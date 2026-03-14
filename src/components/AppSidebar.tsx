@@ -8,6 +8,7 @@ import {
   FileText,
   FileBox,
   Stethoscope,
+  Settings,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -17,7 +18,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarProvider,
 } from '@/components/ui/sidebar'
 
 const navItems = [
@@ -29,6 +29,7 @@ const navItems = [
   { title: 'Prontuários', icon: Stethoscope, url: '/prontuario' },
   { title: 'Documentos', icon: FileText, url: '/documentos' },
   { title: 'Equipe', icon: FileBox, url: '/equipe' },
+  { title: 'Configurações', icon: Settings, url: '/configuracoes' },
 ]
 
 export function AppSidebar() {
@@ -64,7 +65,7 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter className="p-4 border-t">
-        <div className="text-xs text-muted-foreground text-center w-full">Versão 1.0.0</div>
+        <div className="text-xs text-muted-foreground text-center w-full">Versão 1.0.1</div>
       </SidebarFooter>
     </Sidebar>
   )

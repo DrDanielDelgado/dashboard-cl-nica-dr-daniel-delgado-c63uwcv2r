@@ -14,6 +14,7 @@ import CRM from './pages/CRM'
 import Prontuario from './pages/Prontuario'
 import Documentos from './pages/Documentos'
 import Equipe from './pages/Equipe'
+import Configuracoes from './pages/Configuracoes'
 
 const App = () => (
   <AppProvider>
@@ -31,6 +32,7 @@ const App = () => (
             <Route path="/prontuario" element={<Prontuario />} />
             <Route path="/documentos" element={<Documentos />} />
             <Route path="/equipe" element={<Equipe />} />
+            <Route path="/configuracoes" element={<Configuracoes />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
