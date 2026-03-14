@@ -10,6 +10,7 @@ import {
   Stethoscope,
   Settings,
   Bot,
+  MessageSquareShare,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -27,6 +28,7 @@ const navItems = [
   { title: 'Financeiro', icon: CircleDollarSign, url: '/financeiro' },
   { title: 'Estoque', icon: Package, url: '/estoque' },
   { title: 'CRM & Social', icon: Users, url: '/crm' },
+  { title: 'Chatbot', icon: MessageSquareShare, url: '/chatbot' },
   { title: 'Prontuários', icon: Stethoscope, url: '/prontuario' },
   { title: 'Automações', icon: Bot, url: '/automacoes' },
   { title: 'Documentos', icon: FileText, url: '/documentos' },

@@ -11,6 +11,7 @@ import Agenda from './pages/Agenda'
 import Financeiro from './pages/Financeiro'
 import Estoque from './pages/Estoque'
 import CRM from './pages/CRM'
+import Chatbot from './pages/Chatbot'
 import Prontuario from './pages/Prontuario'
 import Automacoes from './pages/Automacoes'
 import Documentos from './pages/Documentos'
@@ -30,6 +31,7 @@ const App = () => (
             <Route path="/financeiro" element={<Financeiro />} />
             <Route path="/estoque" element={<Estoque />} />
             <Route path="/crm" element={<CRM />} />
+            <Route path="/chatbot" element={<Chatbot />} />
             <Route path="/prontuario" element={<Prontuario />} />
             <Route path="/automacoes" element={<Automacoes />} />
             <Route path="/documentos" element={<Documentos />} />
