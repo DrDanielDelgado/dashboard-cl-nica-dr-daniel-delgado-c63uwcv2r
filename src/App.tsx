@@ -12,6 +12,7 @@ import Financeiro from './pages/Financeiro'
 import Estoque from './pages/Estoque'
 import CRM from './pages/CRM'
 import Prontuario from './pages/Prontuario'
+import Automacoes from './pages/Automacoes'
 import Documentos from './pages/Documentos'
 import Equipe from './pages/Equipe'
 import Configuracoes from './pages/Configuracoes'
@@ -30,6 +31,7 @@ const App = () => (
             <Route path="/estoque" element={<Estoque />} />
             <Route path="/crm" element={<CRM />} />
             <Route path="/prontuario" element={<Prontuario />} />
+            <Route path="/automacoes" element={<Automacoes />} />
             <Route path="/documentos" element={<Documentos />} />
             <Route path="/equipe" element={<Equipe />} />
             <Route path="/configuracoes" element={<Configuracoes />} />

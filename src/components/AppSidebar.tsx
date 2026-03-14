@@ -9,6 +9,7 @@ import {
   FileBox,
   Stethoscope,
   Settings,
+  Bot,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -27,6 +28,7 @@ const navItems = [
   { title: 'Estoque', icon: Package, url: '/estoque' },
   { title: 'CRM & Social', icon: Users, url: '/crm' },
   { title: 'Prontuários', icon: Stethoscope, url: '/prontuario' },
+  { title: 'Automações', icon: Bot, url: '/automacoes' },
   { title: 'Documentos', icon: FileText, url: '/documentos' },
   { title: 'Equipe', icon: FileBox, url: '/equipe' },
   { title: 'Configurações', icon: Settings, url: '/configuracoes' },
