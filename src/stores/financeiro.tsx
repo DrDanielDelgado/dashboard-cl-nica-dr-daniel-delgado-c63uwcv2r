@@ -9,7 +9,7 @@ const lastMonth = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString
 const MOCK_BUDGETS: Budget[] = [
   {
     id: '1',
-    patient: 'Ana Costa',
+    patient: 'Ana Silva',
     procedure: 'Tratamento de Varizes (Laser)',
     value: 4500,
     discount: 500,
@@ -37,7 +37,7 @@ const MOCK_BUDGETS: Budget[] = [
   },
   {
     id: '3',
-    patient: 'Maria Silva',
+    patient: 'Maria Costa',
     procedure: 'Espuma',
     value: 800,
     discount: 0,

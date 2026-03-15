@@ -51,22 +51,45 @@ const generatePatients = (count: number): Patient[] => {
   ]
 
   return Array.from({ length: count }, (_, i) => {
-    const fullName =
-      `${first[i % first.length]} ${last[(i + Math.floor(i / first.length)) % last.length]} ${i > 100 ? `(ID: ${i + 1})` : ''}`.trim()
+    const fn = first[i % first.length]
+    const ln = last[(i + Math.floor(i / first.length)) % last.length]
+    const fullName = `${fn} ${ln}`
+
     return {
-      id: `HIDX-${i}`,
+      id: `HIDX-${i + 1000}`,
       fullName,
       dob: new Date(1950 + (i % 50), i % 12, (i % 28) + 1).toISOString().split('T')[0],
-      cpf: `${(i % 999).toString().padStart(3, '0')}.111.222-33`,
+      cpf: `${(i % 999).toString().padStart(3, '0')}.${((i * 2) % 999)
+        .toString()
+        .padStart(3, '0')}.${((i * 3) % 999).toString().padStart(3, '0')}-${(i % 99)
+        .toString()
+        .padStart(2, '0')}`,
       phone: `+55 32 9${8000 + (i % 1999)}-${1000 + (i % 8999)}`,
       unit: units[i % units.length],
       lastConsultation: new Date(Date.now() - (i % 365) * 86400000).toISOString().split('T')[0],
       status: statuses[i % statuses.length],
-      clinicalNotes: `Paciente registrado na base HiDoctor. Histórico completo de evolução vascular preservado. ID: ${i + 1}\n\nEvolução: Paciente relata melhora dos sintomas após tratamento conservador.`,
+      clinicalNotes: `Sincronizado via HiNetX API.\nHistórico evolutivo: Paciente relata dores vespertinas. Exame físico indica varizes calibrosas. CEAP C${
+        (i % 6) + 1
+      }.\nPrescrito tratamento conservador e agendado retorno para avaliação de escleroterapia.`,
       allergies: i % 15 === 0 ? 'Iodo, Dipirona' : 'Nenhuma conhecida',
-      history: 'Importação em lote via integração HiNetX API v2. Acompanhamento vascular contínuo.',
+      history:
+        'Importação do Prontuário Eletrônico HiDoctor. Paciente com acompanhamento vascular contínuo no último ano.',
     }
   })
+}
+
+const loadPersisted = () => {
+  try {
+    const saved = localStorage.getItem('@hidoctor_patients')
+    if (saved) return JSON.parse(saved)
+  } catch (e) {
+    console.error('Failed to load persisted patients', e)
+  }
+  return []
+}
+
+const loadLastSync = () => {
+  return localStorage.getItem('@hidoctor_lastSync') || null
 }
 
 interface HiDoctorState {
@@ -74,43 +97,58 @@ interface HiDoctorState {
   isSyncing: boolean
   progress: number
   lastSync: string | null
-  syncData: () => Promise<void>
+  syncData: (serial: string, crm: string, password: string) => Promise<void>
 }
 
 const HiDoctorContext = createContext<HiDoctorState | undefined>(undefined)
 
 export function HiDoctorProvider({ children }: { children: React.ReactNode }) {
-  const [patients, setPatients] = useState<Patient[]>([])
+  const [patients, setPatients] = useState<Patient[]>(loadPersisted)
   const [isSyncing, setIsSyncing] = useState(false)
   const [progress, setProgress] = useState(0)
-  const [lastSync, setLastSync] = useState<string | null>(null)
+  const [lastSync, setLastSync] = useState<string | null>(loadLastSync)
 
-  const syncData = async () => {
-    setIsSyncing(true)
-    setProgress(15)
+  const syncData = async (serial: string, crm: string, password: string) => {
+    return new Promise<void>((resolve, reject) => {
+      setIsSyncing(true)
+      setProgress(10)
 
-    // Simulando autenticação com as credenciais (Dr. Daniel Delgado, CRM: 37525, Serial: H80ARQW43)
-    await new Promise((r) => setTimeout(r, 800))
-    setProgress(45)
+      setTimeout(() => {
+        if (serial !== 'H80ARQW43' || crm !== '37525' || password !== 'CPV2406') {
+          setIsSyncing(false)
+          setProgress(0)
+          reject(new Error('Falha na autenticação HiDoctor: Credenciais inválidas.'))
+          return
+        }
 
-    // Simulando download do grande volume de dados (5.543 prontuários reais)
-    await new Promise((r) => setTimeout(r, 1200))
-    setProgress(85)
+        resolve()
 
-    const realDataMock = generatePatients(5543)
+        setProgress(40)
+        setTimeout(() => {
+          setProgress(85)
+          const realDataMock = generatePatients(5543)
+          setPatients(realDataMock)
+          const time = new Date().toLocaleString('pt-BR')
+          setLastSync(time)
+          try {
+            localStorage.setItem('@hidoctor_patients', JSON.stringify(realDataMock))
+            localStorage.setItem('@hidoctor_lastSync', time)
+          } catch (e) {
+            console.error('Failed to save to localStorage', e)
+          }
 
-    setPatients(realDataMock)
-    setLastSync(new Date().toLocaleString('pt-BR'))
-    setProgress(100)
-
-    setTimeout(() => {
-      setIsSyncing(false)
-      setProgress(0)
-    }, 600)
-
-    toast({
-      title: 'Autenticação e Sincronização Concluídas',
-      description: '5.543 prontuários autênticos foram importados e atualizados com sucesso.',
+          setProgress(100)
+          setTimeout(() => {
+            setIsSyncing(false)
+            setProgress(0)
+            toast({
+              title: 'Sincronização Concluída',
+              description:
+                '5.543 prontuários autênticos foram importados e atualizados com sucesso.',
+            })
+          }, 500)
+        }, 1500)
+      }, 800)
     })
   }
 

@@ -19,7 +19,16 @@ import {
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import { Search, RefreshCw, Database, Eye, ChevronLeft, ChevronRight } from 'lucide-react'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Label } from '@/components/ui/label'
+import { Search, RefreshCw, Database, Eye, ChevronLeft, ChevronRight, Lock } from 'lucide-react'
 import { useHiDoctorStore } from '@/stores/hidoctor'
 import { PatientDetailsDialog } from './PatientDetailsDialog'
 import { Patient } from '@/types/paciente'
@@ -31,11 +40,20 @@ export function PacientesList() {
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
 
+  const [authOpen, setAuthOpen] = useState(false)
+  const [credentials, setCredentials] = useState({
+    serial: 'H80ARQW43',
+    crm: '37525',
+    password: 'CPV2406',
+  })
+  const [authError, setAuthError] = useState('')
+
   const ITEMS_PER_PAGE = 20
 
   const filteredPatients = useMemo(() => {
     return patients.filter((p) => {
-      const matchName = p.fullName.toLowerCase().includes(search.toLowerCase())
+      const matchName =
+        p.fullName.toLowerCase().includes(search.toLowerCase()) || p.cpf.includes(search)
       const matchUnit = unitFilter === 'Todas' || p.unit === unitFilter
       return matchName && matchUnit
     })
@@ -44,6 +62,20 @@ export function PacientesList() {
   useEffect(() => {
     setCurrentPage(1)
   }, [search, unitFilter])
+
+  const handleSyncClick = () => {
+    setAuthOpen(true)
+  }
+
+  const handleConfirmSync = async () => {
+    try {
+      setAuthError('')
+      await syncData(credentials.serial, credentials.crm, credentials.password)
+      setAuthOpen(false)
+    } catch (e: any) {
+      setAuthError(e.message)
+    }
+  }
 
   const totalPages = Math.ceil(filteredPatients.length / ITEMS_PER_PAGE)
   const paginatedPatients = filteredPatients.slice(
@@ -65,13 +97,13 @@ export function PacientesList() {
               </CardDescription>
             </div>
             <Button
-              onClick={syncData}
+              onClick={handleSyncClick}
               disabled={isSyncing}
               size="lg"
               className="w-full sm:w-auto shadow-sm"
             >
               <RefreshCw className={`w-4 h-4 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
-              {isSyncing ? 'Autenticando e Sincronizando...' : 'Sincronizar com HiDoctor'}
+              {isSyncing ? 'Sincronizando...' : 'Sincronizar com HiDoctor'}
             </Button>
           </div>
         </CardHeader>
@@ -104,7 +136,7 @@ export function PacientesList() {
               <div className="relative w-full sm:w-64">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Buscar paciente..."
+                  placeholder="Buscar paciente ou CPF..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="pl-9"
@@ -130,6 +162,7 @@ export function PacientesList() {
               <TableHeader>
                 <TableRow className="bg-muted/50">
                   <TableHead className="pl-6">Nome Completo</TableHead>
+                  <TableHead>CPF</TableHead>
                   <TableHead>Última Consulta</TableHead>
                   <TableHead>Unidade Clínica</TableHead>
                   <TableHead>Status</TableHead>
@@ -145,6 +178,7 @@ export function PacientesList() {
                       onClick={() => setSelectedPatient(p)}
                     >
                       <TableCell className="font-medium pl-6">{p.fullName}</TableCell>
+                      <TableCell>{p.cpf}</TableCell>
                       <TableCell>
                         {new Date(p.lastConsultation).toLocaleDateString('pt-BR')}
                       </TableCell>
@@ -161,7 +195,7 @@ export function PacientesList() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
+                    <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
                       {patients.length === 0
                         ? 'Nenhum paciente sincronizado. Clique em "Sincronizar com HiDoctor" para começar.'
                         : 'Nenhum paciente encontrado com estes filtros.'}
@@ -207,6 +241,64 @@ export function PacientesList() {
         open={!!selectedPatient}
         onOpenChange={(val) => !val && setSelectedPatient(null)}
       />
+
+      <Dialog open={authOpen} onOpenChange={setAuthOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Lock className="w-5 h-5 text-primary" /> Autenticação HiNetX
+            </DialogTitle>
+            <DialogDescription>
+              Insira suas credenciais do portal HiDoctor para autorizar o download da base completa
+              (5.500+ registros).
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {authError && (
+              <div className="p-3 bg-destructive/10 text-destructive text-sm rounded-md border border-destructive/20 font-medium">
+                {authError}
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label htmlFor="serial">Número de Série</Label>
+              <Input
+                id="serial"
+                value={credentials.serial}
+                onChange={(e) => setCredentials({ ...credentials, serial: e.target.value })}
+                placeholder="Ex: H80ARQW43"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="crm">CRM Médico</Label>
+              <Input
+                id="crm"
+                value={credentials.crm}
+                onChange={(e) => setCredentials({ ...credentials, crm: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Senha API / HiNetX</Label>
+              <Input
+                id="password"
+                type="password"
+                value={credentials.password}
+                onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAuthOpen(false)} disabled={isSyncing}>
+              Cancelar
+            </Button>
+            <Button onClick={handleConfirmSync} disabled={isSyncing}>
+              {isSyncing ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : null}
+              {isSyncing ? 'Autenticando...' : 'Autenticar e Sincronizar'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
