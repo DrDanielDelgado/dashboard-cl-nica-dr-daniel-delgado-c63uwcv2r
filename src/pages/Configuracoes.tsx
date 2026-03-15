@@ -1,9 +1,10 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Globe, FileSignature, MessageSquare, Landmark } from 'lucide-react'
+import { Globe, FileSignature, MessageSquare, Landmark, Database } from 'lucide-react'
 import { DomainSettings } from '@/components/settings/DomainSettings'
 import { NFeSettings } from '@/components/settings/NFeSettings'
 import { WhatsAppSettings } from '@/components/settings/WhatsAppSettings'
 import { BankSettings } from '@/components/settings/BankSettings'
+import { HiDoctorSettings } from '@/components/settings/HiDoctorSettings'
 
 export default function Configuracoes() {
   return (
@@ -11,12 +12,16 @@ export default function Configuracoes() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Configurações de Produção</h1>
         <p className="text-muted-foreground">
-          Gerencie domínios e chaves de API para integrações reais (Fazenda MG, C6 Bank, WhatsApp).
+          Gerencie domínios e chaves de API para integrações reais (Fazenda MG, C6 Bank, WhatsApp,
+          HiDoctor).
         </p>
       </div>
 
-      <Tabs defaultValue="dominio" className="w-full">
+      <Tabs defaultValue="hidoctor" className="w-full">
         <TabsList className="mb-6 flex flex-wrap h-auto w-fit max-w-full justify-start">
+          <TabsTrigger value="hidoctor" className="gap-2 py-2">
+            <Database className="h-4 w-4" /> Prontuários (HiDoctor)
+          </TabsTrigger>
           <TabsTrigger value="dominio" className="gap-2 py-2">
             <Globe className="h-4 w-4" /> Geral (Domínio)
           </TabsTrigger>
@@ -30,6 +35,10 @@ export default function Configuracoes() {
             <Landmark className="h-4 w-4" /> Financeiro (C6 Bank)
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="hidoctor" className="outline-none">
+          <HiDoctorSettings />
+        </TabsContent>
 
         <TabsContent value="dominio" className="outline-none">
           <DomainSettings />
