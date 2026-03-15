@@ -10,7 +10,7 @@ export function AiAssistant() {
   const [messages, setMessages] = useState<{ role: 'user' | 'ai'; text: string }[]>([
     {
       role: 'ai',
-      text: 'Olá! Sou seu assistente de clínica. Como posso ajudar com a agenda, prontuários ou estoque hoje?',
+      text: 'Olá! Sou a assistente virtual da clínica do Dr. Daniel Delgado. Como posso ajudar com a agenda, prontuários ou estoque hoje?',
     },
   ])
   const [input, setInput] = useState('')

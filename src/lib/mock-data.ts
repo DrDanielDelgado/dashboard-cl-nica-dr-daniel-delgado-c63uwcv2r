@@ -57,7 +57,7 @@ export const MOCK_CRM_LEADS = [
     name: 'Maria Silva',
     status: 'qualified',
     phone: '+55 31 99999-1111',
-    treatment: 'Avaliação Vascular',
+    treatment: 'Tratamento de Varizes (Laser e Espuma)',
   },
   {
     id: 'L2',
@@ -71,14 +71,14 @@ export const MOCK_CRM_LEADS = [
     name: 'Ana Costa',
     status: 'scheduled',
     phone: '+55 31 97777-3333',
-    treatment: 'Doppler',
+    treatment: 'Check-up Vascular',
   },
   {
     id: 'L4',
     name: 'Pedro Alves',
     status: 'qualified',
     phone: '+55 31 96666-4444',
-    treatment: 'Cirurgia Varizes',
+    treatment: 'Cirurgia de Carótidas',
   },
 ]
 
@@ -89,8 +89,20 @@ export const MOCK_TASKS = [
 ]
 
 export const MOCK_APPOINTMENTS = [
-  { id: 1, patient: 'Carlos Alberto', time: '09:00', type: 'Consulta', status: 'confirmed' },
+  {
+    id: 1,
+    patient: 'Carlos Alberto',
+    time: '09:00',
+    type: 'Avaliação Vascular',
+    status: 'confirmed',
+  },
   { id: 2, patient: 'Fernanda Lima', time: '10:30', type: 'Retorno', status: 'pending' },
-  { id: 3, patient: 'Ricardo Gomes', time: '14:00', type: 'Procedimento', status: 'confirmed' },
-  { id: 4, patient: 'Luciana M.', time: '16:00', type: 'Avaliação', status: 'cancelled' },
+  { id: 3, patient: 'Ricardo Gomes', time: '14:00', type: 'Escleroterapia', status: 'confirmed' },
+  {
+    id: 4,
+    patient: 'Luciana M.',
+    time: '16:00',
+    type: 'Microcirurgia de Varizes',
+    status: 'cancelled',
+  },
 ]

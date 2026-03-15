@@ -47,7 +47,7 @@ export function AppSidebar() {
             <Stethoscope className="h-5 w-5 text-white" />
           </div>
           <span className="font-bold text-lg text-sidebar-foreground truncate">
-            Clínica Integrada
+            Dr. Daniel Delgado
           </span>
         </div>
       </SidebarHeader>

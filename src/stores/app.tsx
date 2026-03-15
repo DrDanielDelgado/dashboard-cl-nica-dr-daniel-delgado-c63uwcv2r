@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState } from 'react'
 
-type Location = 'Belo Horizonte' | 'Contagem' | 'Betim' | 'Uberlândia'
+type Location = 'Sete Lagoas' | 'Curvelo' | 'Pompéu' | 'Abaeté'
 type Role = 'Médico' | 'Secretária' | 'Gerenciador' | 'Enfermeira' | 'Contador'
 
 interface AppState {
@@ -13,7 +13,7 @@ interface AppState {
 const AppContext = createContext<AppState | undefined>(undefined)
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [location, setLocation] = useState<Location>('Belo Horizonte')
+  const [location, setLocation] = useState<Location>('Sete Lagoas')
   const [role, setRole] = useState<Role>('Gerenciador')
 
   return (

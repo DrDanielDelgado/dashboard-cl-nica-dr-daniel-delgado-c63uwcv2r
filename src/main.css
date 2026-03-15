@@ -15,7 +15,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    --primary: 199 98% 39%; /* Medical Blue #0284c7 */
+    --primary: 215 100% 30%; /* Deep Medical Blue #004099 */
     --primary-foreground: 0 0% 100%;
 
     --secondary: 214 32% 91%;
@@ -24,29 +24,29 @@
     --muted: 214 32% 91%;
     --muted-foreground: 215 16% 47%;
 
-    --accent: 214 32% 91%;
-    --accent-foreground: 222 47% 11%;
+    --accent: 180 100% 25%; /* Medical Teal #008080 */
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
     --border: 214 32% 91%;
     --input: 214 32% 91%;
-    --ring: 199 98% 39%;
+    --ring: 215 100% 30%;
 
     --radius: 0.75rem;
 
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 222 47% 11%;
-    --sidebar-primary: 199 98% 39%;
+    --sidebar-primary: 215 100% 30%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 214 32% 91%;
     --sidebar-accent-foreground: 222 47% 11%;
     --sidebar-border: 214 32% 91%;
-    --sidebar-ring: 199 98% 39%;
+    --sidebar-ring: 215 100% 30%;
 
-    --chart-1: 199 98% 39%;
-    --chart-2: 142 71% 45%;
+    --chart-1: 215 100% 30%;
+    --chart-2: 180 100% 25%;
     --chart-3: 45 93% 47%;
     --chart-4: 0 84% 60%;
     --chart-5: 280 65% 60%;

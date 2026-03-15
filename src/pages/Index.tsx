@@ -151,7 +151,7 @@ export default function Index() {
               rel="noreferrer"
               className="flex items-center gap-2 text-sm font-medium text-primary hover:underline bg-primary/10 px-4 py-2 rounded-lg"
             >
-              <ExternalLink className="h-4 w-4" /> Site da Clínica
+              <ExternalLink className="h-4 w-4" /> Site do Dr. Daniel Delgado
             </a>
             <a
               href="#"
@@ -167,7 +167,7 @@ export default function Index() {
             <CardTitle>Status das Unidades</CardTitle>
           </CardHeader>
           <CardContent className="flex justify-between flex-wrap gap-4">
-            {['BH', 'Contagem', 'Betim', 'Uberlândia'].map((unit) => (
+            {['Sete Lagoas', 'Curvelo', 'Pompéu', 'Abaeté'].map((unit) => (
               <div key={unit} className="flex flex-col items-center gap-2">
                 <div
                   className={`h-12 w-12 rounded-full flex items-center justify-center ${unit === location ? 'bg-primary text-white shadow-lg scale-110 transition-transform' : 'bg-muted text-muted-foreground'}`}

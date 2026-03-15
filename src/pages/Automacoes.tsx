@@ -48,7 +48,7 @@ const INITIAL_FLOWS = [
     id: '1',
     name: 'Lembrete 24h (Padrão)',
     trigger: '24h antes',
-    units: ['Belo Horizonte', 'Contagem'],
+    units: ['Sete Lagoas', 'Curvelo'],
     isActive: true,
     message:
       'Olá {{paciente_nome}}, confirmamos sua consulta na unidade {{unidade_nome}} amanhã às {{hora_consulta}}.',
@@ -57,7 +57,7 @@ const INITIAL_FLOWS = [
     id: '2',
     name: 'Confirmação no Dia',
     trigger: '4h antes',
-    units: ['Belo Horizonte', 'Contagem', 'Betim', 'Uberlândia'],
+    units: ['Sete Lagoas', 'Curvelo', 'Pompéu', 'Abaeté'],
     isActive: false,
     message:
       'Passando para lembrar da sua consulta hoje às {{hora_consulta}} com {{medico_nome}}. Responda SIM para confirmar.',
@@ -68,7 +68,7 @@ const MOCK_LOGS = [
   {
     id: 'L1',
     patient: 'Carlos Alberto',
-    unit: 'Belo Horizonte',
+    unit: 'Sete Lagoas',
     time: '09:00',
     type: 'Lembrete 24h',
     status: 'sent',
@@ -77,7 +77,7 @@ const MOCK_LOGS = [
   {
     id: 'L2',
     patient: 'Fernanda Lima',
-    unit: 'Contagem',
+    unit: 'Curvelo',
     time: '10:30',
     type: 'Lembrete 24h',
     status: 'read',
@@ -86,7 +86,7 @@ const MOCK_LOGS = [
   {
     id: 'L3',
     patient: 'Ricardo Gomes',
-    unit: 'Betim',
+    unit: 'Pompéu',
     time: '14:00',
     type: 'Confirmação no Dia',
     status: 'error',
@@ -95,7 +95,7 @@ const MOCK_LOGS = [
   {
     id: 'L4',
     patient: 'Luciana M.',
-    unit: 'Uberlândia',
+    unit: 'Abaeté',
     time: '16:00',
     type: 'Confirmação no Dia',
     status: 'pending',
@@ -112,7 +112,7 @@ const VARIABLES = [
   '{{unidade_endereco}}',
 ]
 
-const ALL_UNITS = ['Belo Horizonte', 'Contagem', 'Betim', 'Uberlândia']
+const ALL_UNITS = ['Sete Lagoas', 'Curvelo', 'Pompéu', 'Abaeté']
 
 export default function Automacoes() {
   const [flows, setFlows] = useState(INITIAL_FLOWS)

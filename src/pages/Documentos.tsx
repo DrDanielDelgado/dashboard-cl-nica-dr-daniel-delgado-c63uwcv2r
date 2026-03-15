@@ -83,12 +83,16 @@ export default function Documentos() {
             <div className="absolute inset-0 bg-secondary/30 p-4 sm:p-8 overflow-auto">
               <div className="mx-auto max-w-[800px] min-h-[1056px] bg-white shadow-sm border border-border p-12">
                 {/* Simulated Letterhead */}
-                <div className="border-b-2 border-primary pb-4 mb-8 flex items-end justify-between">
-                  <div className="text-primary font-bold text-xl">DANIEL DELGADO</div>
-                  <div className="text-xs text-right text-muted-foreground uppercase tracking-widest">
-                    Cirurgia Vascular & Endovascular
+                <div className="border-b-2 border-primary pb-4 mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                  <div className="text-primary font-bold text-2xl tracking-tight">
+                    DR. DANIEL DELGADO
+                  </div>
+                  <div className="text-xs sm:text-right text-muted-foreground uppercase tracking-widest leading-relaxed">
+                    <span className="font-semibold">Angiologia e Cirurgia Vascular</span>
                     <br />
-                    CRM-MG 12345
+                    Cirurgia Endovascular
+                    <br />
+                    CRM-MG 58249 | RQE 41411 | RQE 41412
                   </div>
                 </div>
 

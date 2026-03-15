@@ -1,4 +1,4 @@
-import { Bell, Search, MapPin, UserCircle } from 'lucide-react'
+import { Bell, Search, MapPin } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import {
@@ -28,10 +28,10 @@ export function AppHeader() {
               <SelectValue placeholder="Selecione a Unidade" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="Belo Horizonte">Belo Horizonte</SelectItem>
-              <SelectItem value="Contagem">Contagem</SelectItem>
-              <SelectItem value="Betim">Betim</SelectItem>
-              <SelectItem value="Uberlândia">Uberlândia</SelectItem>
+              <SelectItem value="Sete Lagoas">Sete Lagoas</SelectItem>
+              <SelectItem value="Curvelo">Curvelo</SelectItem>
+              <SelectItem value="Pompéu">Pompéu</SelectItem>
+              <SelectItem value="Abaeté">Abaeté</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -53,14 +53,14 @@ export function AppHeader() {
         </Button>
         <div className="hidden sm:flex items-center gap-3 border-l pl-4">
           <div className="text-right">
-            <p className="text-sm font-medium leading-none">Dra. Silva</p>
+            <p className="text-sm font-medium leading-none">Dr. Daniel</p>
             <Badge variant="secondary" className="mt-1 text-[10px] uppercase">
               {role}
             </Badge>
           </div>
           <Avatar>
-            <AvatarImage src="https://img.usecurling.com/ppl/thumbnail?gender=female&seed=1" />
-            <AvatarFallback>DS</AvatarFallback>
+            <AvatarImage src="https://img.usecurling.com/ppl/thumbnail?gender=male&seed=4" />
+            <AvatarFallback>DD</AvatarFallback>
           </Avatar>
         </div>
       </div>
