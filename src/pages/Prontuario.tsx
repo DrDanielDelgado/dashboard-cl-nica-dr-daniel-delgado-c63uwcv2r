@@ -18,9 +18,10 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
-import { Database, Link as LinkIcon, UploadCloud, Stethoscope } from 'lucide-react'
+import { Database, Link as LinkIcon, UploadCloud, Stethoscope, ExternalLink } from 'lucide-react'
 import useFinanceiroStore from '@/stores/financeiro'
 import { OrcamentoPreviewDialog } from '@/components/financeiro/OrcamentoPreviewDialog'
+import { HiDoctorPortalDialog } from '@/components/prontuario/HiDoctorPortalDialog'
 import { Budget } from '@/types/financeiro'
 
 export default function Prontuario() {
@@ -32,6 +33,7 @@ export default function Prontuario() {
   )
   const [previewOpen, setPreviewOpen] = useState(false)
   const [selectedBudget, setSelectedBudget] = useState<Budget | null>(null)
+  const [hiDoctorOpen, setHiDoctorOpen] = useState(false)
 
   const patientBudgets = budgets.filter((b) => b.patient === selectedPatient)
 
@@ -108,27 +110,40 @@ export default function Prontuario() {
 
         <TabsContent value="clinico" className="space-y-6 animate-fade-in">
           <div className="grid md:grid-cols-2 gap-6">
-            <Card className="border-primary/20 bg-primary/5">
+            <Card className="border-primary/20 bg-primary/5 shadow-sm">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-primary">
-                  <Database className="h-5 w-5" /> Sistema HiDoctor
+                  <Database className="h-5 w-5" /> Portal de Integração HiDoctor
                 </CardTitle>
                 <CardDescription>
-                  Sincronize dados do paciente{' '}
-                  {selectedPatient !== 'Novo Paciente' ? `(${selectedPatient})` : ''} com o
-                  HiDoctor.
+                  Sincronize e visualize dados clínicos de{' '}
+                  {selectedPatient !== 'Novo Paciente' ? (
+                    <span className="font-semibold">{selectedPatient}</span>
+                  ) : (
+                    'um paciente'
+                  )}{' '}
+                  com o banco de dados externo HiDoctor.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="text-sm bg-background p-3 rounded border font-mono text-muted-foreground">
-                  Status: <span className="text-success font-semibold">Conectado (API v2.1)</span>
+                  Status:{' '}
+                  <span className="text-success font-semibold">Pronto para Sincronização</span>
                   <br />
-                  Última Sincronização: Há 5 minutos
+                  Serial Ativo: H80ARQW43
                 </div>
-                <div className="flex gap-2">
-                  <Button variant="default">Abrir Evolução</Button>
-                  <Button variant="outline">
-                    <UploadCloud className="mr-2 h-4 w-4" /> Forçar Sync
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Button
+                    variant="default"
+                    onClick={() => setHiDoctorOpen(true)}
+                    className="flex-1"
+                  >
+                    <Database className="mr-2 h-4 w-4" /> Acessar Portal
+                  </Button>
+                  <Button variant="outline" asChild className="flex-1">
+                    <a href="https://app.hidoctor.com.br/hinetx/" target="_blank" rel="noreferrer">
+                      <ExternalLink className="mr-2 h-4 w-4" /> Acesso Web
+                    </a>
                   </Button>
                 </div>
               </CardContent>
@@ -230,6 +245,11 @@ export default function Prontuario() {
         open={previewOpen}
         onOpenChange={setPreviewOpen}
         budget={selectedBudget}
+      />
+      <HiDoctorPortalDialog
+        open={hiDoctorOpen}
+        onOpenChange={setHiDoctorOpen}
+        patientName={selectedPatient}
       />
     </div>
   )
