@@ -209,7 +209,9 @@ export function OrcamentoFormDialog({
               <SelectContent>
                 <SelectItem value="draft">Rascunho</SelectItem>
                 <SelectItem value="pending">Pendente</SelectItem>
+                <SelectItem value="sent">Enviado via WA</SelectItem>
                 <SelectItem value="approved">Aprovado</SelectItem>
+                <SelectItem value="declined">Recusado</SelectItem>
                 <SelectItem value="expired">Expirado</SelectItem>
               </SelectContent>
             </Select>

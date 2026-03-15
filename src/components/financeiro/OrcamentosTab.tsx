@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, Search, MoreHorizontal, FileText, Edit, Trash } from 'lucide-react'
+import { Plus, Search, MoreHorizontal, FileText, Edit, Trash, MessageCircle } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -22,48 +22,11 @@ import { OrcamentoFormDialog } from './OrcamentoFormDialog'
 import { OrcamentoPreviewDialog } from './OrcamentoPreviewDialog'
 import { Budget } from '@/types/financeiro'
 import { useToast } from '@/hooks/use-toast'
-
-const MOCK_BUDGETS: Budget[] = [
-  {
-    id: '1',
-    patient: 'Ana Costa',
-    procedure: 'Tratamento de Varizes (Laser)',
-    value: 4500,
-    discount: 500,
-    finalValue: 4000,
-    validityDate: '2026-04-15T12:00:00.000Z',
-    paymentMethods: ['Cartão de Crédito', 'PIX'],
-    observations: '10x sem juros no cartão.',
-    status: 'pending',
-  },
-  {
-    id: '2',
-    patient: 'João Santos',
-    procedure: 'Escleroterapia',
-    value: 1200,
-    discount: 0,
-    finalValue: 1200,
-    validityDate: '2026-03-20T12:00:00.000Z',
-    paymentMethods: ['PIX', 'Dinheiro'],
-    observations: 'Pagamento à vista.',
-    status: 'approved',
-  },
-  {
-    id: '3',
-    patient: 'Maria Silva',
-    procedure: 'Espuma',
-    value: 800,
-    discount: 0,
-    finalValue: 800,
-    validityDate: '2024-01-10T12:00:00.000Z',
-    paymentMethods: ['Cartão de Débito'],
-    observations: '',
-    status: 'expired',
-  },
-]
+import useFinanceiroStore from '@/stores/financeiro'
 
 export function OrcamentosTab() {
-  const [budgets, setBudgets] = useState<Budget[]>(MOCK_BUDGETS)
+  const { budgets, addBudget, updateBudget, deleteBudget, updateBudgetStatus } =
+    useFinanceiroStore()
   const [search, setSearch] = useState('')
   const [formOpen, setFormOpen] = useState(false)
   const [previewOpen, setPreviewOpen] = useState(false)
@@ -86,6 +49,21 @@ export function OrcamentosTab() {
             Pendente
           </Badge>
         )
+      case 'sent':
+        return (
+          <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-300">
+            Enviado (WA)
+          </Badge>
+        )
+      case 'declined':
+        return (
+          <Badge
+            variant="destructive"
+            className="bg-red-100 text-red-800 hover:bg-red-100 border-red-300"
+          >
+            Recusado
+          </Badge>
+        )
       case 'expired':
         return <Badge variant="destructive">Expirado</Badge>
       default:
@@ -94,19 +72,32 @@ export function OrcamentosTab() {
   }
 
   const handleDelete = (id: string) => {
-    setBudgets(budgets.filter((b) => b.id !== id))
+    deleteBudget(id)
     toast({ title: 'Orçamento Excluído', description: 'O orçamento foi removido com sucesso.' })
   }
 
   const handleSave = (budget: Budget) => {
     if (budget.id) {
-      setBudgets(budgets.map((b) => (b.id === budget.id ? budget : b)))
+      updateBudget(budget)
       toast({ title: 'Orçamento Atualizado', description: 'As alterações foram salvas.' })
     } else {
-      setBudgets([...budgets, { ...budget, id: Math.random().toString(36).substring(7) }])
+      addBudget(budget)
       toast({ title: 'Orçamento Criado', description: 'Novo orçamento gerado com sucesso.' })
     }
     setFormOpen(false)
+  }
+
+  const handleWhatsApp = (budget: Budget) => {
+    const validade = new Date(budget.validityDate).toLocaleDateString('pt-BR')
+    const obs = budget.observations ? `\n\nObservações: ${budget.observations}` : ''
+    const text = `Olá ${budget.patient},\n\nAqui é do consultório do Dr. Daniel Delgado (CRM 37.525).\n\nSegue o orçamento para o procedimento: *${budget.procedure}*.\n\nValor Final: R$ ${budget.finalValue.toFixed(2)}\nFormas de Pagamento: ${budget.paymentMethods.join(', ')}\nValidade da Proposta: ${validade}${obs}\n\nQualquer dúvida, estamos à disposição para aprovação e agendamento!`
+
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank')
+    updateBudgetStatus(budget.id, 'sent')
+    toast({
+      title: 'Enviado via WhatsApp',
+      description: 'Status atualizado para "Enviado". O WhatsApp foi aberto em nova aba.',
+    })
   }
 
   return (
@@ -116,7 +107,7 @@ export function OrcamentosTab() {
           <div>
             <CardTitle>Gerenciamento de Orçamentos</CardTitle>
             <CardDescription>
-              Crie, edite e gere PDFs de orçamentos para os pacientes.
+              Crie, edite e envie aprovações por WhatsApp para os pacientes.
             </CardDescription>
           </div>
           <Button
@@ -169,6 +160,10 @@ export function OrcamentosTab() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleWhatsApp(budget)}>
+                            <MessageCircle className="w-4 h-4 mr-2 text-green-600" /> Enviar
+                            WhatsApp
+                          </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => {
                               setSelectedBudget(budget)

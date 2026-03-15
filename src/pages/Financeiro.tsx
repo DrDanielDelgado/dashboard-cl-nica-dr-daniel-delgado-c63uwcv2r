@@ -3,11 +3,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Progress } from '@/components/ui/progress'
 import { FileText, Send, Building2, Receipt } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
 import { OrcamentosTab } from '@/components/financeiro/OrcamentosTab'
+import useFinanceiroStore from '@/stores/financeiro'
 
 export default function Financeiro() {
+  const { budgets } = useFinanceiroStore()
+
   const handleNFe = () => {
     toast({
       title: 'NFe Emitida com Sucesso',
@@ -16,11 +20,19 @@ export default function Financeiro() {
   }
 
   const handleBoleto = () => {
-    toast({
-      title: 'Boleto Gerado',
-      description: 'Boleto Banco C6 gerado e enviado ao paciente.',
-    })
+    toast({ title: 'Boleto Gerado', description: 'Boleto Banco C6 gerado e enviado ao paciente.' })
   }
+
+  const faturamentoAprovado = budgets
+    .filter((b) => b.status === 'approved')
+    .reduce((acc, b) => acc + b.finalValue, 0)
+
+  const projecaoReceita = budgets
+    .filter((b) => b.status === 'pending' || b.status === 'sent')
+    .reduce((acc, b) => acc + b.finalValue, 0)
+
+  const totalProjecao = faturamentoAprovado + projecaoReceita
+  const percentageAprovado = totalProjecao > 0 ? (faturamentoAprovado / totalProjecao) * 100 : 0
 
   return (
     <div className="space-y-6 animate-slide-up">
@@ -33,17 +45,17 @@ export default function Financeiro() {
 
       <Tabs defaultValue="fluxo" className="w-full">
         <TabsList className="grid w-full grid-cols-4 max-w-2xl mb-4">
-          <TabsTrigger value="fluxo">Fluxo de Caixa</TabsTrigger>
+          <TabsTrigger value="fluxo">Dashboard & Caixa</TabsTrigger>
           <TabsTrigger value="orcamento">Orçamentos</TabsTrigger>
           <TabsTrigger value="nfe">NF-e (SEF-MG)</TabsTrigger>
           <TabsTrigger value="c6">Banco C6</TabsTrigger>
         </TabsList>
 
         <TabsContent value="fluxo" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Receitas (Mês)</CardTitle>
+                <CardTitle className="text-sm font-medium">Receitas (Mês)</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-success">R$ 145.200,00</div>
@@ -51,25 +63,64 @@ export default function Financeiro() {
             </Card>
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Despesas (Mês)</CardTitle>
+                <CardTitle className="text-sm font-medium">Despesas (Mês)</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-alert">R$ 82.400,00</div>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="bg-primary/5 border-primary/20">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Saldo Projetado</CardTitle>
+                <CardTitle className="text-sm font-medium text-primary">
+                  Faturamento Aprovado
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-primary">R$ 62.800,00</div>
+                <div className="text-2xl font-bold text-primary">
+                  R$ {faturamentoAprovado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Orçamentos com status 'Aprovado'
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">Projeção de Receita</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-muted-foreground">
+                  R$ {projecaoReceita.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">Orçamentos pendentes/enviados</p>
               </CardContent>
             </Card>
           </div>
-          <Card className="h-64 flex items-center justify-center bg-muted/20 border-dashed">
-            <p className="text-muted-foreground">
-              Gráfico detalhado de Fluxo de Caixa aparecerá aqui.
-            </p>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Projeção de Conversão de Orçamentos</CardTitle>
+              <CardDescription>
+                Acompanhe o volume financeiro de propostas aprovadas em relação ao total negociado.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex justify-between text-sm font-medium">
+                <span className="text-primary">
+                  Aprovado (R${' '}
+                  {faturamentoAprovado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})
+                </span>
+                <span className="text-muted-foreground">
+                  Pendente (R${' '}
+                  {projecaoReceita.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})
+                </span>
+              </div>
+              <Progress value={percentageAprovado} className="h-4" />
+              <p className="text-xs text-muted-foreground text-center">
+                {percentageAprovado.toFixed(1)}% do volume financeiro projetado já foi convertido em
+                faturamento garantido.
+              </p>
+            </CardContent>
           </Card>
         </TabsContent>
 
@@ -80,7 +131,7 @@ export default function Financeiro() {
                 <Building2 className="h-5 w-5" /> Integração SEF-MG
               </CardTitle>
               <CardDescription>
-                Emissão direta de Nota Fiscal Eletrônica de Serviços para o Estado de Minas Gerais.
+                Emissão direta de Nota Fiscal Eletrônica de Serviços.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4 max-w-md">
@@ -109,9 +160,7 @@ export default function Financeiro() {
               <CardTitle className="flex items-center gap-2">
                 <Receipt className="h-5 w-5 text-black" /> Emissão de Boletos C6 Bank
               </CardTitle>
-              <CardDescription>
-                Gere boletos de cobrança integrados diretamente na sua conta PJ C6.
-              </CardDescription>
+              <CardDescription>Gere boletos de cobrança na sua conta PJ C6.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4 max-w-md">
               <div className="space-y-2">
