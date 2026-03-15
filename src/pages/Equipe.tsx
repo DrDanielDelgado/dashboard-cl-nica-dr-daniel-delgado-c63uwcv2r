@@ -1,13 +1,12 @@
 import { MOCK_TASKS } from '@/lib/mock-data'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+import { Card, CardContent } from '@/components/ui/card'
 import { useAppStore } from '@/stores/app'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { ShieldAlert } from 'lucide-react'
 
 export default function Equipe() {
   const { role } = useAppStore()
-  const isManager = role === 'Gerenciador'
+  const isManager = ['Gerenciador', 'Administrador', 'Gerente'].includes(role)
 
   const columns = [
     { id: 'todo', title: 'A Fazer' },
@@ -29,8 +28,8 @@ export default function Equipe() {
       {!isManager && (
         <div className="bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300 p-3 rounded-lg flex items-center gap-2 text-sm">
           <ShieldAlert className="w-4 h-4 shrink-0" />
-          Seu perfil ({role}) permite visualizar as tarefas. Apenas o Gerenciador pode alterar
-          permissões da equipe.
+          Seu perfil ({role}) permite visualizar as tarefas. Apenas os Gestores podem alterar
+          permissões amplas da equipe.
         </div>
       )}
 

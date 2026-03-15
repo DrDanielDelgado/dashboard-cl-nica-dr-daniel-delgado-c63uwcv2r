@@ -1,12 +1,17 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Globe, FileSignature, MessageSquare, Landmark, Database } from 'lucide-react'
+import { Globe, FileSignature, MessageSquare, Landmark, Database, Users } from 'lucide-react'
 import { DomainSettings } from '@/components/settings/DomainSettings'
 import { NFeSettings } from '@/components/settings/NFeSettings'
 import { WhatsAppSettings } from '@/components/settings/WhatsAppSettings'
 import { BankSettings } from '@/components/settings/BankSettings'
 import { HiDoctorSettings } from '@/components/settings/HiDoctorSettings'
+import { UsersSettings } from '@/components/settings/UsersSettings'
+import { useAppStore } from '@/stores/app'
 
 export default function Configuracoes() {
+  const { role } = useAppStore()
+  const isAdmin = ['Gerenciador', 'Administrador', 'Gerente'].includes(role)
+
   return (
     <div className="space-y-6">
       <div>
@@ -17,8 +22,13 @@ export default function Configuracoes() {
         </p>
       </div>
 
-      <Tabs defaultValue="hidoctor" className="w-full">
+      <Tabs defaultValue={isAdmin ? 'usuarios' : 'hidoctor'} className="w-full">
         <TabsList className="mb-6 flex flex-wrap h-auto w-fit max-w-full justify-start">
+          {isAdmin && (
+            <TabsTrigger value="usuarios" className="gap-2 py-2">
+              <Users className="h-4 w-4" /> Usuários e Permissões
+            </TabsTrigger>
+          )}
           <TabsTrigger value="hidoctor" className="gap-2 py-2">
             <Database className="h-4 w-4" /> Prontuários (HiDoctor)
           </TabsTrigger>
@@ -35,6 +45,12 @@ export default function Configuracoes() {
             <Landmark className="h-4 w-4" /> Financeiro (C6 Bank)
           </TabsTrigger>
         </TabsList>
+
+        {isAdmin && (
+          <TabsContent value="usuarios" className="outline-none">
+            <UsersSettings />
+          </TabsContent>
+        )}
 
         <TabsContent value="hidoctor" className="outline-none">
           <HiDoctorSettings />

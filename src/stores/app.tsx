@@ -1,7 +1,14 @@
 import React, { createContext, useContext, useState } from 'react'
 
 type Location = 'Juiz de Fora' | 'Leopoldina' | 'Além Paraíba'
-type Role = 'Médico' | 'Secretária' | 'Gerenciador' | 'Enfermeira' | 'Contador'
+type Role =
+  | 'Médico'
+  | 'Secretária'
+  | 'Gerenciador'
+  | 'Enfermeira'
+  | 'Contador'
+  | 'Administrador'
+  | 'Gerente'
 
 interface AppState {
   location: Location
