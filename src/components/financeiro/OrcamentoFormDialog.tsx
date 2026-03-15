@@ -23,6 +23,7 @@ import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar'
 import { CalendarIcon } from 'lucide-react'
 import { Budget } from '@/types/financeiro'
+import { useAppStore } from '@/stores/app'
 
 const PAYMENT_METHODS = ['Cartão de Crédito', 'Cartão de Débito', 'PIX', 'Dinheiro']
 const PROCEDURES = [
@@ -45,12 +46,14 @@ export function OrcamentoFormDialog({
   budget: Budget | null
   onSave: (b: Budget) => void
 }) {
+  const { location } = useAppStore()
   const [formData, setFormData] = useState<Partial<Budget>>({
     value: 0,
     discount: 0,
     finalValue: 0,
     paymentMethods: [],
     status: 'pending',
+    unit: location,
   })
 
   useEffect(() => {
@@ -63,9 +66,11 @@ export function OrcamentoFormDialog({
           finalValue: 0,
           paymentMethods: [],
           status: 'pending',
+          createdAt: new Date().toISOString(),
+          unit: location,
         })
     }
-  }, [budget, open])
+  }, [budget, open, location])
 
   useEffect(() => {
     const value = formData.value || 0
@@ -83,7 +88,8 @@ export function OrcamentoFormDialog({
   }
 
   const handleSave = () => {
-    if (!formData.patient || !formData.procedure || !formData.validityDate) return
+    if (!formData.patient || !formData.procedure || !formData.validityDate || !formData.unit) return
+    if (!formData.createdAt) formData.createdAt = new Date().toISOString()
     onSave(formData as Budget)
   }
 
@@ -120,6 +126,23 @@ export function OrcamentoFormDialog({
                     {p}
                   </SelectItem>
                 ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Unidade de Atendimento</Label>
+            <Select
+              value={formData.unit}
+              onValueChange={(v: any) => setFormData({ ...formData, unit: v })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione a unidade" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Juiz de Fora">Juiz de Fora</SelectItem>
+                <SelectItem value="Leopoldina">Leopoldina</SelectItem>
+                <SelectItem value="Além Paraíba">Além Paraíba</SelectItem>
               </SelectContent>
             </Select>
           </div>

@@ -1,16 +1,19 @@
+import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Progress } from '@/components/ui/progress'
-import { FileText, Send, Building2, Receipt } from 'lucide-react'
+import { FileText, Send, Building2, Receipt, FileDown, AlertCircle } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
 import { OrcamentosTab } from '@/components/financeiro/OrcamentosTab'
+import { RelatoriosDialog } from '@/components/financeiro/RelatoriosDialog'
 import useFinanceiroStore from '@/stores/financeiro'
 
 export default function Financeiro() {
   const { budgets } = useFinanceiroStore()
+  const [relatoriosOpen, setRelatoriosOpen] = useState(false)
 
   const handleNFe = () => {
     toast({
@@ -34,13 +37,24 @@ export default function Financeiro() {
   const totalProjecao = faturamentoAprovado + projecaoReceita
   const percentageAprovado = totalProjecao > 0 ? (faturamentoAprovado / totalProjecao) * 100 : 0
 
+  const followUps = budgets.filter((b) => {
+    if (b.status !== 'pending') return false
+    const diff = new Date(b.validityDate).getTime() - new Date().getTime()
+    return diff > 0 && diff <= 48 * 60 * 60 * 1000
+  })
+
   return (
     <div className="space-y-6 animate-slide-up">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Financeiro & Faturamento</h1>
-        <p className="text-muted-foreground">
-          Controle de caixa, orçamentos, emissão de NF-e MG e Boletos C6.
-        </p>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Financeiro & Faturamento</h1>
+          <p className="text-muted-foreground">
+            Controle de caixa, orçamentos, emissão de NF-e MG e Boletos C6.
+          </p>
+        </div>
+        <Button onClick={() => setRelatoriosOpen(true)}>
+          <FileDown className="w-4 h-4 mr-2" /> Exportar Relatórios
+        </Button>
       </div>
 
       <Tabs defaultValue="fluxo" className="w-full">
@@ -52,7 +66,7 @@ export default function Financeiro() {
         </TabsList>
 
         <TabsContent value="fluxo" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-5">
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium">Receitas (Mês)</CardTitle>
@@ -66,7 +80,7 @@ export default function Financeiro() {
                 <CardTitle className="text-sm font-medium">Despesas (Mês)</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-alert">R$ 82.400,00</div>
+                <div className="text-2xl font-bold text-destructive">R$ 82.400,00</div>
               </CardContent>
             </Card>
             <Card className="bg-primary/5 border-primary/20">
@@ -79,9 +93,7 @@ export default function Financeiro() {
                 <div className="text-2xl font-bold text-primary">
                   R$ {faturamentoAprovado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Orçamentos com status 'Aprovado'
-                </p>
+                <p className="text-xs text-muted-foreground mt-1">Status 'Aprovado'</p>
               </CardContent>
             </Card>
             <Card>
@@ -92,7 +104,22 @@ export default function Financeiro() {
                 <div className="text-2xl font-bold text-muted-foreground">
                   R$ {projecaoReceita.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">Orçamentos pendentes/enviados</p>
+                <p className="text-xs text-muted-foreground mt-1">Pendentes / Enviados</p>
+              </CardContent>
+            </Card>
+            <Card className="bg-orange-500/10 border-orange-500/20">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-orange-600 dark:text-orange-500 flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4" /> Follow-ups Pendentes
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-orange-600 dark:text-orange-500">
+                  {followUps.length}
+                </div>
+                <p className="text-xs text-orange-600/80 dark:text-orange-500/80 mt-1">
+                  Vencendo em até 48h
+                </p>
               </CardContent>
             </Card>
           </div>
@@ -185,6 +212,8 @@ export default function Financeiro() {
           <OrcamentosTab />
         </TabsContent>
       </Tabs>
+
+      <RelatoriosDialog open={relatoriosOpen} onOpenChange={setRelatoriosOpen} />
     </div>
   )
 }

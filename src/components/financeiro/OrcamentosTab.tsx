@@ -100,6 +100,12 @@ export function OrcamentosTab() {
     })
   }
 
+  const isFollowUp = (budget: Budget) => {
+    if (budget.status !== 'pending') return false
+    const diff = new Date(budget.validityDate).getTime() - new Date().getTime()
+    return diff > 0 && diff <= 48 * 60 * 60 * 1000
+  }
+
   return (
     <div className="space-y-4 animate-fade-in">
       <Card>
@@ -145,7 +151,19 @@ export function OrcamentosTab() {
               <TableBody>
                 {filtered.map((budget) => (
                   <TableRow key={budget.id} className="hover:bg-muted/30">
-                    <TableCell className="font-medium">{budget.patient}</TableCell>
+                    <TableCell className="font-medium">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                        {budget.patient}
+                        {isFollowUp(budget) && (
+                          <Badge
+                            variant="destructive"
+                            className="w-fit h-5 px-1.5 text-[10px] uppercase tracking-wider bg-orange-500 hover:bg-orange-600 animate-pulse"
+                          >
+                            Follow-up
+                          </Badge>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell>{budget.procedure}</TableCell>
                     <TableCell>R$ {budget.finalValue.toFixed(2)}</TableCell>
                     <TableCell>

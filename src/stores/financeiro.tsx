@@ -1,6 +1,11 @@
 import React, { createContext, useContext, useState } from 'react'
 import { Budget } from '@/types/financeiro'
 
+const now = new Date()
+const in24h = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString()
+const in10Days = new Date(now.getTime() + 10 * 24 * 60 * 60 * 1000).toISOString()
+const lastMonth = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString()
+
 const MOCK_BUDGETS: Budget[] = [
   {
     id: '1',
@@ -9,10 +14,12 @@ const MOCK_BUDGETS: Budget[] = [
     value: 4500,
     discount: 500,
     finalValue: 4000,
-    validityDate: '2026-04-15T12:00:00.000Z',
+    createdAt: lastMonth,
+    validityDate: in10Days,
     paymentMethods: ['Cartão de Crédito', 'PIX'],
     observations: '10x sem juros no cartão.',
     status: 'pending',
+    unit: 'Juiz de Fora',
   },
   {
     id: '2',
@@ -21,10 +28,12 @@ const MOCK_BUDGETS: Budget[] = [
     value: 1200,
     discount: 0,
     finalValue: 1200,
-    validityDate: '2026-03-20T12:00:00.000Z',
+    createdAt: lastMonth,
+    validityDate: lastMonth,
     paymentMethods: ['PIX', 'Dinheiro'],
     observations: 'Pagamento à vista.',
     status: 'approved',
+    unit: 'Leopoldina',
   },
   {
     id: '3',
@@ -33,10 +42,26 @@ const MOCK_BUDGETS: Budget[] = [
     value: 800,
     discount: 0,
     finalValue: 800,
-    validityDate: '2024-01-10T12:00:00.000Z',
+    createdAt: lastMonth,
+    validityDate: lastMonth,
     paymentMethods: ['Cartão de Débito'],
     observations: '',
     status: 'expired',
+    unit: 'Além Paraíba',
+  },
+  {
+    id: '4',
+    patient: 'Carlos Almeida',
+    procedure: 'Check-up Vascular',
+    value: 600,
+    discount: 0,
+    finalValue: 600,
+    createdAt: now.toISOString(),
+    validityDate: in24h,
+    paymentMethods: ['PIX'],
+    observations: 'Paciente aguardando confirmação.',
+    status: 'pending',
+    unit: 'Juiz de Fora',
   },
 ]
 
