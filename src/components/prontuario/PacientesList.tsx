@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import {
@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import { Search, RefreshCw, Database, Eye } from 'lucide-react'
+import { Search, RefreshCw, Database, Eye, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useHiDoctorStore } from '@/stores/hidoctor'
 import { PatientDetailsDialog } from './PatientDetailsDialog'
 import { Patient } from '@/types/paciente'
@@ -29,12 +29,27 @@ export function PacientesList() {
   const [search, setSearch] = useState('')
   const [unitFilter, setUnitFilter] = useState('Todas')
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
 
-  const filteredPatients = patients.filter((p) => {
-    const matchName = p.fullName.toLowerCase().includes(search.toLowerCase())
-    const matchUnit = unitFilter === 'Todas' || p.unit === unitFilter
-    return matchName && matchUnit
-  })
+  const ITEMS_PER_PAGE = 20
+
+  const filteredPatients = useMemo(() => {
+    return patients.filter((p) => {
+      const matchName = p.fullName.toLowerCase().includes(search.toLowerCase())
+      const matchUnit = unitFilter === 'Todas' || p.unit === unitFilter
+      return matchName && matchUnit
+    })
+  }, [patients, search, unitFilter])
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [search, unitFilter])
+
+  const totalPages = Math.ceil(filteredPatients.length / ITEMS_PER_PAGE)
+  const paginatedPatients = filteredPatients.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE,
+  )
 
   return (
     <div className="space-y-4">
@@ -56,14 +71,14 @@ export function PacientesList() {
               className="w-full sm:w-auto shadow-sm"
             >
               <RefreshCw className={`w-4 h-4 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
-              {isSyncing ? 'Sincronizando...' : 'Sincronizar com HiDoctor'}
+              {isSyncing ? 'Autenticando e Sincronizando...' : 'Sincronizar com HiDoctor'}
             </Button>
           </div>
         </CardHeader>
         {isSyncing && (
           <CardContent className="py-2 animate-fade-in">
             <div className="flex justify-between text-xs text-muted-foreground mb-1 font-medium">
-              <span>Baixando prontuários de app.hidoctor.com.br...</span>
+              <span>Estabelecendo conexão segura via API HiNetX e baixando prontuários...</span>
               <span>{progress}%</span>
             </div>
             <Progress value={progress} className="h-2" />
@@ -75,7 +90,10 @@ export function PacientesList() {
         <CardHeader>
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
-              <CardTitle>Pacientes Sincronizados</CardTitle>
+              <CardTitle>
+                Pacientes Sincronizados{' '}
+                {filteredPatients.length > 0 && `(${filteredPatients.length})`}
+              </CardTitle>
               <CardDescription>
                 {lastSync
                   ? `Última sincronização: ${lastSync}`
@@ -106,27 +124,27 @@ export function PacientesList() {
             </div>
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="rounded-md border overflow-hidden">
+        <CardContent className="p-0">
+          <div className="border-t overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/50">
-                  <TableHead>Nome Completo</TableHead>
+                  <TableHead className="pl-6">Nome Completo</TableHead>
                   <TableHead>Última Consulta</TableHead>
                   <TableHead>Unidade Clínica</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Ação</TableHead>
+                  <TableHead className="text-right pr-6">Ação</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredPatients.length > 0 ? (
-                  filteredPatients.map((p) => (
+                {paginatedPatients.length > 0 ? (
+                  paginatedPatients.map((p) => (
                     <TableRow
                       key={p.id}
                       className="cursor-pointer hover:bg-muted/30"
                       onClick={() => setSelectedPatient(p)}
                     >
-                      <TableCell className="font-medium">{p.fullName}</TableCell>
+                      <TableCell className="font-medium pl-6">{p.fullName}</TableCell>
                       <TableCell>
                         {new Date(p.lastConsultation).toLocaleDateString('pt-BR')}
                       </TableCell>
@@ -134,7 +152,7 @@ export function PacientesList() {
                       <TableCell>
                         <Badge variant="secondary">{p.status}</Badge>
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right pr-6">
                         <Button variant="ghost" size="sm">
                           <Eye className="w-4 h-4 mr-2" /> Abrir
                         </Button>
@@ -153,6 +171,34 @@ export function PacientesList() {
               </TableBody>
             </Table>
           </div>
+          {filteredPatients.length > 0 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 border-t bg-muted/10 gap-4">
+              <p className="text-sm text-muted-foreground">
+                Mostrando{' '}
+                {Math.min((currentPage - 1) * ITEMS_PER_PAGE + 1, filteredPatients.length)} a{' '}
+                {Math.min(currentPage * ITEMS_PER_PAGE, filteredPatients.length)} de{' '}
+                {filteredPatients.length} registros
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="w-4 h-4 mr-1" /> Anterior
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages || totalPages === 0}
+                >
+                  Próxima <ChevronRight className="w-4 h-4 ml-1" />
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
