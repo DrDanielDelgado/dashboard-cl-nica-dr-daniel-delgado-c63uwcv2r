@@ -18,68 +18,25 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
-
-const MOCK_LOGS = [
-  {
-    id: '1',
-    user: 'Dr. Daniel Delgado',
-    action: 'Login no Sistema',
-    resource: 'Autenticação',
-    timestamp: '2026-03-14 08:00:12',
-  },
-  {
-    id: '2',
-    user: 'Ana Silva',
-    action: 'Agendamento Criado',
-    resource: 'Paciente: Carlos Alberto',
-    timestamp: '2026-03-14 08:15:45',
-  },
-  {
-    id: '3',
-    user: 'Dr. Daniel Delgado',
-    action: 'Acesso a Prontuário',
-    resource: 'Prontuário: Fernanda Lima',
-    timestamp: '2026-03-14 09:30:00',
-  },
-  {
-    id: '4',
-    user: 'Carlos Médico',
-    action: 'Edição de Dados',
-    resource: 'Estoque: Seringa 5ml',
-    timestamp: '2026-03-14 10:05:22',
-  },
-  {
-    id: '5',
-    user: 'Ana Silva',
-    action: 'Convite Enviado',
-    resource: 'Usuário: Maria Secretária',
-    timestamp: '2026-03-14 11:20:10',
-  },
-  {
-    id: '6',
-    user: 'Dr. Daniel Delgado',
-    action: 'Emissão de NF-e',
-    resource: 'NF-e: 10452',
-    timestamp: '2026-03-14 14:45:00',
-  },
-]
+import { useAuditStore } from '@/stores/audit'
 
 export function AuditLogsSettings() {
+  const { logs } = useAuditStore()
   const [dateFilter, setDateFilter] = useState('')
   const [userFilter, setUserFilter] = useState('all')
   const [actionFilter, setActionFilter] = useState('all')
 
   const filteredLogs = useMemo(() => {
-    return MOCK_LOGS.filter((log) => {
+    return logs.filter((log) => {
       const matchUser = userFilter === 'all' || log.user === userFilter
       const matchAction = actionFilter === 'all' || log.action === actionFilter
       const matchDate = !dateFilter || log.timestamp.includes(dateFilter)
       return matchUser && matchAction && matchDate
     })
-  }, [dateFilter, userFilter, actionFilter])
+  }, [logs, dateFilter, userFilter, actionFilter])
 
-  const uniqueUsers = Array.from(new Set(MOCK_LOGS.map((l) => l.user)))
-  const uniqueActions = Array.from(new Set(MOCK_LOGS.map((l) => l.action)))
+  const uniqueUsers = Array.from(new Set(logs.map((l) => l.user)))
+  const uniqueActions = Array.from(new Set(logs.map((l) => l.action)))
 
   return (
     <Card className="animate-fade-in">

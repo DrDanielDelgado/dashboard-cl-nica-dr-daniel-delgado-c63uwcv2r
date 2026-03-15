@@ -7,6 +7,7 @@ import {
   Database,
   Users,
   Shield,
+  Workflow,
 } from 'lucide-react'
 import { DomainSettings } from '@/components/settings/DomainSettings'
 import { NFeSettings } from '@/components/settings/NFeSettings'
@@ -15,6 +16,7 @@ import { BankSettings } from '@/components/settings/BankSettings'
 import { HiDoctorSettings } from '@/components/settings/HiDoctorSettings'
 import { UsersSettings } from '@/components/settings/UsersSettings'
 import { AuditLogsSettings } from '@/components/settings/AuditLogsSettings'
+import { IntegrationsSettings } from '@/components/settings/IntegrationsSettings'
 import { useAppStore } from '@/stores/app'
 import { Navigate } from 'react-router-dom'
 
@@ -43,6 +45,9 @@ export default function Configuracoes() {
               <TabsTrigger value="usuarios" className="gap-2 py-2">
                 <Users className="h-4 w-4" /> Usuários e Permissões
               </TabsTrigger>
+              <TabsTrigger value="integracoes" className="gap-2 py-2">
+                <Workflow className="h-4 w-4" /> Integrações e Automação
+              </TabsTrigger>
               <TabsTrigger value="auditoria" className="gap-2 py-2">
                 <Shield className="h-4 w-4" /> Auditoria
               </TabsTrigger>
@@ -58,7 +63,7 @@ export default function Configuracoes() {
             <FileSignature className="h-4 w-4" /> Fiscal (NF-e MG)
           </TabsTrigger>
           <TabsTrigger value="whatsapp" className="gap-2 py-2">
-            <MessageSquare className="h-4 w-4" /> Comunicação (WhatsApp)
+            <MessageSquare className="h-4 w-4" /> WhatsApp Legado
           </TabsTrigger>
           <TabsTrigger value="banco" className="gap-2 py-2">
             <Landmark className="h-4 w-4" /> Financeiro (C6 Bank)
@@ -69,6 +74,9 @@ export default function Configuracoes() {
           <>
             <TabsContent value="usuarios" className="outline-none">
               <UsersSettings />
+            </TabsContent>
+            <TabsContent value="integracoes" className="outline-none">
+              <IntegrationsSettings />
             </TabsContent>
             <TabsContent value="auditoria" className="outline-none">
               <AuditLogsSettings />
