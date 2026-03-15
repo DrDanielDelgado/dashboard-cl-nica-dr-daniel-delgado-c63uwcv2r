@@ -32,8 +32,8 @@ export function ChatbotFlows() {
                 <MapPin className="w-4 h-4 text-primary" /> Roteamento Multi-Unidades
               </Label>
               <p className="text-sm text-muted-foreground">
-                Oferecer um menu inicial para o paciente escolher entre as unidades (BH, Contagem,
-                Betim, Uberlândia).
+                Oferecer um menu inicial para o paciente escolher entre as unidades (Juiz de Fora,
+                Leopoldina, Além Paraíba).
               </p>
             </div>
             <Switch defaultChecked />
@@ -58,7 +58,7 @@ export function ChatbotFlows() {
               </Label>
               <Textarea
                 className="min-h-[100px]"
-                defaultValue="Olá! Bem-vindo(a) à Clínica Integrada. Sou seu assistente virtual. Como posso ajudar você hoje? Digite 'Agendar' ou escolha uma opção do menu."
+                defaultValue="Olá! Bem-vindo(a) à Clínica do Dr. Daniel Delgado. Sou seu assistente virtual. Como posso ajudar você hoje? Digite 'Agendar' ou escolha uma opção do menu."
               />
             </div>
 

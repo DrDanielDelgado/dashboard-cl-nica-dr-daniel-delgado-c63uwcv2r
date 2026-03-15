@@ -21,17 +21,16 @@ export function AppHeader() {
       <SidebarTrigger className="md:hidden" />
 
       <div className="flex flex-1 items-center gap-4 md:gap-8">
-        <div className="flex items-center gap-2 max-w-xs w-full">
+        <div className="flex items-center gap-2 max-w-[200px] w-full">
           <MapPin className="h-5 w-5 text-muted-foreground hidden sm:block" />
           <Select value={location} onValueChange={(val: any) => setLocation(val)}>
-            <SelectTrigger className="w-[180px] bg-background border-none shadow-none font-semibold text-primary">
+            <SelectTrigger className="w-full bg-background border-none shadow-none font-semibold text-primary">
               <SelectValue placeholder="Selecione a Unidade" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="Sete Lagoas">Sete Lagoas</SelectItem>
-              <SelectItem value="Curvelo">Curvelo</SelectItem>
-              <SelectItem value="Pompéu">Pompéu</SelectItem>
-              <SelectItem value="Abaeté">Abaeté</SelectItem>
+              <SelectItem value="Juiz de Fora">Juiz de Fora</SelectItem>
+              <SelectItem value="Leopoldina">Leopoldina</SelectItem>
+              <SelectItem value="Além Paraíba">Além Paraíba</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -53,7 +52,7 @@ export function AppHeader() {
         </Button>
         <div className="hidden sm:flex items-center gap-3 border-l pl-4">
           <div className="text-right">
-            <p className="text-sm font-medium leading-none">Dr. Daniel</p>
+            <p className="text-sm font-medium leading-none">Dr. Daniel Delgado</p>
             <Badge variant="secondary" className="mt-1 text-[10px] uppercase">
               {role}
             </Badge>

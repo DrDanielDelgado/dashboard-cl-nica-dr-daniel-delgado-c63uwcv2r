@@ -166,11 +166,11 @@ export default function Index() {
           <CardHeader>
             <CardTitle>Status das Unidades</CardTitle>
           </CardHeader>
-          <CardContent className="flex justify-between flex-wrap gap-4">
-            {['Sete Lagoas', 'Curvelo', 'Pompéu', 'Abaeté'].map((unit) => (
+          <CardContent className="flex justify-around flex-wrap gap-4">
+            {['Juiz de Fora', 'Leopoldina', 'Além Paraíba'].map((unit) => (
               <div key={unit} className="flex flex-col items-center gap-2">
                 <div
-                  className={`h-12 w-12 rounded-full flex items-center justify-center ${unit === location ? 'bg-primary text-white shadow-lg scale-110 transition-transform' : 'bg-muted text-muted-foreground'}`}
+                  className={`h-12 w-12 rounded-full flex items-center justify-center ${unit === location ? 'bg-primary text-primary-foreground shadow-lg scale-110 transition-transform' : 'bg-muted text-muted-foreground'}`}
                 >
                   <ActivitySquare className="h-5 w-5" />
                 </div>

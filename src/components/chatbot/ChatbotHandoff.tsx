@@ -9,7 +9,7 @@ const MOCK_HANDOFFS = [
     id: 'H1',
     patient: 'Ana Clara Souza',
     platform: 'WhatsApp',
-    unit: 'Belo Horizonte',
+    unit: 'Juiz de Fora',
     waitTime: '4 min',
     lastMessage: 'Gostaria de falar com uma secretária sobre meu exame.',
   },

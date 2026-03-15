@@ -6,8 +6,8 @@
 
 @layer base {
   :root {
-    --background: 210 40% 98%; /* Soft Slate #f8fafc */
-    --foreground: 222 47% 11%; /* Deep Navy #0f172a */
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
 
     --card: 0 0% 100%;
     --card-foreground: 222 47% 11%;
@@ -15,41 +15,42 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    --primary: 215 100% 30%; /* Deep Medical Blue #004099 */
+    /* Refined Medical Branding based on Dr. Daniel Delgado's identity */
+    --primary: 217 33% 25%; /* Sophisticated Deep Navy */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 214 32% 91%;
+    --secondary: 214 20% 90%;
     --secondary-foreground: 222 47% 11%;
 
-    --muted: 214 32% 91%;
+    --muted: 214 20% 92%;
     --muted-foreground: 215 16% 47%;
 
-    --accent: 180 100% 25%; /* Medical Teal #008080 */
-    --accent-foreground: 0 0% 100%;
+    --accent: 210 20% 85%; /* Elegant Slate Accent */
+    --accent-foreground: 217 33% 25%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 215 100% 30%;
+    --border: 214 20% 90%;
+    --input: 214 20% 90%;
+    --ring: 217 33% 25%;
 
     --radius: 0.75rem;
 
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 222 47% 11%;
-    --sidebar-primary: 215 100% 30%;
+    --sidebar-primary: 217 33% 25%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 214 32% 91%;
+    --sidebar-accent: 214 20% 90%;
     --sidebar-accent-foreground: 222 47% 11%;
-    --sidebar-border: 214 32% 91%;
-    --sidebar-ring: 215 100% 30%;
+    --sidebar-border: 214 20% 90%;
+    --sidebar-ring: 217 33% 25%;
 
-    --chart-1: 215 100% 30%;
-    --chart-2: 180 100% 25%;
-    --chart-3: 45 93% 47%;
-    --chart-4: 0 84% 60%;
-    --chart-5: 280 65% 60%;
+    --chart-1: 217 33% 25%;
+    --chart-2: 210 20% 60%;
+    --chart-3: 45 40% 60%;
+    --chart-4: 0 50% 60%;
+    --chart-5: 280 30% 50%;
   }
 }
 

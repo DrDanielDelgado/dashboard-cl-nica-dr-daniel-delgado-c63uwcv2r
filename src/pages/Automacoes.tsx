@@ -48,7 +48,7 @@ const INITIAL_FLOWS = [
     id: '1',
     name: 'Lembrete 24h (Padrão)',
     trigger: '24h antes',
-    units: ['Sete Lagoas', 'Curvelo'],
+    units: ['Juiz de Fora', 'Leopoldina'],
     isActive: true,
     message:
       'Olá {{paciente_nome}}, confirmamos sua consulta na unidade {{unidade_nome}} amanhã às {{hora_consulta}}.',
@@ -57,7 +57,7 @@ const INITIAL_FLOWS = [
     id: '2',
     name: 'Confirmação no Dia',
     trigger: '4h antes',
-    units: ['Sete Lagoas', 'Curvelo', 'Pompéu', 'Abaeté'],
+    units: ['Juiz de Fora', 'Leopoldina', 'Além Paraíba'],
     isActive: false,
     message:
       'Passando para lembrar da sua consulta hoje às {{hora_consulta}} com {{medico_nome}}. Responda SIM para confirmar.',
@@ -68,7 +68,7 @@ const MOCK_LOGS = [
   {
     id: 'L1',
     patient: 'Carlos Alberto',
-    unit: 'Sete Lagoas',
+    unit: 'Juiz de Fora',
     time: '09:00',
     type: 'Lembrete 24h',
     status: 'sent',
@@ -77,7 +77,7 @@ const MOCK_LOGS = [
   {
     id: 'L2',
     patient: 'Fernanda Lima',
-    unit: 'Curvelo',
+    unit: 'Leopoldina',
     time: '10:30',
     type: 'Lembrete 24h',
     status: 'read',
@@ -86,20 +86,11 @@ const MOCK_LOGS = [
   {
     id: 'L3',
     patient: 'Ricardo Gomes',
-    unit: 'Pompéu',
+    unit: 'Além Paraíba',
     time: '14:00',
     type: 'Confirmação no Dia',
     status: 'error',
     timestamp: '2026-03-14 10:00',
-  },
-  {
-    id: 'L4',
-    patient: 'Luciana M.',
-    unit: 'Abaeté',
-    time: '16:00',
-    type: 'Confirmação no Dia',
-    status: 'pending',
-    timestamp: '-',
   },
 ]
 
@@ -112,7 +103,7 @@ const VARIABLES = [
   '{{unidade_endereco}}',
 ]
 
-const ALL_UNITS = ['Sete Lagoas', 'Curvelo', 'Pompéu', 'Abaeté']
+const ALL_UNITS = ['Juiz de Fora', 'Leopoldina', 'Além Paraíba']
 
 export default function Automacoes() {
   const [flows, setFlows] = useState(INITIAL_FLOWS)

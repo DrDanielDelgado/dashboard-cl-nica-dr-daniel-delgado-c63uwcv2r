@@ -79,20 +79,17 @@ export default function Documentos() {
             </div>
           </div>
           <CardContent className="flex-1 p-0 relative">
-            {/* Visual simulation of an A4 page */}
             <div className="absolute inset-0 bg-secondary/30 p-4 sm:p-8 overflow-auto">
               <div className="mx-auto max-w-[800px] min-h-[1056px] bg-white shadow-sm border border-border p-12">
-                {/* Simulated Letterhead */}
                 <div className="border-b-2 border-primary pb-4 mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
                   <div className="text-primary font-bold text-2xl tracking-tight">
                     DR. DANIEL DELGADO
                   </div>
                   <div className="text-xs sm:text-right text-muted-foreground uppercase tracking-widest leading-relaxed">
-                    <span className="font-semibold">Angiologia e Cirurgia Vascular</span>
+                    <span className="font-semibold">Cirurgia Vascular, Angiologia</span>
+                    <br />e Ecografia Vascular
                     <br />
-                    Cirurgia Endovascular
-                    <br />
-                    CRM-MG 58249 | RQE 41411 | RQE 41412
+                    CRM: 37.525
                   </div>
                 </div>
 

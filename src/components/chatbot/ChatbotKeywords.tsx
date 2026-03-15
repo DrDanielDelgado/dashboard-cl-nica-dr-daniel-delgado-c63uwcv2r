@@ -21,7 +21,7 @@ const MOCK_KEYWORDS = [
   {
     id: 2,
     keyword: 'endereço, local, onde fica',
-    response: 'Nossas unidades estão localizadas em BH, Contagem...',
+    response: 'Nossas unidades estão localizadas em Juiz de Fora, Leopoldina e Além Paraíba...',
     type: 'text',
   },
   {
