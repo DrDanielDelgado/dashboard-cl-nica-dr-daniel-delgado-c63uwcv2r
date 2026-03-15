@@ -9,6 +9,7 @@ import { HiDoctorProvider } from '@/stores/hidoctor'
 import Layout from './components/Layout'
 import NotFound from './pages/NotFound'
 import Index from './pages/Index'
+import Atendimento from './pages/Atendimento'
 import Agenda from './pages/Agenda'
 import Financeiro from './pages/Financeiro'
 import Estoque from './pages/Estoque'
@@ -31,6 +32,7 @@ const App = () => (
             <Routes>
               <Route element={<Layout />}>
                 <Route path="/" element={<Index />} />
+                <Route path="/atendimento" element={<Atendimento />} />
                 <Route path="/agenda" element={<Agenda />} />
                 <Route path="/financeiro" element={<Financeiro />} />
                 <Route path="/estoque" element={<Estoque />} />

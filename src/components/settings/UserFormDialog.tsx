@@ -137,6 +137,7 @@ export function UserFormDialog({ open, onOpenChange, user, onSave }: Props) {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="active">Ativo</SelectItem>
+                      <SelectItem value="pending">Pendente</SelectItem>
                       <SelectItem value="inactive">Inativo</SelectItem>
                     </SelectContent>
                   </Select>

@@ -11,6 +11,7 @@ import {
   Settings,
   Bot,
   MessageSquareShare,
+  Headset,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -21,23 +22,76 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar'
-
-const navItems = [
-  { title: 'Dashboard', icon: LayoutDashboard, url: '/' },
-  { title: 'Agenda', icon: CalendarDays, url: '/agenda' },
-  { title: 'Financeiro', icon: CircleDollarSign, url: '/financeiro' },
-  { title: 'Estoque', icon: Package, url: '/estoque' },
-  { title: 'CRM & Social', icon: Users, url: '/crm' },
-  { title: 'Chatbot', icon: MessageSquareShare, url: '/chatbot' },
-  { title: 'Prontuários', icon: Stethoscope, url: '/prontuario' },
-  { title: 'Automações', icon: Bot, url: '/automacoes' },
-  { title: 'Documentos', icon: FileText, url: '/documentos' },
-  { title: 'Equipe', icon: FileBox, url: '/equipe' },
-  { title: 'Configurações', icon: Settings, url: '/configuracoes' },
-]
+import { useAppStore } from '@/stores/app'
 
 export function AppSidebar() {
   const location = useLocation()
+  const { role } = useAppStore()
+
+  const isSecretary = role === 'Secretária'
+
+  const navItems = [
+    {
+      title: isSecretary ? 'Recepção (Início)' : 'Dashboard',
+      icon: isSecretary ? Headset : LayoutDashboard,
+      url: isSecretary ? '/atendimento' : '/',
+      roles: ['all'],
+    },
+    { title: 'Agenda', icon: CalendarDays, url: '/agenda', roles: ['all'] },
+    {
+      title: 'Financeiro',
+      icon: CircleDollarSign,
+      url: '/financeiro',
+      roles: ['Administrador', 'Gerente', 'Gerenciador', 'Médico', 'Contador'],
+    },
+    {
+      title: 'Estoque',
+      icon: Package,
+      url: '/estoque',
+      roles: ['Administrador', 'Gerente', 'Gerenciador', 'Enfermeira', 'Médico'],
+    },
+    {
+      title: 'CRM & Social',
+      icon: Users,
+      url: '/crm',
+      roles: ['Administrador', 'Gerente', 'Gerenciador'],
+    },
+    {
+      title: 'Chatbot',
+      icon: MessageSquareShare,
+      url: '/chatbot',
+      roles: ['Administrador', 'Gerente', 'Gerenciador'],
+    },
+    {
+      title: 'Prontuários',
+      icon: Stethoscope,
+      url: '/prontuario',
+      roles: ['Administrador', 'Gerente', 'Gerenciador', 'Médico', 'Enfermeira'],
+    },
+    {
+      title: 'Automações',
+      icon: Bot,
+      url: '/automacoes',
+      roles: ['Administrador', 'Gerente', 'Gerenciador'],
+    },
+    {
+      title: 'Documentos',
+      icon: FileText,
+      url: '/documentos',
+      roles: ['Administrador', 'Gerente', 'Gerenciador', 'Médico'],
+    },
+    { title: 'Equipe', icon: FileBox, url: '/equipe', roles: ['all'] },
+    {
+      title: 'Configurações',
+      icon: Settings,
+      url: '/configuracoes',
+      roles: ['Administrador', 'Gerente', 'Gerenciador'],
+    },
+  ]
+
+  const filteredNav = navItems.filter(
+    (item) => item.roles.includes('all') || item.roles.includes(role),
+  )
 
   return (
     <Sidebar variant="inset" className="border-r border-sidebar-border bg-sidebar">
@@ -53,7 +107,7 @@ export function AppSidebar() {
       </SidebarHeader>
       <SidebarContent className="py-4">
         <SidebarMenu>
-          {navItems.map((item) => {
+          {filteredNav.map((item) => {
             const isActive = location.pathname === item.url
             return (
               <SidebarMenuItem key={item.title}>

@@ -12,9 +12,14 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts'
 import { MOCK_REVENUE_DATA, MOCK_TASKS } from '@/lib/mock-data'
 import { Badge } from '@/components/ui/badge'
+import { Navigate } from 'react-router-dom'
 
 export default function Index() {
   const { location, role } = useAppStore()
+
+  if (role === 'Secretária') {
+    return <Navigate to="/atendimento" replace />
+  }
 
   return (
     <div className="space-y-6">

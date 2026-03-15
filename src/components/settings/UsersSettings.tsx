@@ -10,9 +10,10 @@ import {
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Plus, Edit2, Trash2 } from 'lucide-react'
+import { Plus, Edit2, Trash2, Mail } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { UserFormDialog } from './UserFormDialog'
+import { InviteUserDialog } from './InviteUserDialog'
 import { User } from '@/types/user'
 
 const INITIAL_USERS: User[] = [
@@ -51,6 +52,7 @@ const INITIAL_USERS: User[] = [
 export function UsersSettings() {
   const [users, setUsers] = useState<User[]>(INITIAL_USERS)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [inviteOpen, setInviteOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<User | undefined>()
   const { toast } = useToast()
 
@@ -77,6 +79,14 @@ export function UsersSettings() {
     setEditingUser(undefined)
   }
 
+  const handleInvite = (user: Omit<User, 'id' | 'status'>) => {
+    setUsers([
+      ...users,
+      { ...user, id: Math.random().toString(36).substring(7), status: 'pending' },
+    ])
+    setInviteOpen(false)
+  }
+
   return (
     <Card className="animate-fade-in">
       <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -86,14 +96,19 @@ export function UsersSettings() {
             Administre os membros da equipe e seus acessos às ferramentas da clínica.
           </CardDescription>
         </div>
-        <Button
-          onClick={() => {
-            setEditingUser(undefined)
-            setDialogOpen(true)
-          }}
-        >
-          <Plus className="w-4 h-4 mr-2" /> Adicionar Usuário
-        </Button>
+        <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" onClick={() => setInviteOpen(true)}>
+            <Mail className="w-4 h-4 mr-2" /> Convidar Usuário
+          </Button>
+          <Button
+            onClick={() => {
+              setEditingUser(undefined)
+              setDialogOpen(true)
+            }}
+          >
+            <Plus className="w-4 h-4 mr-2" /> Adicionar Manualmente
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         <Table>
@@ -114,14 +129,26 @@ export function UsersSettings() {
                 <TableCell>{user.role}</TableCell>
                 <TableCell>
                   <Badge
-                    variant={user.status === 'active' ? 'default' : 'secondary'}
+                    variant={
+                      user.status === 'active'
+                        ? 'default'
+                        : user.status === 'pending'
+                          ? 'outline'
+                          : 'secondary'
+                    }
                     className={
                       user.status === 'active'
                         ? 'bg-success/10 text-success hover:bg-success/20 border-success/20'
-                        : ''
+                        : user.status === 'pending'
+                          ? 'bg-yellow-100 text-yellow-800 border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-300'
+                          : ''
                     }
                   >
-                    {user.status === 'active' ? 'Ativo' : 'Inativo'}
+                    {user.status === 'active'
+                      ? 'Ativo'
+                      : user.status === 'pending'
+                        ? 'Pendente'
+                        : 'Inativo'}
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right">
@@ -165,6 +192,8 @@ export function UsersSettings() {
         user={editingUser}
         onSave={handleSave}
       />
+
+      <InviteUserDialog open={inviteOpen} onOpenChange={setInviteOpen} onInvite={handleInvite} />
     </Card>
   )
 }
