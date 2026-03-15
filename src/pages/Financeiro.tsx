@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { FileText, Send, Building2, Receipt } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
+import { OrcamentosTab } from '@/components/financeiro/OrcamentosTab'
 
 export default function Financeiro() {
   const handleNFe = () => {
@@ -132,11 +133,7 @@ export default function Financeiro() {
         </TabsContent>
 
         <TabsContent value="orcamento">
-          <Card className="h-64 flex items-center justify-center bg-muted/20 border-dashed">
-            <p className="text-muted-foreground">
-              Módulo de criação de orçamentos em desenvolvimento.
-            </p>
-          </Card>
+          <OrcamentosTab />
         </TabsContent>
       </Tabs>
     </div>
