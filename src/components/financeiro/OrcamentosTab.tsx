@@ -1,5 +1,16 @@
 import { useState } from 'react'
-import { Plus, Search, MoreHorizontal, FileText, Edit, Trash, MessageCircle } from 'lucide-react'
+import {
+  Plus,
+  Search,
+  MoreHorizontal,
+  FileText,
+  Edit,
+  Trash,
+  MessageCircle,
+  Link as LinkIcon,
+  CheckCircle,
+  CreditCard,
+} from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -17,6 +28,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu'
 import { OrcamentoFormDialog } from './OrcamentoFormDialog'
 import { OrcamentoPreviewDialog } from './OrcamentoPreviewDialog'
@@ -25,8 +37,14 @@ import { useToast } from '@/hooks/use-toast'
 import useFinanceiroStore from '@/stores/financeiro'
 
 export function OrcamentosTab() {
-  const { budgets, addBudget, updateBudget, deleteBudget, updateBudgetStatus } =
-    useFinanceiroStore()
+  const {
+    budgets,
+    addBudget,
+    updateBudget,
+    deleteBudget,
+    updateBudgetStatus,
+    generatePaymentLink,
+  } = useFinanceiroStore()
   const [search, setSearch] = useState('')
   const [formOpen, setFormOpen] = useState(false)
   const [previewOpen, setPreviewOpen] = useState(false)
@@ -37,9 +55,15 @@ export function OrcamentosTab() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
+      case 'paid':
+        return (
+          <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 border-emerald-300">
+            Pago
+          </Badge>
+        )
       case 'approved':
         return (
-          <Badge variant="secondary" className="bg-success/10 text-success">
+          <Badge variant="secondary" className="bg-success/10 text-success border-success/30">
             Aprovado
           </Badge>
         )
@@ -64,6 +88,8 @@ export function OrcamentosTab() {
             Recusado
           </Badge>
         )
+      case 'refunded':
+        return <Badge variant="secondary">Reembolsado</Badge>
       case 'expired':
         return <Badge variant="destructive">Expirado</Badge>
       default:
@@ -90,18 +116,21 @@ export function OrcamentosTab() {
   const handleWhatsApp = (budget: Budget) => {
     const validade = new Date(budget.validityDate).toLocaleDateString('pt-BR')
     const obs = budget.observations ? `\n\nObservações: ${budget.observations}` : ''
-    const text = `Olá ${budget.patient},\n\nAqui é do consultório do Dr. Daniel Delgado (CRM 37.525).\n\nSegue o orçamento para o procedimento: *${budget.procedure}*.\n\nValor Final: R$ ${budget.finalValue.toFixed(2)}\nFormas de Pagamento: ${budget.paymentMethods.join(', ')}\nValidade da Proposta: ${validade}${obs}\n\nQualquer dúvida, estamos à disposição para aprovação e agendamento!`
+    const link = budget.paymentLink ? `\n\nLink para Pagamento Seguro: ${budget.paymentLink}` : ''
+    const text = `Olá ${budget.patient},\n\nAqui é do consultório do Dr. Daniel Delgado (CRM 37.525).\n\nSegue o orçamento para o procedimento: *${budget.procedure}*.\n\nValor Final: R$ ${budget.finalValue.toFixed(2)}\nFormas de Pagamento: ${budget.paymentMethods.join(', ')}\nValidade da Proposta: ${validade}${obs}${link}\n\nQualquer dúvida, estamos à disposição para aprovação e agendamento!`
 
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank')
-    updateBudgetStatus(budget.id, 'sent')
+    if (budget.status === 'pending' || budget.status === 'draft') {
+      updateBudgetStatus(budget.id, 'sent')
+    }
     toast({
       title: 'Enviado via WhatsApp',
-      description: 'Status atualizado para "Enviado". O WhatsApp foi aberto em nova aba.',
+      description: 'O WhatsApp foi aberto em nova aba com a mensagem preenchida.',
     })
   }
 
   const isFollowUp = (budget: Budget) => {
-    if (budget.status !== 'pending') return false
+    if (budget.status !== 'pending' && budget.status !== 'sent') return false
     const diff = new Date(budget.validityDate).getTime() - new Date().getTime()
     return diff > 0 && diff <= 48 * 60 * 60 * 1000
   }
@@ -111,9 +140,10 @@ export function OrcamentosTab() {
       <Card>
         <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 gap-4">
           <div>
-            <CardTitle>Gerenciamento de Orçamentos</CardTitle>
+            <CardTitle>Gerenciamento de Orçamentos e Cobranças</CardTitle>
             <CardDescription>
-              Crie, edite e envie aprovações por WhatsApp para os pacientes.
+              Crie orçamentos, envie aprovações por WhatsApp e gere links de pagamento
+              (Stripe/Pagar.me).
             </CardDescription>
           </div>
           <Button
@@ -162,6 +192,14 @@ export function OrcamentosTab() {
                             Follow-up
                           </Badge>
                         )}
+                        {budget.paymentLink && budget.status !== 'paid' && (
+                          <Badge
+                            variant="outline"
+                            className="w-fit h-5 px-1.5 text-[10px] text-muted-foreground border-muted-foreground/30"
+                          >
+                            <LinkIcon className="w-3 h-3 mr-1" /> Link Gerado
+                          </Badge>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell>{budget.procedure}</TableCell>
@@ -178,17 +216,37 @@ export function OrcamentosTab() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleWhatsApp(budget)}>
-                            <MessageCircle className="w-4 h-4 mr-2 text-green-600" /> Enviar
-                            WhatsApp
-                          </DropdownMenuItem>
+                          {budget.status !== 'paid' && (
+                            <>
+                              <DropdownMenuItem onClick={() => generatePaymentLink(budget.id)}>
+                                <LinkIcon className="w-4 h-4 mr-2" /> Gerar Link Pagamento
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  updateBudgetStatus(budget.id, 'paid')
+                                  toast({
+                                    title: 'Pagamento Confirmado',
+                                    description: 'O status foi atualizado para Pago.',
+                                  })
+                                }}
+                              >
+                                <CheckCircle className="w-4 h-4 mr-2 text-emerald-600" /> Marcar
+                                como Pago
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleWhatsApp(budget)}>
+                                <MessageCircle className="w-4 h-4 mr-2 text-green-600" /> Enviar
+                                Cobrança (WA)
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                            </>
+                          )}
                           <DropdownMenuItem
                             onClick={() => {
                               setSelectedBudget(budget)
                               setPreviewOpen(true)
                             }}
                           >
-                            <FileText className="w-4 h-4 mr-2" /> Gerar Documento
+                            <FileText className="w-4 h-4 mr-2" /> Ver Documento / Recibo
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => {

@@ -9,6 +9,7 @@ export interface Budget {
   createdAt: string
   paymentMethods: string[]
   observations: string
-  status: 'pending' | 'approved' | 'expired' | 'draft' | 'sent' | 'declined'
+  status: 'pending' | 'approved' | 'expired' | 'draft' | 'sent' | 'declined' | 'paid' | 'refunded'
   unit: 'Juiz de Fora' | 'Leopoldina' | 'Além Paraíba'
+  paymentLink?: string
 }

@@ -1,11 +1,11 @@
 import { useAgendaStore, AgendaEvent, getLocalDateStr } from '@/stores/agenda'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Badge } from '@/components/ui/badge'
-import { User, Clock } from 'lucide-react'
+import { User, Clock, MessageSquare, CheckCheck } from 'lucide-react'
 import { useState } from 'react'
 import { EventDialog } from './EventDialog'
 
-const HOURS = Array.from({ length: 13 }, (_, i) => i + 7) // 7:00 to 19:00
+const HOURS = Array.from({ length: 13 }, (_, i) => i + 7)
 
 export function DailyView() {
   const { events, selectedDate } = useAgendaStore()
@@ -69,7 +69,21 @@ export function DailyView() {
                 }}
               >
                 <div className="flex justify-between items-start">
-                  <h4 className="font-semibold text-sm text-slate-800">{event.title}</h4>
+                  <h4 className="font-semibold text-sm text-slate-800 flex items-center gap-2">
+                    {event.title}
+                    {event.waStatus === 'confirmed' && (
+                      <CheckCheck
+                        className="w-3.5 h-3.5 text-green-600"
+                        title="Confirmado via WA"
+                      />
+                    )}
+                    {event.waStatus === 'sent' && (
+                      <MessageSquare
+                        className="w-3.5 h-3.5 text-blue-500"
+                        title="Lembrete Enviado"
+                      />
+                    )}
+                  </h4>
                   <Badge variant="outline" className="text-[10px] bg-white/50">
                     {event.status}
                   </Badge>

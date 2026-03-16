@@ -5,7 +5,15 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Progress } from '@/components/ui/progress'
-import { FileText, Send, Building2, Receipt, FileDown, AlertCircle } from 'lucide-react'
+import {
+  FileText,
+  Send,
+  Building2,
+  Receipt,
+  FileDown,
+  AlertCircle,
+  CheckCircle,
+} from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
 import { OrcamentosTab } from '@/components/financeiro/OrcamentosTab'
 import { RelatoriosDialog } from '@/components/financeiro/RelatoriosDialog'
@@ -30,15 +38,18 @@ export default function Financeiro() {
     .filter((b) => b.status === 'approved')
     .reduce((acc, b) => acc + b.finalValue, 0)
 
+  const faturamentoPago = budgets
+    .filter((b) => b.status === 'paid')
+    .reduce((acc, b) => acc + b.finalValue, 0)
+
   const projecaoReceita = budgets
     .filter((b) => b.status === 'pending' || b.status === 'sent')
     .reduce((acc, b) => acc + b.finalValue, 0)
 
-  // Use actual approved values to reflect real state
-  const receitasMes = faturamentoAprovado
-
-  const totalProjecao = faturamentoAprovado + projecaoReceita
-  const percentageAprovado = totalProjecao > 0 ? (faturamentoAprovado / totalProjecao) * 100 : 0
+  const receitasMes = faturamentoPago
+  const totalProjecao = faturamentoAprovado + projecaoReceita + faturamentoPago
+  const percentageAprovado =
+    totalProjecao > 0 ? ((faturamentoAprovado + faturamentoPago) / totalProjecao) * 100 : 0
 
   const followUps = budgets.filter((b) => {
     if (b.status !== 'pending') return false
@@ -52,7 +63,7 @@ export default function Financeiro() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Financeiro & Faturamento</h1>
           <p className="text-muted-foreground">
-            Controle de caixa, orçamentos, emissão de NF-e MG e Boletos C6.
+            Controle de caixa, orçamentos, emissão de NF-e MG, Links de Pagamento e Boletos C6.
           </p>
         </div>
         <Button onClick={() => setRelatoriosOpen(true)}>
@@ -70,13 +81,26 @@ export default function Financeiro() {
 
         <TabsContent value="fluxo" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-5">
-            <Card>
+            <Card className="bg-emerald-500/10 border-emerald-500/20">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Receitas (Mês)</CardTitle>
+                <CardTitle className="text-sm font-medium text-emerald-700 flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4" /> Recebido (Mês)
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-success">
+                <div className="text-2xl font-bold text-emerald-700">
                   R$ {receitasMes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </div>
+                <p className="text-xs text-emerald-700/80 mt-1">Status 'Pago'</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">Aprovado (A Receber)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-primary">
+                  R$ {faturamentoAprovado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </div>
               </CardContent>
             </Card>
@@ -86,19 +110,6 @@ export default function Financeiro() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-destructive">R$ 0,00</div>
-              </CardContent>
-            </Card>
-            <Card className="bg-primary/5 border-primary/20">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-primary">
-                  Faturamento Aprovado
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-primary">
-                  R$ {faturamentoAprovado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">Status 'Aprovado'</p>
               </CardContent>
             </Card>
             <Card>
@@ -114,17 +125,13 @@ export default function Financeiro() {
             </Card>
             <Card className="bg-orange-500/10 border-orange-500/20">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-orange-600 dark:text-orange-500 flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4" /> Follow-ups Pendentes
+                <CardTitle className="text-sm font-medium text-orange-600 flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4" /> Follow-ups
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-orange-600 dark:text-orange-500">
-                  {followUps.length}
-                </div>
-                <p className="text-xs text-orange-600/80 dark:text-orange-500/80 mt-1">
-                  Vencendo em até 48h
-                </p>
+                <div className="text-2xl font-bold text-orange-600">{followUps.length}</div>
+                <p className="text-xs text-orange-600/80 mt-1">Vencendo em até 48h</p>
               </CardContent>
             </Card>
           </div>
@@ -133,14 +140,18 @@ export default function Financeiro() {
             <CardHeader>
               <CardTitle>Projeção de Conversão de Orçamentos</CardTitle>
               <CardDescription>
-                Acompanhe o volume financeiro de propostas aprovadas em relação ao total negociado.
+                Acompanhe o volume financeiro de propostas aprovadas ou pagas em relação ao total
+                negociado.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex justify-between text-sm font-medium">
                 <span className="text-primary">
-                  Aprovado (R${' '}
-                  {faturamentoAprovado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})
+                  Garantido (R${' '}
+                  {(faturamentoAprovado + faturamentoPago).toLocaleString('pt-BR', {
+                    minimumFractionDigits: 2,
+                  })}
+                  )
                 </span>
                 <span className="text-muted-foreground">
                   Pendente (R${' '}
@@ -150,7 +161,7 @@ export default function Financeiro() {
               <Progress value={percentageAprovado} className="h-4" />
               <p className="text-xs text-muted-foreground text-center">
                 {percentageAprovado.toFixed(1)}% do volume financeiro projetado já foi convertido em
-                faturamento garantido.
+                faturamento garantido ou recebido.
               </p>
             </CardContent>
           </Card>

@@ -10,4 +10,9 @@ export interface Patient {
   clinicalNotes: string
   allergies: string
   history: string
+  signature?: {
+    signedAt: string
+    signedBy: string
+    hash: string
+  }
 }

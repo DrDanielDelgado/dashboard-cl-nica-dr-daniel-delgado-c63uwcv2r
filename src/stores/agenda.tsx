@@ -18,6 +18,7 @@ export interface AgendaEvent {
   patientName: string
   status: 'confirmed' | 'pending' | 'cancelled'
   googleSync?: boolean
+  waStatus?: 'pending' | 'sent' | 'confirmed'
 }
 
 const loadAgenda = (): AgendaEvent[] => {
@@ -47,6 +48,7 @@ const loadAgenda = (): AgendaEvent[] => {
       type: 'Consulta',
       patientName: 'Maria Silva',
       status: 'confirmed',
+      waStatus: 'confirmed',
     },
     {
       id: 'evt-2',
@@ -57,6 +59,7 @@ const loadAgenda = (): AgendaEvent[] => {
       type: 'Procedimento',
       patientName: 'João Santos',
       status: 'pending',
+      waStatus: 'sent',
     },
     {
       id: 'evt-3',
@@ -67,6 +70,7 @@ const loadAgenda = (): AgendaEvent[] => {
       type: 'Retorno',
       patientName: 'Ana Costa',
       status: 'confirmed',
+      waStatus: 'confirmed',
     },
     {
       id: 'evt-4',
@@ -76,7 +80,8 @@ const loadAgenda = (): AgendaEvent[] => {
       endTime: '16:00',
       type: 'Consulta',
       patientName: 'Carlos Mendes',
-      status: 'confirmed',
+      status: 'pending',
+      waStatus: 'pending',
     },
   ]
 }
@@ -91,6 +96,8 @@ interface AgendaState {
   addEvent: (event: Omit<AgendaEvent, 'id'>) => void
   updateEvent: (id: string, event: Partial<AgendaEvent>) => void
   deleteEvent: (id: string) => void
+  sendWaReminder: (id: string) => void
+  confirmWaReminder: (id: string) => void
 }
 
 const AgendaContext = createContext<AgendaState | undefined>(undefined)
@@ -123,7 +130,7 @@ export function AgendaProvider({ children }: { children: React.ReactNode }) {
   const addEvent = (e: Omit<AgendaEvent, 'id'>) => {
     setEvents((prev) => [
       ...prev,
-      { ...e, id: Math.random().toString(36).substring(7), googleSync: true },
+      { ...e, id: Math.random().toString(36).substring(7), googleSync: true, waStatus: 'pending' },
     ])
     toast({
       title: 'Agendamento Criado',
@@ -147,6 +154,24 @@ export function AgendaProvider({ children }: { children: React.ReactNode }) {
     })
   }
 
+  const sendWaReminder = (id: string) => {
+    setEvents((prev) => prev.map((ev) => (ev.id === id ? { ...ev, waStatus: 'sent' } : ev)))
+    toast({
+      title: 'Lembrete Enviado',
+      description: 'Notificação automática disparada via API do WhatsApp.',
+    })
+  }
+
+  const confirmWaReminder = (id: string) => {
+    setEvents((prev) =>
+      prev.map((ev) => (ev.id === id ? { ...ev, waStatus: 'confirmed', status: 'confirmed' } : ev)),
+    )
+    toast({
+      title: 'Consulta Confirmada',
+      description: 'O paciente confirmou presença via WhatsApp.',
+    })
+  }
+
   return React.createElement(
     AgendaContext.Provider,
     {
@@ -160,6 +185,8 @@ export function AgendaProvider({ children }: { children: React.ReactNode }) {
         addEvent,
         updateEvent,
         deleteEvent,
+        sendWaReminder,
+        confirmWaReminder,
       },
     },
     children,

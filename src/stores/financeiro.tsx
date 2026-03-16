@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { Budget } from '@/types/financeiro'
+import { toast } from '@/hooks/use-toast'
 
 interface FinanceiroState {
   budgets: Budget[]
@@ -7,6 +8,7 @@ interface FinanceiroState {
   updateBudget: (budget: Budget) => void
   deleteBudget: (id: string) => void
   updateBudgetStatus: (id: string, status: Budget['status']) => void
+  generatePaymentLink: (id: string) => void
 }
 
 const loadBudgets = (): Budget[] => {
@@ -20,7 +22,6 @@ const loadBudgets = (): Budget[] => {
     // fallback to default below
   }
 
-  // Initial mock data to prevent empty states and demonstrate the dashboard
   const now = new Date()
   const currentMonthStr = now.toISOString().substring(0, 7)
   return [
@@ -33,10 +34,11 @@ const loadBudgets = (): Budget[] => {
       finalValue: 1500,
       validityDate: '2026-12-31',
       createdAt: `${currentMonthStr}-05T10:00:00.000Z`,
-      paymentMethods: ['Pix'],
+      paymentMethods: ['Pix', 'Cartão de Crédito'],
       observations: '',
-      status: 'approved',
+      status: 'paid',
       unit: 'Juiz de Fora',
+      paymentLink: 'https://pay.stripe.com/test_123',
     },
     {
       id: 'mock-2',
@@ -94,9 +96,26 @@ export function FinanceiroProvider({ children }: { children: React.ReactNode }) 
     setBudgets((prev) => prev.map((b) => (b.id === id ? { ...b, status } : b)))
   }
 
+  const generatePaymentLink = (id: string) => {
+    const link = `https://pay.stripe.com/test_${Math.random().toString(36).substring(7)}`
+    setBudgets((prev) => prev.map((b) => (b.id === id ? { ...b, paymentLink: link } : b)))
+    toast({
+      title: 'Link de Pagamento Gerado',
+      description: 'O link foi criado via integração (Stripe/Pagar.me) e anexado ao orçamento.',
+    })
+    navigator.clipboard.writeText(link)
+  }
+
   return (
     <FinanceiroContext.Provider
-      value={{ budgets, addBudget, updateBudget, deleteBudget, updateBudgetStatus }}
+      value={{
+        budgets,
+        addBudget,
+        updateBudget,
+        deleteBudget,
+        updateBudgetStatus,
+        generatePaymentLink,
+      }}
     >
       {children}
     </FinanceiroContext.Provider>

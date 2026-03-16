@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Textarea } from '@/components/ui/textarea'
 import { Save, CheckCircle2, XCircle } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 
@@ -18,6 +19,9 @@ export function WhatsAppSettings() {
   const [accountId, setAccountId] = useState('11993424128032')
   const [phoneId, setPhoneId] = useState('11345923984321')
   const [token, setToken] = useState('EAALabcxyz123...')
+  const [template, setTemplate] = useState(
+    'Olá {{paciente}}, sua consulta com Dr. Daniel Delgado está agendada para {{data}} às {{hora}}. Responda SIM para confirmar.',
+  )
   const { toast } = useToast()
 
   const isConnected = accountId.length > 0 && phoneId.length > 0 && token.length > 0
@@ -25,7 +29,7 @@ export function WhatsAppSettings() {
   const handleSave = () => {
     toast({
       title: 'Sucesso',
-      description: 'Chaves do WhatsApp Business API salvas e conectadas.',
+      description: 'Chaves e templates do WhatsApp salvos com sucesso.',
     })
   }
 
@@ -35,7 +39,7 @@ export function WhatsAppSettings() {
         <div className="space-y-1">
           <CardTitle>WhatsApp Business API</CardTitle>
           <CardDescription>
-            Configure a API oficial para habilitar o CRM integrado e contatos.
+            Configure a API oficial e os templates automáticos de lembretes.
           </CardDescription>
         </div>
         <Badge
@@ -69,7 +73,7 @@ export function WhatsAppSettings() {
             placeholder="Insira o Phone Number ID"
           />
         </div>
-        <div className="space-y-2">
+        <div className="space-y-2 border-b pb-6">
           <Label>Permanent Access Token (System User Token)</Label>
           <Input
             type="password"
@@ -77,8 +81,17 @@ export function WhatsAppSettings() {
             onChange={(e) => setToken(e.target.value)}
             placeholder="Insira o Token Permanente"
           />
+        </div>
+
+        <div className="space-y-2">
+          <Label>Template de Lembrete (Agenda)</Label>
+          <Textarea
+            value={template}
+            onChange={(e) => setTemplate(e.target.value)}
+            className="min-h-[100px]"
+          />
           <p className="text-xs text-muted-foreground mt-1">
-            Recomendamos utilizar um token de usuário de sistema para não expirar.
+            Variáveis disponíveis: {'{{paciente}}'}, {'{{data}}'}, {'{{hora}}'}
           </p>
         </div>
       </CardContent>

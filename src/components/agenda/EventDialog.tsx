@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { MessageSquare, CheckCheck, Trash } from 'lucide-react'
 import { useAgendaStore, AgendaEvent, getLocalDateStr } from '@/stores/agenda'
 
 interface EventDialogProps {
@@ -33,7 +34,7 @@ export function EventDialog({
   defaultDate,
   defaultStartTime,
 }: EventDialogProps) {
-  const { addEvent, updateEvent, deleteEvent } = useAgendaStore()
+  const { addEvent, updateEvent, deleteEvent, sendWaReminder, confirmWaReminder } = useAgendaStore()
 
   const [formData, setFormData] = useState<Partial<AgendaEvent>>({
     title: '',
@@ -45,6 +46,7 @@ export function EventDialog({
     type: 'Consulta',
     patientName: '',
     status: 'pending',
+    waStatus: 'pending',
   })
 
   useEffect(() => {
@@ -61,6 +63,7 @@ export function EventDialog({
         type: 'Consulta',
         patientName: '',
         status: 'pending',
+        waStatus: 'pending',
       })
     }
   }, [event, defaultDate, defaultStartTime, open])
@@ -83,11 +86,45 @@ export function EventDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[450px]">
         <DialogHeader>
           <DialogTitle>{event ? 'Editar Agendamento' : 'Novo Agendamento'}</DialogTitle>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
+
+        {event && (
+          <div className="flex gap-2 p-3 bg-muted/30 rounded-lg border items-center justify-between">
+            <div className="text-sm">
+              <span className="text-muted-foreground block text-xs">Status Notificação</span>
+              <span className="font-medium flex items-center gap-1">
+                {event.waStatus === 'confirmed' ? (
+                  <>
+                    <CheckCheck className="w-4 h-4 text-green-600" /> Confirmado via WA
+                  </>
+                ) : event.waStatus === 'sent' ? (
+                  <>
+                    <MessageSquare className="w-4 h-4 text-blue-500" /> Lembrete Enviado
+                  </>
+                ) : (
+                  <span className="text-muted-foreground">Pendente</span>
+                )}
+              </span>
+            </div>
+            <div className="flex gap-2">
+              {event.waStatus !== 'confirmed' && (
+                <Button variant="outline" size="sm" onClick={() => sendWaReminder(event.id)}>
+                  <MessageSquare className="w-3 h-3 mr-1" /> Reenviar
+                </Button>
+              )}
+              {event.waStatus === 'sent' && (
+                <Button variant="secondary" size="sm" onClick={() => confirmWaReminder(event.id)}>
+                  Confirmar
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+
+        <div className="grid gap-4 py-2">
           <div className="space-y-2">
             <Label>Título / Descrição</Label>
             <Input
@@ -165,10 +202,15 @@ export function EventDialog({
             </Select>
           </div>
         </div>
-        <DialogFooter className="flex items-center justify-between sm:justify-between w-full">
+        <DialogFooter className="flex items-center justify-between sm:justify-between w-full mt-2 border-t pt-4">
           {event ? (
-            <Button type="button" variant="destructive" onClick={handleDelete}>
-              Excluir
+            <Button
+              type="button"
+              variant="ghost"
+              className="text-destructive hover:bg-destructive/10"
+              onClick={handleDelete}
+            >
+              <Trash className="w-4 h-4 mr-2" /> Excluir
             </Button>
           ) : (
             <div />
@@ -181,7 +223,7 @@ export function EventDialog({
               onClick={handleSave}
               className="bg-brand-blue text-white hover:bg-brand-blue/90"
             >
-              {event ? 'Atualizar Google' : 'Salvar no Google'}
+              {event ? 'Atualizar Evento' : 'Salvar Evento'}
             </Button>
           </div>
         </DialogFooter>

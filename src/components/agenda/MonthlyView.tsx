@@ -1,6 +1,7 @@
 import { useAgendaStore, AgendaEvent, getLocalDateStr } from '@/stores/agenda'
 import { useState } from 'react'
 import { EventDialog } from './EventDialog'
+import { CheckCheck, MessageSquare } from 'lucide-react'
 
 export function MonthlyView() {
   const { events, selectedDate, setSelectedDate } = useAgendaStore()
@@ -80,7 +81,7 @@ export function MonthlyView() {
                         evt.stopPropagation()
                         setEditingEvent(e)
                       }}
-                      className="text-[10px] truncate px-1.5 py-0.5 rounded border border-transparent hover:border-slate-300 transition-colors cursor-pointer shrink-0"
+                      className="text-[10px] truncate px-1.5 py-0.5 rounded border border-transparent hover:border-slate-300 transition-colors cursor-pointer shrink-0 flex justify-between items-center"
                       style={{
                         backgroundColor:
                           e.type === 'Consulta'
@@ -96,7 +97,17 @@ export function MonthlyView() {
                               : '#b45309',
                       }}
                     >
-                      <span className="font-semibold">{e.startTime}</span> - {e.title}
+                      <span className="truncate">
+                        <span className="font-semibold">{e.startTime}</span> - {e.title}
+                      </span>
+                      <span className="flex items-center ml-1 shrink-0">
+                        {e.waStatus === 'confirmed' && (
+                          <CheckCheck className="w-3 h-3 text-green-600" />
+                        )}
+                        {e.waStatus === 'sent' && (
+                          <MessageSquare className="w-3 h-3 text-blue-500" />
+                        )}
+                      </span>
                     </div>
                   ))}
                 </div>

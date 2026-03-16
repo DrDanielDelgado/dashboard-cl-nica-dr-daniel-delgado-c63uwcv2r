@@ -2,6 +2,7 @@ import { useAgendaStore, AgendaEvent, getLocalDateStr } from '@/stores/agenda'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { useState } from 'react'
 import { EventDialog } from './EventDialog'
+import { CheckCheck, MessageSquare } from 'lucide-react'
 
 const HOURS = Array.from({ length: 13 }, (_, i) => i + 7)
 
@@ -89,7 +90,7 @@ export function WeeklyView() {
                           e.stopPropagation()
                           setEditingEvent(event)
                         }}
-                        className="absolute left-1 right-1 rounded md shadow-sm p-1 overflow-hidden text-[10px] leading-tight cursor-pointer hover:shadow-md transition-shadow"
+                        className="absolute left-1 right-1 rounded md shadow-sm p-1 overflow-hidden text-[10px] leading-tight cursor-pointer hover:shadow-md transition-shadow flex flex-col justify-between"
                         style={{
                           top: `${top}px`,
                           height: `${height}px`,
@@ -109,7 +110,15 @@ export function WeeklyView() {
                         }}
                       >
                         <div className="font-semibold truncate text-slate-800">{event.title}</div>
-                        <div className="truncate text-slate-600">{event.startTime}</div>
+                        <div className="flex justify-between items-end">
+                          <span className="truncate text-slate-600">{event.startTime}</span>
+                          {event.waStatus === 'confirmed' && (
+                            <CheckCheck className="w-3 h-3 text-green-600" />
+                          )}
+                          {event.waStatus === 'sent' && (
+                            <MessageSquare className="w-3 h-3 text-blue-500" />
+                          )}
+                        </div>
                       </div>
                     )
                   })}
