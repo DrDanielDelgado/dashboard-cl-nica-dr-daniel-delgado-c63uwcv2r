@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react'
+import React, { createContext, useContext, useState, useEffect } from 'react'
 import { Budget } from '@/types/financeiro'
 
 interface FinanceiroState {
@@ -9,11 +9,23 @@ interface FinanceiroState {
   updateBudgetStatus: (id: string, status: Budget['status']) => void
 }
 
+const loadBudgets = (): Budget[] => {
+  try {
+    const stored = localStorage.getItem('@db_financeiro')
+    return stored ? JSON.parse(stored) : []
+  } catch {
+    return []
+  }
+}
+
 const FinanceiroContext = createContext<FinanceiroState | undefined>(undefined)
 
 export function FinanceiroProvider({ children }: { children: React.ReactNode }) {
-  // Banco de dados financeiro limpo, sem registros fictícios/mockados
-  const [budgets, setBudgets] = useState<Budget[]>([])
+  const [budgets, setBudgets] = useState<Budget[]>(loadBudgets)
+
+  useEffect(() => {
+    localStorage.setItem('@db_financeiro', JSON.stringify(budgets))
+  }, [budgets])
 
   const addBudget = (b: Budget) => {
     setBudgets((prev) => [...prev, { ...b, id: Math.random().toString(36).substring(7) }])

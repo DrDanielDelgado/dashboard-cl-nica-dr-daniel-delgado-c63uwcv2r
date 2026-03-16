@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react'
+import React, { createContext, useContext, useState, useEffect } from 'react'
 
 interface Log {
   id: string
@@ -13,10 +13,23 @@ interface AuditState {
   addLog: (action: string, resource: string) => void
 }
 
+const loadLogs = (): Log[] => {
+  try {
+    const stored = localStorage.getItem('@db_audit')
+    return stored ? JSON.parse(stored) : []
+  } catch {
+    return []
+  }
+}
+
 const AuditContext = createContext<AuditState | undefined>(undefined)
 
 export function AuditProvider({ children }: { children: React.ReactNode }) {
-  const [logs, setLogs] = useState<Log[]>([])
+  const [logs, setLogs] = useState<Log[]>(loadLogs)
+
+  useEffect(() => {
+    localStorage.setItem('@db_audit', JSON.stringify(logs))
+  }, [logs])
 
   const addLog = (action: string, resource: string) => {
     const newLog = {

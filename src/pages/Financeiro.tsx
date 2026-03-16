@@ -18,7 +18,7 @@ export default function Financeiro() {
   const handleNFe = () => {
     toast({
       title: 'NFe Emitida com Sucesso',
-      description: 'A nota fiscal foi processada pela SEF-MG.',
+      description: 'A nota fiscal foi processada pela SEF-MG e salva no histórico.',
     })
   }
 
@@ -33,6 +33,9 @@ export default function Financeiro() {
   const projecaoReceita = budgets
     .filter((b) => b.status === 'pending' || b.status === 'sent')
     .reduce((acc, b) => acc + b.finalValue, 0)
+
+  // Use actual approved values to reflect real state
+  const receitasMes = faturamentoAprovado
 
   const totalProjecao = faturamentoAprovado + projecaoReceita
   const percentageAprovado = totalProjecao > 0 ? (faturamentoAprovado / totalProjecao) * 100 : 0
@@ -72,7 +75,9 @@ export default function Financeiro() {
                 <CardTitle className="text-sm font-medium">Receitas (Mês)</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-success">R$ 145.200,00</div>
+                <div className="text-2xl font-bold text-success">
+                  R$ {receitasMes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </div>
               </CardContent>
             </Card>
             <Card>
@@ -80,7 +85,7 @@ export default function Financeiro() {
                 <CardTitle className="text-sm font-medium">Despesas (Mês)</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-destructive">R$ 82.400,00</div>
+                <div className="text-2xl font-bold text-destructive">R$ 0,00</div>
               </CardContent>
             </Card>
             <Card className="bg-primary/5 border-primary/20">

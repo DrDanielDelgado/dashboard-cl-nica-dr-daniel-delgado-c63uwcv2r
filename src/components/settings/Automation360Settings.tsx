@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Flow } from '@/types/automation'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -8,7 +8,6 @@ import { Plus, Workflow, Settings2, Copy, Trash2, TrendingUp } from 'lucide-reac
 import { AutomationBuilder } from './automation/AutomationBuilder'
 import { PerformanceDashboard } from './automation/PerformanceDashboard'
 import { useAuditStore } from '@/stores/audit'
-import { MOCK_AUTOMATION_FLOWS } from '@/lib/mock-data'
 import {
   Dialog,
   DialogContent,
@@ -19,13 +18,26 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
+const loadFlows = (): Flow[] => {
+  try {
+    const stored = localStorage.getItem('@db_flows')
+    return stored ? JSON.parse(stored) : []
+  } catch {
+    return []
+  }
+}
+
 export function Automation360Settings() {
-  const [flows, setFlows] = useState<Flow[]>(MOCK_AUTOMATION_FLOWS)
+  const [flows, setFlows] = useState<Flow[]>(loadFlows)
   const [editingFlowId, setEditingFlowId] = useState<string | null>(null)
   const [dashboardOpenId, setDashboardOpenId] = useState<string | null>(null)
   const [isNewDialogOpen, setIsNewDialogOpen] = useState(false)
   const [newFlowName, setNewFlowName] = useState('')
   const { addLog } = useAuditStore()
+
+  useEffect(() => {
+    localStorage.setItem('@db_flows', JSON.stringify(flows))
+  }, [flows])
 
   const handleCreateFlow = () => {
     if (!newFlowName) return
@@ -118,7 +130,7 @@ export function Automation360Settings() {
             <Workflow className="w-12 h-12 mx-auto mb-4 opacity-50" />
             <h3 className="font-semibold text-lg text-foreground mb-2">Nenhum fluxo criado</h3>
             <p className="max-w-sm mx-auto mb-6 text-muted-foreground">
-              Comece automatizando lembretes de consulta ou respostas rápidas.
+              Comece automatizando lembretes de consulta ou respostas rápidas para seus pacientes.
             </p>
             <Button onClick={() => setIsNewDialogOpen(true)}>Criar meu primeiro fluxo</Button>
           </div>

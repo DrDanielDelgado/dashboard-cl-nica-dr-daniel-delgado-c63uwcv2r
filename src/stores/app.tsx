@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react'
+import React, { createContext, useContext, useState, useEffect } from 'react'
 
 type Location = 'Juiz de Fora' | 'Leopoldina' | 'Além Paraíba'
 type Role =
@@ -17,12 +17,25 @@ interface AppState {
   setRole: (role: Role) => void
 }
 
+const loadApp = () => {
+  try {
+    const stored = localStorage.getItem('@db_app')
+    return stored ? JSON.parse(stored) : { location: 'Juiz de Fora', role: 'Gerenciador' }
+  } catch {
+    return { location: 'Juiz de Fora', role: 'Gerenciador' }
+  }
+}
+
 const AppContext = createContext<AppState | undefined>(undefined)
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [location, setLocation] = useState<Location>('Juiz de Fora')
-  // For validation of Redirect Logic, change this to test
-  const [role, setRole] = useState<Role>('Gerenciador')
+  const initApp = loadApp()
+  const [location, setLocation] = useState<Location>(initApp.location)
+  const [role, setRole] = useState<Role>(initApp.role)
+
+  useEffect(() => {
+    localStorage.setItem('@db_app', JSON.stringify({ location, role }))
+  }, [location, role])
 
   return React.createElement(
     AppContext.Provider,

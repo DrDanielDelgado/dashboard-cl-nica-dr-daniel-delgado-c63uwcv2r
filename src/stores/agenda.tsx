@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react'
+import React, { createContext, useContext, useState, useEffect } from 'react'
 import { toast } from '@/hooks/use-toast'
 
 export const getLocalDateStr = (d: Date) => {
@@ -20,43 +20,14 @@ export interface AgendaEvent {
   googleSync?: boolean
 }
 
-const todayStr = getLocalDateStr(new Date())
-
-const mockEvents: AgendaEvent[] = [
-  {
-    id: '1',
-    title: 'Consulta Vascular',
-    date: todayStr,
-    startTime: '09:00',
-    endTime: '09:30',
-    type: 'Consulta',
-    patientName: 'Carlos Alberto',
-    status: 'confirmed',
-    googleSync: true,
-  },
-  {
-    id: '2',
-    title: 'Escleroterapia',
-    date: todayStr,
-    startTime: '10:30',
-    endTime: '11:30',
-    type: 'Procedimento',
-    patientName: 'Fernanda Lima',
-    status: 'pending',
-    googleSync: true,
-  },
-  {
-    id: '3',
-    title: 'Avaliação de Exames',
-    date: todayStr,
-    startTime: '14:00',
-    endTime: '14:30',
-    type: 'Retorno',
-    patientName: 'Ricardo Gomes',
-    status: 'confirmed',
-    googleSync: true,
-  },
-]
+const loadAgenda = (): AgendaEvent[] => {
+  try {
+    const stored = localStorage.getItem('@db_agenda')
+    return stored ? JSON.parse(stored) : []
+  } catch (e) {
+    return []
+  }
+}
 
 interface AgendaState {
   events: AgendaEvent[]
@@ -73,15 +44,24 @@ interface AgendaState {
 const AgendaContext = createContext<AgendaState | undefined>(undefined)
 
 export function AgendaProvider({ children }: { children: React.ReactNode }) {
-  const [events, setEvents] = useState<AgendaEvent[]>(mockEvents)
+  const [events, setEvents] = useState<AgendaEvent[]>(loadAgenda)
   const [selectedDate, setSelectedDate] = useState(new Date())
   const [isSyncing, setIsSyncing] = useState(false)
-  const [lastSync, setLastSync] = useState<string | null>(new Date().toLocaleString('pt-BR'))
+  const [lastSync, setLastSync] = useState<string | null>(
+    localStorage.getItem('@db_agenda_sync') || null,
+  )
+
+  useEffect(() => {
+    localStorage.setItem('@db_agenda', JSON.stringify(events))
+  }, [events])
 
   const syncWithGoogle = async () => {
     setIsSyncing(true)
+    // Simulate real API latency with Google Workspace
     await new Promise((r) => setTimeout(r, 1200))
-    setLastSync(new Date().toLocaleString('pt-BR'))
+    const syncTime = new Date().toLocaleString('pt-BR')
+    setLastSync(syncTime)
+    localStorage.setItem('@db_agenda_sync', syncTime)
     setIsSyncing(false)
     toast({
       title: 'Sincronização Concluída',
@@ -96,7 +76,7 @@ export function AgendaProvider({ children }: { children: React.ReactNode }) {
     ])
     toast({
       title: 'Agendamento Criado',
-      description: 'O evento foi adicionado e sincronizado com o Google Calendar.',
+      description: 'O evento foi adicionado e salvo na base de dados.',
     })
   }
 
@@ -104,7 +84,7 @@ export function AgendaProvider({ children }: { children: React.ReactNode }) {
     setEvents((prev) => prev.map((ev) => (ev.id === id ? { ...ev, ...e } : ev)))
     toast({
       title: 'Agendamento Atualizado',
-      description: 'As alterações foram enviadas para o Google Calendar.',
+      description: 'As alterações foram salvas com sucesso.',
     })
   }
 
@@ -112,7 +92,7 @@ export function AgendaProvider({ children }: { children: React.ReactNode }) {
     setEvents((prev) => prev.filter((ev) => ev.id !== id))
     toast({
       title: 'Agendamento Removido',
-      description: 'O evento foi removido do Google Calendar.',
+      description: 'O evento foi removido da base de dados.',
     })
   }
 
