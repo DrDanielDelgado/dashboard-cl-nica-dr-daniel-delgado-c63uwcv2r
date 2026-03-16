@@ -6,66 +6,57 @@ import NotFound from '@/pages/NotFound'
 import Atendimento from '@/pages/Atendimento'
 import Estoque from '@/pages/Estoque'
 import Automations from '@/pages/Automations'
+import Prontuario from '@/pages/Prontuario'
+import Financeiro from '@/pages/Financeiro'
+import Configuracoes from '@/pages/Configuracoes'
 import { AppProvider } from '@/stores/app'
+import { FinanceiroProvider } from '@/stores/financeiro'
+import { HiDoctorProvider } from '@/stores/hidoctor'
+import { AuditProvider } from '@/stores/audit'
 
 export default function App() {
   return (
     <AppProvider>
-      <Router>
-        <Routes>
-          <Route element={<Layout />}>
-            <Route path="/" element={<Index />} />
-            <Route path="/atendimento" element={<Atendimento />} />
-            <Route path="/estoque" element={<Estoque />} />
-            <Route path="/automations" element={<Automations />} />
+      <FinanceiroProvider>
+        <HiDoctorProvider>
+          <AuditProvider>
+            <Router>
+              <Routes>
+                <Route element={<Layout />}>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/atendimento" element={<Atendimento />} />
+                  <Route path="/estoque" element={<Estoque />} />
+                  <Route path="/automations" element={<Automations />} />
+                  <Route path="/prontuario" element={<Prontuario />} />
+                  <Route path="/financeiro" element={<Financeiro />} />
+                  <Route path="/configuracoes" element={<Configuracoes />} />
 
-            {/* Mock routes for demonstration */}
-            <Route
-              path="/agenda"
-              element={
-                <div className="p-6 text-xl font-medium text-brand-blue">
-                  Agenda (Em Desenvolvimento)
-                </div>
-              }
-            />
-            <Route
-              path="/pacientes"
-              element={
-                <div className="p-6 text-xl font-medium text-brand-blue">
-                  Pacientes (Em Desenvolvimento)
-                </div>
-              }
-            />
-            <Route
-              path="/prontuarios"
-              element={
-                <div className="p-6 text-xl font-medium text-brand-blue">
-                  Prontuários (Em Desenvolvimento)
-                </div>
-              }
-            />
-            <Route
-              path="/financeiro"
-              element={
-                <div className="p-6 text-xl font-medium text-brand-blue">
-                  Financeiro (Em Desenvolvimento)
-                </div>
-              }
-            />
-            <Route
-              path="/settings"
-              element={
-                <div className="p-6 text-xl font-medium text-brand-blue">
-                  Configurações (Em Desenvolvimento)
-                </div>
-              }
-            />
+                  {/* Mock routes for demonstration */}
+                  <Route
+                    path="/agenda"
+                    element={
+                      <div className="p-6 text-xl font-medium text-brand-blue animate-fade-in">
+                        Agenda (Em Desenvolvimento)
+                      </div>
+                    }
+                  />
+                  <Route
+                    path="/pacientes"
+                    element={
+                      <div className="p-6 text-xl font-medium text-brand-blue animate-fade-in">
+                        Pacientes (Em Desenvolvimento)
+                      </div>
+                    }
+                  />
 
-            <Route path="*" element={<NotFound />} />
-          </Route>
-        </Routes>
-        <Toaster />
-      </Router>
+                  <Route path="*" element={<NotFound />} />
+                </Route>
+              </Routes>
+              <Toaster />
+            </Router>
+          </AuditProvider>
+        </HiDoctorProvider>
+      </FinanceiroProvider>
     </AppProvider>
   )
 }

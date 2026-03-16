@@ -29,13 +29,13 @@ const mainNavItems = [
   { title: 'Dashboard', icon: LayoutDashboard, url: '/' },
   { title: 'Atendimento', icon: Users, url: '/atendimento' },
   { title: 'Agenda', icon: Calendar, url: '/agenda' },
-  { title: 'Prontuários', icon: Activity, url: '/prontuarios' },
+  { title: 'Prontuário', icon: Activity, url: '/prontuario' },
   { title: 'Financeiro', icon: CreditCard, url: '/financeiro' },
   { title: 'Estoque', icon: Package, url: '/estoque' },
   { title: 'Automações & MKT', icon: Megaphone, url: '/automations' },
 ]
 
-const bottomNavItems = [{ title: 'Configurações', icon: Settings, url: '/settings' }]
+const bottomNavItems = [{ title: 'Configurações', icon: Settings, url: '/configuracoes' }]
 
 export function AppSidebar() {
   const location = useLocation()
@@ -107,20 +107,36 @@ export function AppSidebar() {
         <SidebarGroup className="mt-auto pb-4">
           <SidebarGroupContent>
             <SidebarMenu>
-              {bottomNavItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    asChild
-                    tooltip={item.title}
-                    className="text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-white py-5 rounded-lg"
-                  >
-                    <Link to={item.url} className="flex items-center gap-3">
-                      <item.icon className="h-5 w-5 text-sidebar-foreground/70 group-hover:text-white" />
-                      <span className="text-[15px]">{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {bottomNavItems.map((item) => {
+                const isActive = location.pathname.startsWith(item.url)
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive}
+                      tooltip={item.title}
+                      className={cn(
+                        'transition-all duration-200 rounded-lg py-5',
+                        isActive
+                          ? 'bg-sidebar-primary text-sidebar-primary-foreground font-semibold shadow-md'
+                          : 'text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-white',
+                      )}
+                    >
+                      <Link to={item.url} className="flex items-center gap-3">
+                        <item.icon
+                          className={cn(
+                            'h-5 w-5',
+                            isActive
+                              ? 'text-white'
+                              : 'text-sidebar-foreground/70 group-hover:text-white',
+                          )}
+                        />
+                        <span className="text-[15px]">{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
