@@ -4,7 +4,7 @@ import { AppSidebar } from './AppSidebar'
 import { AppHeader } from './AppHeader'
 import { AiAssistant } from './AiAssistant'
 
-export default function Layout() {
+export function Layout() {
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full bg-background overflow-hidden">
