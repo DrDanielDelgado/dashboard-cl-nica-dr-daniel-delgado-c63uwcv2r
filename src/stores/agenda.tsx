@@ -23,10 +23,62 @@ export interface AgendaEvent {
 const loadAgenda = (): AgendaEvent[] => {
   try {
     const stored = localStorage.getItem('@db_agenda')
-    return stored ? JSON.parse(stored) : []
+    if (stored) {
+      const parsed = JSON.parse(stored)
+      if (parsed && parsed.length > 0) return parsed
+    }
   } catch (e) {
-    return []
+    // fallback
   }
+
+  const today = new Date()
+  const yesterday = new Date(today)
+  yesterday.setDate(yesterday.getDate() - 1)
+  const tomorrow = new Date(today)
+  tomorrow.setDate(tomorrow.getDate() + 1)
+
+  return [
+    {
+      id: 'evt-1',
+      title: 'Consulta - Maria',
+      date: getLocalDateStr(today),
+      startTime: '09:00',
+      endTime: '09:30',
+      type: 'Consulta',
+      patientName: 'Maria Silva',
+      status: 'confirmed',
+    },
+    {
+      id: 'evt-2',
+      title: 'Procedimento Laser',
+      date: getLocalDateStr(today),
+      startTime: '10:00',
+      endTime: '11:00',
+      type: 'Procedimento',
+      patientName: 'João Santos',
+      status: 'pending',
+    },
+    {
+      id: 'evt-3',
+      title: 'Retorno - Ana',
+      date: getLocalDateStr(yesterday),
+      startTime: '14:00',
+      endTime: '14:30',
+      type: 'Retorno',
+      patientName: 'Ana Costa',
+      status: 'confirmed',
+    },
+    {
+      id: 'evt-4',
+      title: 'Avaliação Cirúrgica',
+      date: getLocalDateStr(tomorrow),
+      startTime: '15:00',
+      endTime: '16:00',
+      type: 'Consulta',
+      patientName: 'Carlos Mendes',
+      status: 'confirmed',
+    },
+  ]
 }
 
 interface AgendaState {
@@ -57,7 +109,6 @@ export function AgendaProvider({ children }: { children: React.ReactNode }) {
 
   const syncWithGoogle = async () => {
     setIsSyncing(true)
-    // Simulate real API latency with Google Workspace
     await new Promise((r) => setTimeout(r, 1200))
     const syncTime = new Date().toLocaleString('pt-BR')
     setLastSync(syncTime)

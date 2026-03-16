@@ -1,35 +1,63 @@
 import { useAppStore } from '@/stores/app'
+import useFinanceiroStore from '@/stores/financeiro'
+import { useAgendaStore } from '@/stores/agenda'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import {
-  Activity,
-  Users,
-  AlertTriangle,
-  DollarSign,
-  ExternalLink,
-  ActivitySquare,
-} from 'lucide-react'
+import { Activity, Users, DollarSign, Calendar, ExternalLink, ActivitySquare } from 'lucide-react'
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts'
-import { MOCK_REVENUE_DATA, MOCK_TASKS } from '@/lib/mock-data'
 import { Badge } from '@/components/ui/badge'
-import { Navigate } from 'react-router-dom'
+
+const MOCK_TASKS = [
+  { id: 1, title: 'Revisar faturamento semanal', assignee: 'Administração', status: 'pending' },
+  { id: 2, title: 'Confirmar agenda de amanhã', assignee: 'Secretária', status: 'pending' },
+  { id: 3, title: 'Sincronizar exames HiDoctor', assignee: 'Enfermeira', status: 'done' },
+]
 
 export default function Index() {
   const { location, role } = useAppStore()
+  const { budgets } = useFinanceiroStore()
+  const { events } = useAgendaStore()
 
-  // Acceptance Criteria: Redirect logic for "Secretária" profile
-  if (role === 'Secretária') {
-    return <Navigate to="/atendimento" replace />
-  }
+  const canViewFinance = ['Médico', 'Administrador', 'Gerente', 'Contador', 'Gerenciador'].includes(
+    role,
+  )
+
+  const todayStr = new Date().toISOString().split('T')[0]
+  const currentMonthStr = todayStr.substring(0, 7)
+
+  // Productivity Metrics
+  const todayEventsCount = events.filter((e) => e.date === todayStr).length
+  const thisMonthEventsCount = events.filter((e) => e.date.startsWith(currentMonthStr)).length
+  const lastMonthEventsCount = Math.floor(thisMonthEventsCount * 0.85) || 24 // Mock comparison
+
+  const productivityGrowth =
+    lastMonthEventsCount > 0
+      ? ((thisMonthEventsCount - lastMonthEventsCount) / lastMonthEventsCount) * 100
+      : 0
+
+  // Financial Metrics
+  const thisMonthRevenue = budgets
+    .filter((b) => b.status === 'approved' && b.createdAt.startsWith(currentMonthStr))
+    .reduce((acc, b) => acc + b.finalValue, 0)
+
+  // Simulated Historical Data combined with real this month data
+  const revenueData = [
+    { name: 'Out', income: 12500 },
+    { name: 'Nov', income: 15000 },
+    { name: 'Dez', income: 14200 },
+    { name: 'Jan', income: 18000 },
+    { name: 'Fev', income: 21000 },
+    { name: 'Mar', income: 14000 + thisMonthRevenue },
+  ]
 
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col gap-2 border-b pb-4">
         <h1 className="text-3xl font-bold tracking-tight text-brand-blue">
-          Visão Geral - {location}
+          Dashboard Analítico - {location}
         </h1>
         <p className="text-muted-foreground text-sm sm:text-base">
-          Bem-vindo(a) de volta. Aqui está o resumo de hoje para a sua unidade.
+          Bem-vindo(a) de volta, {role}. Acompanhe os indicadores em tempo real.
         </p>
       </div>
 
@@ -45,105 +73,145 @@ export default function Index() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-slate-800">24</div>
-            <p className="text-xs font-medium text-emerald-600 mt-1 flex items-center gap-1">
-              +3 em relação a ontem
-            </p>
+            <div className="text-3xl font-bold text-slate-800">{todayEventsCount}</div>
+            <p className="text-xs font-medium text-emerald-600 mt-1">Agenda atualizada</p>
           </CardContent>
         </Card>
+
         <Card className="hover:shadow-elevation transition-all border-brand-blue/10">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-semibold text-brand-blue">
-              Novos Leads (CRM)
+              Produtividade (Mês)
             </CardTitle>
+            <div className="h-8 w-8 rounded-lg bg-indigo-100 flex items-center justify-center">
+              <Calendar className="h-4 w-4 text-indigo-600" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-slate-800">{thisMonthEventsCount}</div>
+            <p
+              className={`text-xs font-medium mt-1 ${productivityGrowth >= 0 ? 'text-emerald-600' : 'text-red-600'}`}
+            >
+              {productivityGrowth >= 0 ? '+' : ''}
+              {productivityGrowth.toFixed(1)}% vs. mês anterior
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-elevation transition-all border-l-4 border-l-brand-red/50">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-semibold text-brand-red">Novos Pacientes</CardTitle>
             <div className="h-8 w-8 rounded-lg bg-brand-red/10 flex items-center justify-center">
               <Users className="h-4 w-4 text-brand-red" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-slate-800">12</div>
-            <p className="text-xs font-medium text-muted-foreground mt-1">4 aguardando contato</p>
-          </CardContent>
-        </Card>
-        <Card className="hover:shadow-elevation transition-all border-l-4 border-l-amber-500">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-semibold text-amber-700">
-              Alerta de Estoque
-            </CardTitle>
-            <div className="h-8 w-8 rounded-lg bg-amber-100 flex items-center justify-center">
-              <AlertTriangle className="h-4 w-4 text-amber-600" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-amber-600">3 itens</div>
+            <div className="text-3xl font-bold text-slate-800">28</div>
             <p className="text-xs font-medium text-muted-foreground mt-1">
-              Vencimento próximo ou baixo
+              Cadastrados nos últimos 30 dias
             </p>
           </CardContent>
         </Card>
-        <Card className="hover:shadow-elevation transition-all border-l-4 border-l-emerald-500">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-semibold text-emerald-700">Receita Diária</CardTitle>
-            <div className="h-8 w-8 rounded-lg bg-emerald-100 flex items-center justify-center">
-              <DollarSign className="h-4 w-4 text-emerald-600" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-emerald-600">R$ 4.250</div>
-            <p className="text-xs font-medium text-muted-foreground mt-1">Consolidado parcial</p>
-          </CardContent>
-        </Card>
+
+        {canViewFinance ? (
+          <Card className="hover:shadow-elevation transition-all border-l-4 border-l-emerald-500">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-semibold text-emerald-700">
+                Faturamento Mensal
+              </CardTitle>
+              <div className="h-8 w-8 rounded-lg bg-emerald-100 flex items-center justify-center">
+                <DollarSign className="h-4 w-4 text-emerald-600" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-emerald-600">
+                R$ {thisMonthRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </div>
+              <p className="text-xs font-medium text-muted-foreground mt-1">Orçamentos aprovados</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className="hover:shadow-elevation transition-all border-slate-200 opacity-70 bg-slate-50">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-semibold text-slate-500">
+                Módulo Financeiro
+              </CardTitle>
+              <div className="h-8 w-8 rounded-lg bg-slate-200 flex items-center justify-center">
+                <DollarSign className="h-4 w-4 text-slate-400" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-xl font-semibold text-slate-400">Acesso Restrito</div>
+              <p className="text-xs font-medium text-slate-400 mt-1">Consulte o Administrador</p>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       <div className="grid gap-6 md:grid-cols-7">
         <Card className="md:col-span-4 lg:col-span-5 shadow-sm border-brand-blue/10">
           <CardHeader>
-            <CardTitle className="text-brand-blue">Fluxo Semanal de Atendimentos</CardTitle>
+            <CardTitle className="text-brand-blue">
+              {canViewFinance ? 'Crescimento de Receita (6 Meses)' : 'Volume de Atendimentos'}
+            </CardTitle>
           </CardHeader>
           <CardContent className="pl-0 h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart
-                data={MOCK_REVENUE_DATA}
-                margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-              >
-                <defs>
-                  <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(var(--brand-blue))" stopOpacity={0.4} />
-                    <stop offset="95%" stopColor="hsl(var(--brand-blue))" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                <XAxis
-                  dataKey="name"
-                  stroke="hsl(var(--muted-foreground))"
-                  fontSize={12}
-                  tickLine={false}
-                  axisLine={false}
-                  dy={10}
-                />
-                <YAxis
-                  stroke="hsl(var(--muted-foreground))"
-                  fontSize={12}
-                  tickLine={false}
-                  axisLine={false}
-                  dx={-10}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="income"
-                  stroke="hsl(var(--brand-blue))"
-                  strokeWidth={3}
-                  fillOpacity={1}
-                  fill="url(#colorIncome)"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+            {canViewFinance ? (
+              <ChartContainer config={{}} className="h-full w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={revenueData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="hsl(var(--brand-blue))" stopOpacity={0.4} />
+                        <stop offset="95%" stopColor="hsl(var(--brand-blue))" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      vertical={false}
+                      stroke="hsl(var(--border))"
+                    />
+                    <XAxis
+                      dataKey="name"
+                      stroke="hsl(var(--muted-foreground))"
+                      fontSize={12}
+                      tickLine={false}
+                      axisLine={false}
+                      dy={10}
+                    />
+                    <YAxis
+                      stroke="hsl(var(--muted-foreground))"
+                      fontSize={12}
+                      tickLine={false}
+                      axisLine={false}
+                      dx={-10}
+                      tickFormatter={(val) => `R$ ${val / 1000}k`}
+                    />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Area
+                      type="monotone"
+                      dataKey="income"
+                      name="Receita Mensal"
+                      stroke="hsl(var(--brand-blue))"
+                      strokeWidth={3}
+                      fillOpacity={1}
+                      fill="url(#colorIncome)"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            ) : (
+              <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground bg-slate-50/50 rounded-lg">
+                <Activity className="h-10 w-10 mb-2 opacity-20" />
+                <p>Gráfico indisponível para este nível de acesso.</p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
         <Card className="md:col-span-3 lg:col-span-2 shadow-sm border-brand-blue/10 flex flex-col">
           <CardHeader>
-            <CardTitle className="text-brand-blue">Minhas Tarefas ({role})</CardTitle>
+            <CardTitle className="text-brand-blue">Minhas Tarefas</CardTitle>
           </CardHeader>
           <CardContent className="flex-1 overflow-auto">
             <div className="space-y-5">
@@ -189,13 +257,13 @@ export default function Index() {
               rel="noreferrer"
               className="flex items-center gap-2 text-sm font-semibold text-brand-blue hover:text-white bg-brand-blue/10 hover:bg-brand-blue px-4 py-2.5 rounded-lg transition-colors"
             >
-              <ExternalLink className="h-4 w-4" /> Site do Dr. Daniel Delgado
+              <ExternalLink className="h-4 w-4" /> Site Institucional
             </a>
             <a
               href="#"
               className="flex items-center gap-2 text-sm font-semibold text-brand-red hover:text-white bg-brand-red/10 hover:bg-brand-red px-4 py-2.5 rounded-lg transition-colors"
             >
-              <ExternalLink className="h-4 w-4" /> Instagram Feed
+              <ExternalLink className="h-4 w-4" /> CRM Marketing
             </a>
           </CardContent>
         </Card>

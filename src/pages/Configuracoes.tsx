@@ -20,23 +20,18 @@ import { AuditLogsSettings } from '@/components/settings/AuditLogsSettings'
 import { IntegrationsSettings } from '@/components/settings/IntegrationsSettings'
 import { Automation360Settings } from '@/components/settings/Automation360Settings'
 import { useAppStore } from '@/stores/app'
-import { Navigate } from 'react-router-dom'
 
 export default function Configuracoes() {
   const { role } = useAppStore()
 
-  if (role === 'Secretária') {
-    return <Navigate to="/atendimento" replace />
-  }
-
   const isAdmin = ['Gerenciador', 'Administrador', 'Gerente'].includes(role)
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Configurações de Produção</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Configurações do Sistema</h1>
         <p className="text-muted-foreground">
-          Gerencie domínios, integrações, automações visuais e trilhas de auditoria.
+          Gerencie domínios, integrações, automações visuais, usuários e trilhas de auditoria.
         </p>
       </div>
 

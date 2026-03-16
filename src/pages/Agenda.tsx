@@ -4,18 +4,20 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Calendar } from '@/components/ui/calendar'
-import { RefreshCcw, Plus, Calendar as CalendarIcon } from 'lucide-react'
+import { RefreshCcw, Plus, Calendar as CalendarIcon, FileDown } from 'lucide-react'
 import { useAgendaStore } from '@/stores/agenda'
 import { useAppStore } from '@/stores/app'
 import { DailyView } from '@/components/agenda/DailyView'
 import { WeeklyView } from '@/components/agenda/WeeklyView'
 import { MonthlyView } from '@/components/agenda/MonthlyView'
 import { EventDialog } from '@/components/agenda/EventDialog'
+import { RelatoriosAgendaDialog } from '@/components/agenda/RelatoriosAgendaDialog'
 
 export default function Agenda() {
   const { location } = useAppStore()
   const { selectedDate, setSelectedDate, isSyncing, lastSync, syncWithGoogle } = useAgendaStore()
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [exportOpen, setExportOpen] = useState(false)
 
   return (
     <div className="flex flex-col h-full space-y-6 animate-fade-in">
@@ -36,7 +38,14 @@ export default function Agenda() {
             )}
           </div>
         </div>
-        <div className="flex gap-2 w-full md:w-auto">
+        <div className="flex gap-2 w-full md:w-auto flex-wrap">
+          <Button
+            variant="outline"
+            onClick={() => setExportOpen(true)}
+            className="flex-1 md:flex-none border-brand-blue/20 text-brand-blue hover:bg-brand-blue/5"
+          >
+            <FileDown className="w-4 h-4 mr-2" /> Exportar
+          </Button>
           <Button
             variant="outline"
             onClick={syncWithGoogle}
@@ -120,7 +129,9 @@ export default function Agenda() {
           </Tabs>
         </Card>
       </div>
+
       <EventDialog open={dialogOpen} onOpenChange={setDialogOpen} />
+      <RelatoriosAgendaDialog open={exportOpen} onOpenChange={setExportOpen} />
     </div>
   )
 }
