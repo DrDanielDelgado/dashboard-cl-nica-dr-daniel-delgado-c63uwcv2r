@@ -3,7 +3,7 @@ import { Flow, FlowNode, NodeType } from '@/types/automation'
 import { Button } from '@/components/ui/button'
 import { FlowTree } from './FlowTree'
 import { AutomationConfigPanel } from './AutomationConfigPanel'
-import { Save, ArrowLeft, MessageSquare, Clock, GitBranch } from 'lucide-react'
+import { Save, ArrowLeft, MessageSquare, Clock, GitBranch, Shuffle } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -34,6 +34,7 @@ export function AutomationBuilder({ flow, onSave, onBack }: BuilderProps) {
     if (type === 'template') title = 'Template WhatsApp'
     if (type === 'delay') title = 'Aguardar (Delay)'
     if (type === 'condition') title = 'Condição (If/Else)'
+    if (type === 'ab_test') title = 'Teste A/B'
 
     const newNode: FlowNode = { id: newId, type, title, config: {} }
     const { parentId, branch } = addNodeContext
@@ -41,7 +42,7 @@ export function AutomationBuilder({ flow, onSave, onBack }: BuilderProps) {
     const existingChildId = (parent as any)[branch]
 
     if (existingChildId) {
-      if (type === 'condition') {
+      if (type === 'condition' || type === 'ab_test') {
         newNode.nextTrueId = existingChildId
       } else {
         newNode.nextId = existingChildId
@@ -94,7 +95,7 @@ export function AutomationBuilder({ flow, onSave, onBack }: BuilderProps) {
             nodeId={flow.rootId}
             nodes={nodes}
             onEdit={setEditingNodeId}
-            onAdd={(p: string, b: string) => setAddNodeContext({ parentId: p, branch: b })}
+            onAdd={(p, b) => setAddNodeContext({ parentId: p, branch: b })}
             parentId="root"
             branch="root"
           />
@@ -112,31 +113,31 @@ export function AutomationBuilder({ flow, onSave, onBack }: BuilderProps) {
           <div className="grid grid-cols-2 gap-4 py-4">
             <Button
               variant="outline"
-              className="h-24 flex flex-col gap-2 border-blue-200 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all"
-              onClick={() => handleAddBlock('message')}
-            >
-              <MessageSquare className="w-6 h-6 text-blue-500" /> Mensagem
-            </Button>
-            <Button
-              variant="outline"
-              className="h-24 flex flex-col gap-2 border-blue-200 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all"
+              className="h-24 flex flex-col gap-2 border-blue-200 hover:border-blue-500"
               onClick={() => handleAddBlock('template')}
             >
-              <MessageSquare className="w-6 h-6 text-blue-600" /> Template WhatsApp
+              <MessageSquare className="w-6 h-6 text-blue-600" /> WhatsApp
             </Button>
             <Button
               variant="outline"
-              className="h-24 flex flex-col gap-2 border-orange-200 hover:border-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-all"
+              className="h-24 flex flex-col gap-2 border-orange-200 hover:border-orange-500"
               onClick={() => handleAddBlock('delay')}
             >
-              <Clock className="w-6 h-6 text-orange-500" /> Aguardar (Delay)
+              <Clock className="w-6 h-6 text-orange-500" /> Aguardar
             </Button>
             <Button
               variant="outline"
-              className="h-24 flex flex-col gap-2 border-amber-200 hover:border-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-all"
+              className="h-24 flex flex-col gap-2 border-amber-200 hover:border-amber-500"
               onClick={() => handleAddBlock('condition')}
             >
-              <GitBranch className="w-6 h-6 text-amber-500" /> Condição (If/Else)
+              <GitBranch className="w-6 h-6 text-amber-500" /> Condição
+            </Button>
+            <Button
+              variant="outline"
+              className="h-24 flex flex-col gap-2 border-purple-200 hover:border-purple-500 hover:bg-purple-50"
+              onClick={() => handleAddBlock('ab_test')}
+            >
+              <Shuffle className="w-6 h-6 text-purple-500" /> Teste A/B
             </Button>
           </div>
         </DialogContent>
@@ -146,7 +147,7 @@ export function AutomationBuilder({ flow, onSave, onBack }: BuilderProps) {
         <AutomationConfigPanel
           node={nodes[editingNodeId]}
           onClose={() => setEditingNodeId(null)}
-          onUpdate={(n: FlowNode) => setNodes((p) => ({ ...p, [n.id]: n }))}
+          onUpdate={(n) => setNodes((p) => ({ ...p, [n.id]: n }))}
           onDelete={() => handleDeleteNode(editingNodeId)}
         />
       )}

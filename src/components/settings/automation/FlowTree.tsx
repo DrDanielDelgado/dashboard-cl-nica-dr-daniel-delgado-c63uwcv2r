@@ -1,37 +1,33 @@
 import { FlowNode, NodeType } from '@/types/automation'
-import { Plus, MessageSquare, Clock, GitBranch, Zap } from 'lucide-react'
+import { Plus, MessageSquare, Clock, GitBranch, Zap, Shuffle } from 'lucide-react'
 
 const getVisuals = (type: NodeType) => {
   switch (type) {
     case 'trigger':
       return {
         icon: <Zap className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />,
-        classes:
-          'border-emerald-500 bg-emerald-50/90 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-100',
+        classes: 'border-emerald-500 bg-emerald-50/90 text-emerald-900',
       }
     case 'message':
-      return {
-        icon: <MessageSquare className="w-4 h-4 text-blue-600 dark:text-blue-400" />,
-        classes:
-          'border-blue-500 bg-blue-50/90 dark:bg-blue-950/40 text-blue-900 dark:text-blue-100',
-      }
     case 'template':
       return {
         icon: <MessageSquare className="w-4 h-4 text-blue-600 dark:text-blue-400" />,
-        classes:
-          'border-blue-500 bg-blue-50/90 dark:bg-blue-950/40 text-blue-900 dark:text-blue-100',
+        classes: 'border-blue-500 bg-blue-50/90 text-blue-900',
       }
     case 'delay':
       return {
         icon: <Clock className="w-4 h-4 text-orange-600 dark:text-orange-400" />,
-        classes:
-          'border-orange-500 bg-orange-50/90 dark:bg-orange-950/40 text-orange-900 dark:text-orange-100',
+        classes: 'border-orange-500 bg-orange-50/90 text-orange-900',
       }
     case 'condition':
       return {
         icon: <GitBranch className="w-4 h-4 text-amber-600 dark:text-amber-400" />,
-        classes:
-          'border-amber-500 bg-amber-50/90 dark:bg-amber-950/40 text-amber-900 dark:text-amber-100',
+        classes: 'border-amber-500 bg-amber-50/90 text-amber-900',
+      }
+    case 'ab_test':
+      return {
+        icon: <Shuffle className="w-4 h-4 text-purple-600 dark:text-purple-400" />,
+        classes: 'border-purple-500 bg-purple-50/90 text-purple-900',
       }
   }
 }
@@ -89,23 +85,25 @@ export function FlowTree({ nodeId, nodes, onEdit, onAdd, parentId, branch }: Flo
                 ? `Aguardar ${node.config.amount || '0'} ${node.config.unit || 'minutos'}`
                 : node.type === 'condition'
                   ? `Se ${node.config.field || '...'} ${node.config.operator === 'contains' ? 'contém' : '='} ${node.config.value || '...'}`
-                  : 'Configurar bloco...'}
+                  : node.type === 'ab_test'
+                    ? 'Divide o fluxo em duas variantes'
+                    : 'Configurar bloco...'}
         </p>
       </div>
 
-      {node.type === 'condition' ? (
+      {node.type === 'condition' || node.type === 'ab_test' ? (
         <>
           <div className="w-0.5 h-6 bg-muted-foreground/30" />
           <div className="flex relative w-full pt-6 justify-center">
-            {/* Horizontal connection line */}
             <div className="absolute top-0 left-[25%] right-[25%] h-0.5 bg-muted-foreground/30" />
-            {/* Vertical drop lines */}
             <div className="absolute top-0 left-[25%] w-0.5 h-6 bg-muted-foreground/30" />
             <div className="absolute top-0 right-[25%] w-0.5 h-6 bg-muted-foreground/30" />
 
             <div className="flex flex-col items-center w-1/2 min-w-[240px]">
-              <span className="text-[10px] font-bold text-success bg-success/10 border border-success/20 px-3 py-1 rounded-full mb-2 z-10 shadow-sm">
-                SIM
+              <span
+                className={`text-[10px] font-bold px-3 py-1 rounded-full mb-2 z-10 shadow-sm ${node.type === 'ab_test' ? 'text-purple-700 bg-purple-100 border border-purple-200' : 'text-success bg-success/10 border border-success/20'}`}
+              >
+                {node.type === 'ab_test' ? '50% (Caminho A)' : 'SIM'}
               </span>
               <FlowTree
                 nodeId={node.nextTrueId}
@@ -117,8 +115,10 @@ export function FlowTree({ nodeId, nodes, onEdit, onAdd, parentId, branch }: Flo
               />
             </div>
             <div className="flex flex-col items-center w-1/2 min-w-[240px]">
-              <span className="text-[10px] font-bold text-destructive bg-destructive/10 border border-destructive/20 px-3 py-1 rounded-full mb-2 z-10 shadow-sm">
-                NÃO
+              <span
+                className={`text-[10px] font-bold px-3 py-1 rounded-full mb-2 z-10 shadow-sm ${node.type === 'ab_test' ? 'text-purple-700 bg-purple-100 border border-purple-200' : 'text-destructive bg-destructive/10 border border-destructive/20'}`}
+              >
+                {node.type === 'ab_test' ? '50% (Caminho B)' : 'NÃO'}
               </span>
               <FlowTree
                 nodeId={node.nextFalseId}

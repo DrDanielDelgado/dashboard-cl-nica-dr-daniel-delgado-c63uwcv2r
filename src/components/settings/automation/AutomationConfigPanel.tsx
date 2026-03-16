@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Trash2 } from 'lucide-react'
+import { Trash2, Shuffle } from 'lucide-react'
 
 interface PanelProps {
   node?: FlowNode | null
@@ -36,8 +36,7 @@ export function AutomationConfigPanel({ node, onClose, onUpdate, onDelete }: Pan
   }
 
   const insertVariable = (variable: string) => {
-    const currentContent = node.config.content || ''
-    updateConfig('content', `${currentContent}${variable}`)
+    updateConfig('content', `${node.config.content || ''}${variable}`)
   }
 
   return (
@@ -69,12 +68,8 @@ export function AutomationConfigPanel({ node, onClose, onUpdate, onDelete }: Pan
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="appointment_new">Novo Agendamento</SelectItem>
-                  <SelectItem value="appointment_canceled">Agendamento Cancelado</SelectItem>
-                  <SelectItem value="appointment_reminder">
-                    Lembrete de Consulta (Agendado)
-                  </SelectItem>
+                  <SelectItem value="appointment_reminder">Lembrete de Consulta</SelectItem>
                   <SelectItem value="social_message">Mensagem Recebida (Social)</SelectItem>
-                  <SelectItem value="tag_added">Tag de Paciente Adicionada</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -94,19 +89,15 @@ export function AutomationConfigPanel({ node, onClose, onUpdate, onDelete }: Pan
                   <SelectContent>
                     <SelectItem value="whatsapp">WhatsApp Business</SelectItem>
                     <SelectItem value="instagram">Instagram Direct</SelectItem>
-                    <SelectItem value="facebook">Facebook Messenger</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <Label>Texto da Mensagem</Label>
-                </div>
+                <Label>Texto da Mensagem</Label>
                 <Textarea
                   className="h-32 resize-none"
                   value={node.config.content || ''}
                   onChange={(e) => updateConfig('content', e.target.value)}
-                  placeholder="Escreva sua mensagem..."
                 />
                 <div className="pt-2">
                   <Label className="text-xs text-muted-foreground mb-2 block">
@@ -117,7 +108,7 @@ export function AutomationConfigPanel({ node, onClose, onUpdate, onDelete }: Pan
                       <Badge
                         key={v}
                         variant="secondary"
-                        className="cursor-pointer text-[10px] hover:bg-primary hover:text-primary-foreground transition-colors"
+                        className="cursor-pointer text-[10px] hover:bg-primary hover:text-primary-foreground"
                         onClick={() => insertVariable(v)}
                       >
                         + {v}
@@ -129,79 +120,15 @@ export function AutomationConfigPanel({ node, onClose, onUpdate, onDelete }: Pan
             </>
           )}
 
-          {node.type === 'delay' && (
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Tempo de Espera</Label>
-                <Input
-                  type="number"
-                  min="0"
-                  value={node.config.amount || ''}
-                  onChange={(e) => updateConfig('amount', Number(e.target.value))}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Unidade</Label>
-                <Select
-                  value={node.config.unit || 'minutes'}
-                  onValueChange={(v) => updateConfig('unit', v)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="minutes">Minutos</SelectItem>
-                    <SelectItem value="hours">Horas</SelectItem>
-                    <SelectItem value="days">Dias</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          )}
-
-          {node.type === 'condition' && (
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Regra de Verificação (Se...)</Label>
-                <Select
-                  value={node.config.field || ''}
-                  onValueChange={(v) => updateConfig('field', v)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione a variável..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="appointment_confirmed">Consulta Confirmada</SelectItem>
-                    <SelectItem value="message_content">Conteúdo da Mensagem</SelectItem>
-                    <SelectItem value="patient_tag">Tag do Paciente</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div className="space-y-2">
-                  <Label>Operador</Label>
-                  <Select
-                    value={node.config.operator || 'equals'}
-                    onValueChange={(v) => updateConfig('operator', v)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="equals">É igual a</SelectItem>
-                      <SelectItem value="contains">Contém</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Valor</Label>
-                  <Input
-                    value={node.config.value || ''}
-                    onChange={(e) => updateConfig('value', e.target.value)}
-                    placeholder="Ex: Sim"
-                  />
-                </div>
-              </div>
+          {node.type === 'ab_test' && (
+            <div className="p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg">
+              <h4 className="font-semibold text-purple-900 dark:text-purple-200 mb-2 flex items-center gap-2">
+                <Shuffle className="w-4 h-4" /> Distribuição 50/50
+              </h4>
+              <p className="text-sm text-purple-800/80 dark:text-purple-300/80">
+                O tráfego deste fluxo será dividido igualmente entre o Caminho A e o Caminho B para
+                identificar qual modelo de mensagem converte melhor.
+              </p>
             </div>
           )}
 
@@ -209,7 +136,7 @@ export function AutomationConfigPanel({ node, onClose, onUpdate, onDelete }: Pan
             <div className="pt-8 mt-auto">
               <Button
                 variant="outline"
-                className="w-full text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/20"
+                className="w-full text-destructive hover:bg-destructive/10"
                 onClick={onDelete}
               >
                 <Trash2 className="w-4 h-4 mr-2" /> Excluir Bloco

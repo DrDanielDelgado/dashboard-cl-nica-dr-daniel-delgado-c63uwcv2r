@@ -1,4 +1,15 @@
-export type NodeType = 'trigger' | 'message' | 'template' | 'delay' | 'condition'
+export type NodeType = 'trigger' | 'message' | 'template' | 'delay' | 'condition' | 'ab_test'
+
+export interface FlowMetrics {
+  entries: number
+  conversions: number
+  conversionRate: number
+  abTest?: {
+    a: { conversions: number; entries: number; name?: string }
+    b: { conversions: number; entries: number; name?: string }
+  }
+  chartData?: any[]
+}
 
 export interface FlowNode {
   id: string
@@ -17,4 +28,5 @@ export interface Flow {
   triggerType: string
   rootId: string
   nodes: Record<string, FlowNode>
+  metrics?: FlowMetrics
 }

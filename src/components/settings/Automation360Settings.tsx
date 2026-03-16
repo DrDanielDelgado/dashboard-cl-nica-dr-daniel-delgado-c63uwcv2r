@@ -4,9 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
-import { Plus, Workflow, Settings2, Copy, Trash2 } from 'lucide-react'
+import { Plus, Workflow, Settings2, Copy, Trash2, TrendingUp } from 'lucide-react'
 import { AutomationBuilder } from './automation/AutomationBuilder'
+import { PerformanceDashboard } from './automation/PerformanceDashboard'
 import { useAuditStore } from '@/stores/audit'
+import { MOCK_AUTOMATION_FLOWS } from '@/lib/mock-data'
 import {
   Dialog,
   DialogContent,
@@ -17,39 +19,10 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
-const INITIAL_FLOWS: Flow[] = [
-  {
-    id: 'f1',
-    name: 'Boas-vindas Hub Social',
-    isActive: true,
-    triggerType: 'social_message',
-    rootId: 'n1',
-    nodes: {
-      n1: {
-        id: 'n1',
-        type: 'trigger',
-        title: 'Nova Mensagem',
-        config: { triggerType: 'social_message' },
-        nextId: 'n2',
-      },
-      n2: {
-        id: 'n2',
-        type: 'message',
-        title: 'Resposta Automática',
-        config: {
-          channel: 'instagram',
-          content:
-            'Olá {{nome_do_paciente}}! Agradecemos o contato. Nossa equipe responderá em breve.',
-        },
-        nextId: null,
-      },
-    },
-  },
-]
-
 export function Automation360Settings() {
-  const [flows, setFlows] = useState<Flow[]>(INITIAL_FLOWS)
+  const [flows, setFlows] = useState<Flow[]>(MOCK_AUTOMATION_FLOWS)
   const [editingFlowId, setEditingFlowId] = useState<string | null>(null)
+  const [dashboardOpenId, setDashboardOpenId] = useState<string | null>(null)
   const [isNewDialogOpen, setIsNewDialogOpen] = useState(false)
   const [newFlowName, setNewFlowName] = useState('')
   const { addLog } = useAuditStore()
@@ -125,14 +98,13 @@ export function Automation360Settings() {
   return (
     <Card className="animate-fade-in border-none shadow-none bg-transparent">
       <CardHeader className="px-0 pt-0">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:flex-wrap gap-4">
           <div>
             <CardTitle className="text-2xl flex items-center gap-2">
               <Workflow className="w-6 h-6 text-primary" /> Automações 360
             </CardTitle>
             <CardDescription>
-              Crie fluxos visuais para interagir automaticamente com pacientes via WhatsApp,
-              Instagram e Facebook.
+              Crie fluxos visuais e realize Testes A/B para interagir automaticamente com pacientes.
             </CardDescription>
           </div>
           <Button onClick={() => setIsNewDialogOpen(true)}>
@@ -142,20 +114,20 @@ export function Automation360Settings() {
       </CardHeader>
       <CardContent className="px-0 space-y-4">
         {flows.length === 0 && (
-          <div className="text-center p-12 border-2 border-dashed rounded-xl text-muted-foreground bg-muted/10">
+          <div className="text-center p-12 border-2 border-dashed rounded-xl bg-muted/10">
             <Workflow className="w-12 h-12 mx-auto mb-4 opacity-50" />
             <h3 className="font-semibold text-lg text-foreground mb-2">Nenhum fluxo criado</h3>
-            <p className="max-w-sm mx-auto mb-6">
+            <p className="max-w-sm mx-auto mb-6 text-muted-foreground">
               Comece automatizando lembretes de consulta ou respostas rápidas.
             </p>
             <Button onClick={() => setIsNewDialogOpen(true)}>Criar meu primeiro fluxo</Button>
           </div>
         )}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 auto-rows-max">
           {flows.map((flow) => (
             <Card
               key={flow.id}
-              className={`hover:shadow-md transition-shadow ${flow.isActive ? 'border-primary/30' : 'opacity-80'}`}
+              className={`transition-all duration-300 hover:shadow-md ${flow.isActive ? 'border-primary/30' : 'opacity-80'} ${dashboardOpenId === flow.id ? 'md:col-span-2 lg:col-span-3 row-span-2 ring-1 ring-primary/20' : ''}`}
             >
               <CardContent className="p-5 flex flex-col h-full">
                 <div className="flex justify-between items-start mb-4">
@@ -175,14 +147,30 @@ export function Automation360Settings() {
                   <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-1 rounded">
                     {Object.keys(flow.nodes).length} Blocos
                   </span>
+                  {flow.metrics?.abTest && (
+                    <Badge
+                      variant="outline"
+                      className="border-purple-300 text-purple-700 bg-purple-50"
+                    >
+                      A/B Test
+                    </Badge>
+                  )}
                 </div>
-                <div className="mt-auto flex items-center gap-2">
+
+                <div className="mt-auto flex flex-wrap items-center gap-2">
                   <Button
                     variant="outline"
-                    className="flex-1"
+                    className="flex-1 min-w-[120px]"
                     onClick={() => setEditingFlowId(flow.id)}
                   >
                     <Settings2 className="w-4 h-4 mr-2" /> Editar
+                  </Button>
+                  <Button
+                    variant={dashboardOpenId === flow.id ? 'default' : 'outline'}
+                    className="flex-1 min-w-[140px]"
+                    onClick={() => setDashboardOpenId(dashboardOpenId === flow.id ? null : flow.id)}
+                  >
+                    <TrendingUp className="w-4 h-4 mr-2" /> Desempenho
                   </Button>
                   <Button variant="outline" size="icon" onClick={() => duplicateFlow(flow.id)}>
                     <Copy className="w-4 h-4" />
@@ -190,12 +178,18 @@ export function Automation360Settings() {
                   <Button
                     variant="outline"
                     size="icon"
-                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    className="text-destructive hover:bg-destructive/10"
                     onClick={() => deleteFlow(flow.id)}
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
+
+                {dashboardOpenId === flow.id && (
+                  <div className="mt-6 pt-6 border-t animate-fade-in-down w-full">
+                    <PerformanceDashboard flow={flow} />
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}
@@ -207,10 +201,9 @@ export function Automation360Settings() {
           <DialogHeader>
             <DialogTitle>Novo Fluxo de Automação</DialogTitle>
           </DialogHeader>
-          <div className="py-4">
+          <div className="py-4 space-y-2">
             <Label>Nome do Fluxo</Label>
             <Input
-              className="mt-2"
               placeholder="Ex: Confirmação 24h WhatsApp"
               value={newFlowName}
               onChange={(e) => setNewFlowName(e.target.value)}
@@ -221,7 +214,7 @@ export function Automation360Settings() {
               Cancelar
             </Button>
             <Button onClick={handleCreateFlow} disabled={!newFlowName}>
-              Continuar para o Construtor
+              Continuar
             </Button>
           </DialogFooter>
         </DialogContent>
