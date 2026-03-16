@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
-import { Plus, Workflow, Settings2 } from 'lucide-react'
+import { Plus, Workflow, Settings2, Copy, Trash2 } from 'lucide-react'
 import { AutomationBuilder } from './automation/AutomationBuilder'
 import { useAuditStore } from '@/stores/audit'
 import {
@@ -28,7 +28,7 @@ const INITIAL_FLOWS: Flow[] = [
       n1: {
         id: 'n1',
         type: 'trigger',
-        title: 'Início de Conversa',
+        title: 'Nova Mensagem',
         config: { triggerType: 'social_message' },
         nextId: 'n2',
       },
@@ -38,7 +38,8 @@ const INITIAL_FLOWS: Flow[] = [
         title: 'Resposta Automática',
         config: {
           channel: 'instagram',
-          content: 'Olá! Agradecemos o contato. Nossa equipe responderá em breve.',
+          content:
+            'Olá {{nome_do_paciente}}! Agradecemos o contato. Nossa equipe responderá em breve.',
         },
         nextId: null,
       },
@@ -85,6 +86,24 @@ export function Automation360Settings() {
     addLog('Fluxo Atualizado e Publicado', `Automação 360: ${updatedFlow.name}`)
   }
 
+  const duplicateFlow = (id: string) => {
+    const flow = flows.find((f) => f.id === id)
+    if (!flow) return
+    const newFlow = {
+      ...flow,
+      id: Math.random().toString(36).substring(7),
+      name: `${flow.name} (Cópia)`,
+      isActive: false,
+    }
+    setFlows([...flows, newFlow])
+    addLog('Fluxo Duplicado', `Automação 360: ${newFlow.name}`)
+  }
+
+  const deleteFlow = (id: string) => {
+    setFlows(flows.filter((f) => f.id !== id))
+    addLog('Fluxo Excluído', `Automação 360`)
+  }
+
   const toggleFlow = (id: string, name: string, active: boolean) => {
     setFlows(flows.map((f) => (f.id === id ? { ...f, isActive: active } : f)))
     addLog(`Fluxo ${active ? 'Ativado' : 'Pausado'}`, `Automação 360: ${name}`)
@@ -127,12 +146,11 @@ export function Automation360Settings() {
             <Workflow className="w-12 h-12 mx-auto mb-4 opacity-50" />
             <h3 className="font-semibold text-lg text-foreground mb-2">Nenhum fluxo criado</h3>
             <p className="max-w-sm mx-auto mb-6">
-              Comece automatizando lembretes de consulta ou respostas rápidas do Instagram.
+              Comece automatizando lembretes de consulta ou respostas rápidas.
             </p>
             <Button onClick={() => setIsNewDialogOpen(true)}>Criar meu primeiro fluxo</Button>
           </div>
         )}
-
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {flows.map((flow) => (
             <Card
@@ -158,13 +176,24 @@ export function Automation360Settings() {
                     {Object.keys(flow.nodes).length} Blocos
                   </span>
                 </div>
-                <div className="mt-auto">
+                <div className="mt-auto flex items-center gap-2">
                   <Button
                     variant="outline"
-                    className="w-full"
+                    className="flex-1"
                     onClick={() => setEditingFlowId(flow.id)}
                   >
-                    <Settings2 className="w-4 h-4 mr-2" /> Editar Fluxo Visual
+                    <Settings2 className="w-4 h-4 mr-2" /> Editar
+                  </Button>
+                  <Button variant="outline" size="icon" onClick={() => duplicateFlow(flow.id)}>
+                    <Copy className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    onClick={() => deleteFlow(flow.id)}
+                  >
+                    <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
               </CardContent>

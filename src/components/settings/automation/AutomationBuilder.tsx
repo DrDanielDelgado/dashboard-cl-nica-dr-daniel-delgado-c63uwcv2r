@@ -4,7 +4,13 @@ import { Button } from '@/components/ui/button'
 import { FlowTree } from './FlowTree'
 import { AutomationConfigPanel } from './AutomationConfigPanel'
 import { Save, ArrowLeft, MessageSquare, Clock, GitBranch } from 'lucide-react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog'
 
 interface BuilderProps {
   flow: Flow
@@ -26,14 +32,14 @@ export function AutomationBuilder({ flow, onSave, onBack }: BuilderProps) {
     let title = 'Novo Bloco'
     if (type === 'message') title = 'Enviar Mensagem'
     if (type === 'template') title = 'Template WhatsApp'
-    if (type === 'delay') title = 'Aguardar'
-    if (type === 'condition') title = 'Condição'
+    if (type === 'delay') title = 'Aguardar (Delay)'
+    if (type === 'condition') title = 'Condição (If/Else)'
 
     const newNode: FlowNode = { id: newId, type, title, config: {} }
     const { parentId, branch } = addNodeContext
     const parent = nodes[parentId]
-
     const existingChildId = (parent as any)[branch]
+
     if (existingChildId) {
       if (type === 'condition') {
         newNode.nextTrueId = existingChildId
@@ -66,7 +72,7 @@ export function AutomationBuilder({ flow, onSave, onBack }: BuilderProps) {
   }
 
   return (
-    <div className="flex flex-col h-[75vh] min-h-[600px] border rounded-xl overflow-hidden bg-muted/10 animate-fade-in">
+    <div className="flex flex-col h-[80vh] min-h-[600px] border rounded-xl overflow-hidden bg-dot-pattern animate-fade-in relative shadow-inner">
       <div className="flex items-center justify-between p-4 border-b bg-background shadow-sm z-20">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" onClick={onBack}>
@@ -74,16 +80,16 @@ export function AutomationBuilder({ flow, onSave, onBack }: BuilderProps) {
           </Button>
           <div>
             <h3 className="font-bold text-lg leading-none">{flow.name}</h3>
-            <span className="text-xs text-muted-foreground">Construtor Visual 360</span>
+            <span className="text-xs text-muted-foreground">Construtor Visual de Automação</span>
           </div>
         </div>
         <Button onClick={() => onSave({ ...flow, nodes })}>
-          <Save className="w-4 h-4 mr-2" /> Publicar Fluxo
+          <Save className="w-4 h-4 mr-2" /> Salvar Fluxo
         </Button>
       </div>
 
-      <div className="flex-1 overflow-auto p-8 relative">
-        <div className="flex justify-center min-w-max pb-32 pt-8">
+      <div className="flex-1 overflow-auto p-8 relative bg-muted/5">
+        <div className="flex justify-center min-w-max pb-48 pt-8">
           <FlowTree
             nodeId={flow.rootId}
             nodes={nodes}
@@ -96,42 +102,41 @@ export function AutomationBuilder({ flow, onSave, onBack }: BuilderProps) {
       </div>
 
       <Dialog open={!!addNodeContext} onOpenChange={(o) => !o && setAddNodeContext(null)}>
-        <DialogContent className="sm:max-w-[400px]">
+        <DialogContent className="sm:max-w-[450px]">
           <DialogHeader>
-            <DialogTitle>Adicionar Bloco</DialogTitle>
+            <DialogTitle>Adicionar Novo Bloco</DialogTitle>
+            <DialogDescription>
+              Escolha o tipo de ação ou lógica para inserir no fluxo.
+            </DialogDescription>
           </DialogHeader>
-          <div className="grid grid-cols-2 gap-3 py-4">
+          <div className="grid grid-cols-2 gap-4 py-4">
             <Button
               variant="outline"
-              className="h-20 flex flex-col gap-2"
+              className="h-24 flex flex-col gap-2 border-blue-200 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all"
               onClick={() => handleAddBlock('message')}
             >
-              <MessageSquare className="w-6 h-6 text-blue-500" />
-              Mensagem
+              <MessageSquare className="w-6 h-6 text-blue-500" /> Mensagem
             </Button>
             <Button
               variant="outline"
-              className="h-20 flex flex-col gap-2"
+              className="h-24 flex flex-col gap-2 border-blue-200 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all"
               onClick={() => handleAddBlock('template')}
             >
-              <MessageSquare className="w-6 h-6 text-green-500" />
-              Template (WhatsApp)
+              <MessageSquare className="w-6 h-6 text-blue-600" /> Template WhatsApp
             </Button>
             <Button
               variant="outline"
-              className="h-20 flex flex-col gap-2"
+              className="h-24 flex flex-col gap-2 border-orange-200 hover:border-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-all"
               onClick={() => handleAddBlock('delay')}
             >
-              <Clock className="w-6 h-6 text-orange-500" />
-              Aguardar
+              <Clock className="w-6 h-6 text-orange-500" /> Aguardar (Delay)
             </Button>
             <Button
               variant="outline"
-              className="h-20 flex flex-col gap-2"
+              className="h-24 flex flex-col gap-2 border-amber-200 hover:border-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-all"
               onClick={() => handleAddBlock('condition')}
             >
-              <GitBranch className="w-6 h-6 text-purple-500" />
-              Condição (Filtro)
+              <GitBranch className="w-6 h-6 text-amber-500" /> Condição (If/Else)
             </Button>
           </div>
         </DialogContent>
