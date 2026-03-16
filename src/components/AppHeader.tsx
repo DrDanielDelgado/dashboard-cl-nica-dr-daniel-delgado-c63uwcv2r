@@ -12,54 +12,74 @@ import { useAppStore } from '@/stores/app'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
+import brandLogo from '@/assets/captura-de-tela-2026-03-15-as-21.39.36-d4190.png'
 
 export function AppHeader() {
   const { location, setLocation, role } = useAppStore()
 
   return (
-    <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-4 border-b bg-background/80 px-6 backdrop-blur-md">
-      <SidebarTrigger className="md:hidden" />
+    <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-4 border-b bg-background/95 px-6 backdrop-blur-md shadow-sm">
+      <div className="flex items-center gap-4 md:hidden">
+        <SidebarTrigger />
+        <img src={brandLogo} alt="Dr. Daniel Delgado" className="h-8 w-auto object-contain" />
+      </div>
 
-      <div className="flex flex-1 items-center gap-4 md:gap-8">
-        <div className="flex items-center gap-2 max-w-[200px] w-full">
-          <MapPin className="h-5 w-5 text-muted-foreground hidden sm:block" />
+      {/* Spacer for desktop to align with sidebar correctly if needed, otherwise hidden */}
+      <SidebarTrigger className="hidden md:flex" />
+
+      <div className="flex flex-1 items-center gap-4 md:gap-8 ml-auto">
+        <div className="flex items-center gap-2 max-w-[220px] w-full ml-auto md:ml-0">
+          <MapPin className="h-5 w-5 text-brand-red hidden sm:block" />
           <Select value={location} onValueChange={(val: any) => setLocation(val)}>
-            <SelectTrigger className="w-full bg-background border-none shadow-none font-semibold text-primary">
+            <SelectTrigger className="w-full bg-muted/50 border-none shadow-none font-semibold text-brand-blue hover:bg-muted focus:ring-brand-blue/20">
               <SelectValue placeholder="Selecione a Unidade" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="Juiz de Fora">Juiz de Fora</SelectItem>
-              <SelectItem value="Leopoldina">Leopoldina</SelectItem>
-              <SelectItem value="Além Paraíba">Além Paraíba</SelectItem>
+              <SelectItem value="Juiz de Fora" className="font-medium">
+                Juiz de Fora
+              </SelectItem>
+              <SelectItem value="Leopoldina" className="font-medium">
+                Leopoldina
+              </SelectItem>
+              <SelectItem value="Além Paraíba" className="font-medium">
+                Além Paraíba
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <div className="flex-1 max-w-xl relative hidden md:block">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
-            placeholder="Buscar pacientes, agendamentos..."
-            className="w-full bg-muted/50 pl-9 rounded-full border-none focus-visible:ring-primary/50"
+            placeholder="Buscar pacientes, prontuários, agendamentos..."
+            className="w-full bg-muted/40 pl-10 rounded-full border-none focus-visible:ring-brand-blue/30 focus-visible:bg-white transition-colors"
           />
         </div>
       </div>
 
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-5 w-5 text-muted-foreground" />
-          <span className="absolute top-1 right-1 flex h-2 w-2 rounded-full bg-destructive animate-pulse-soft"></span>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="relative text-slate-500 hover:text-brand-blue hover:bg-brand-blue/5"
+        >
+          <Bell className="h-5 w-5" />
+          <span className="absolute top-2 right-2 flex h-2 w-2 rounded-full bg-brand-red ring-2 ring-background"></span>
         </Button>
         <div className="hidden sm:flex items-center gap-3 border-l pl-4">
           <div className="text-right">
-            <p className="text-sm font-medium leading-none">Dr. Daniel Delgado</p>
-            <Badge variant="secondary" className="mt-1 text-[10px] uppercase">
+            <p className="text-sm font-semibold text-brand-blue leading-none">Dr. Daniel Delgado</p>
+            <Badge
+              variant="outline"
+              className="mt-1.5 text-[10px] uppercase font-bold text-brand-red border-brand-red/20 bg-brand-red/5"
+            >
               {role}
             </Badge>
           </div>
-          <Avatar>
+          <Avatar className="border-2 border-brand-blue/10">
             <AvatarImage src="https://img.usecurling.com/ppl/thumbnail?gender=male&seed=4" />
-            <AvatarFallback>DD</AvatarFallback>
+            <AvatarFallback className="bg-brand-blue text-white font-bold">DD</AvatarFallback>
           </Avatar>
         </div>
       </div>

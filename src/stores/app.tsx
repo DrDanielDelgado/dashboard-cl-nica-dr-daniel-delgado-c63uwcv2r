@@ -21,17 +21,20 @@ const AppContext = createContext<AppState | undefined>(undefined)
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useState<Location>('Juiz de Fora')
+  // For validation of Redirect Logic, change this to test
   const [role, setRole] = useState<Role>('Gerenciador')
 
-  return (
-    <AppContext.Provider value={{ location, setLocation, role, setRole }}>
-      {children}
-    </AppContext.Provider>
+  return React.createElement(
+    AppContext.Provider,
+    { value: { location, setLocation, role, setRole } },
+    children,
   )
 }
 
 export function useAppStore() {
   const context = useContext(AppContext)
-  if (!context) throw new Error('useAppStore must be used within AppProvider')
+  if (context === undefined) {
+    throw new Error('useAppStore must be used within an AppProvider')
+  }
   return context
 }

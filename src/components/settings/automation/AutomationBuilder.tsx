@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowLeft, Play, LayoutGrid } from 'lucide-react'
+import { ArrowLeft, Play, Workflow } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { FlowTree } from './FlowTree'
 import { AutomationConfigPanel } from './AutomationConfigPanel'
@@ -7,23 +7,31 @@ import { FlowNode } from '@/types/automation'
 
 const MOCK_FLOW: FlowNode[] = [
   {
-    id: '1',
+    id: 'n1',
     type: 'trigger',
-    title: 'Novo Paciente Cadastrado',
-    description: 'Inicia quando um paciente é adicionado ao sistema',
+    title: 'Lembrete de Consulta',
+    description: 'Inicia 24 horas antes da data agendada no prontuário',
     status: 'active',
     children: [
       {
-        id: '2',
-        type: 'delay',
-        title: 'Aguardar 1 dia',
-        description: 'Espera 24 horas após o cadastro',
+        id: 'n2',
+        type: 'ab_test',
+        title: 'Teste A/B de Abordagem',
+        description: 'Distribui pacientes para avaliar melhor taxa de confirmação',
         children: [
           {
-            id: '3',
+            id: 'n3',
             type: 'action',
-            title: 'Enviar Mensagem de Boas-vindas',
-            description: 'Envia WhatsApp com instruções da clínica',
+            title: 'Mensagem Formal (A)',
+            description: 'Olá {{nome}}. Confirmamos sua consulta com o Dr. Daniel...',
+            config: { variant: 'A' },
+          },
+          {
+            id: 'n4',
+            type: 'action',
+            title: 'Mensagem Casual (B)',
+            description: 'Oi {{nome}}! Passando pra lembrar da nossa consulta...',
+            config: { variant: 'B' },
           },
         ],
       },
@@ -37,7 +45,6 @@ export function AutomationBuilder() {
 
   const activeNode = activeNodeId ? findNode(nodes, activeNodeId) : null
 
-  // Helper to deep find a node
   function findNode(nodesToSearch: FlowNode[], id: string): FlowNode | null {
     for (const node of nodesToSearch) {
       if (node.id === id) return node
@@ -50,25 +57,26 @@ export function AutomationBuilder() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] flex-col bg-slate-50 overflow-hidden rounded-xl border border-slate-200 shadow-sm">
+    <div className="flex h-[calc(100vh-14rem)] min-h-[600px] flex-col bg-slate-50/50 overflow-hidden rounded-xl border border-slate-200 shadow-elevation">
       {/* Topbar */}
-      <div className="flex h-14 items-center justify-between border-b bg-white px-4">
+      <div className="flex h-14 shrink-0 items-center justify-between border-b bg-white px-4">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" className="text-slate-500 hover:text-brand-blue">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-brand-red text-white">
-              <LayoutGrid className="h-4 w-4" />
+          <div className="flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-red text-white shadow-sm">
+              <Workflow className="h-4 w-4" />
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-slate-900">Boas-vindas Paciente</h2>
-              <div className="flex items-center gap-1.5">
+              <h2 className="text-sm font-semibold text-slate-900 leading-none">
+                Confirmação de Consulta (Teste A/B)
+              </h2>
+              <div className="mt-1 flex items-center gap-1.5">
                 <span className="relative flex h-2 w-2">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500"></span>
                 </span>
-                <span className="text-xs text-slate-500">Ativo</span>
+                <span className="text-[10px] font-medium uppercase text-slate-500 tracking-wider">
+                  Publicado
+                </span>
               </div>
             </div>
           </div>
@@ -76,12 +84,12 @@ export function AutomationBuilder() {
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
-            className="text-brand-blue border-brand-blue/30 hover:bg-brand-blue/5"
+            className="text-brand-blue border-brand-blue/20 hover:bg-brand-blue/5 hover:text-brand-blue"
           >
-            Testar Fluxo
+            Modo de Teste
           </Button>
-          <Button className="bg-brand-red hover:bg-brand-red/90 text-white shadow-sm">
-            <Play className="mr-2 h-4 w-4" />
+          <Button className="bg-brand-red hover:bg-brand-red/90 text-white shadow-md transition-transform active:scale-95">
+            <Play className="mr-2 h-4 w-4 fill-current" />
             Publicar Alterações
           </Button>
         </div>
@@ -90,7 +98,7 @@ export function AutomationBuilder() {
       {/* Main Canvas Area */}
       <div className="flex flex-1 overflow-hidden">
         {/* Canvas */}
-        <div className="relative flex-1 overflow-auto bg-grid-pattern">
+        <div className="relative flex-1 overflow-auto bg-grid-pattern cursor-grab active:cursor-grabbing">
           <FlowTree nodes={nodes} activeNodeId={activeNodeId} onSelectNode={setActiveNodeId} />
         </div>
 
@@ -99,7 +107,10 @@ export function AutomationBuilder() {
           <AutomationConfigPanel
             node={activeNode}
             onClose={() => setActiveNodeId(null)}
-            onSave={() => setActiveNodeId(null)}
+            onSave={(updated) => {
+              // Mock save interaction
+              setActiveNodeId(null)
+            }}
           />
         )}
       </div>

@@ -7,7 +7,7 @@ import {
   Package,
   Settings,
   Users,
-  Workflow,
+  Megaphone,
 } from 'lucide-react'
 
 import {
@@ -27,12 +27,12 @@ import brandLogo from '@/assets/captura-de-tela-2026-03-15-as-21.39.36-d4190.png
 
 const mainNavItems = [
   { title: 'Dashboard', icon: LayoutDashboard, url: '/' },
+  { title: 'Atendimento', icon: Users, url: '/atendimento' },
   { title: 'Agenda', icon: Calendar, url: '/agenda' },
-  { title: 'Pacientes', icon: Users, url: '/pacientes' },
   { title: 'Prontuários', icon: Activity, url: '/prontuarios' },
   { title: 'Financeiro', icon: CreditCard, url: '/financeiro' },
   { title: 'Estoque', icon: Package, url: '/estoque' },
-  { title: 'Automações', icon: Workflow, url: '/automations' },
+  { title: 'Automações & MKT', icon: Megaphone, url: '/automations' },
 ]
 
 const bottomNavItems = [{ title: 'Configurações', icon: Settings, url: '/settings' }]
@@ -43,23 +43,31 @@ export function AppSidebar() {
   const isCollapsed = state === 'collapsed'
 
   return (
-    <Sidebar className="border-r border-sidebar-border shadow-md">
-      <SidebarHeader className="border-b border-sidebar-border bg-sidebar-background py-5">
-        <div
-          className={cn(
-            'flex items-center justify-center rounded-lg bg-white shadow-sm transition-all duration-300',
-            isCollapsed ? 'mx-auto h-10 w-10 p-1' : 'mx-4 h-20 w-auto p-3',
-          )}
-        >
-          <img src={brandLogo} alt="Dr. Daniel Delgado" className="h-full w-full object-contain" />
-        </div>
+    <Sidebar className="border-r border-sidebar-border shadow-xl z-50">
+      <SidebarHeader className="border-b border-sidebar-border bg-sidebar-background py-6">
+        <Link to="/">
+          <div
+            className={cn(
+              'flex items-center justify-center rounded-xl bg-white shadow-md transition-all duration-300 hover:shadow-lg',
+              isCollapsed ? 'mx-auto h-12 w-12 p-2' : 'mx-4 h-24 w-auto p-4',
+            )}
+          >
+            <img
+              src={brandLogo}
+              alt="Dr. Daniel Delgado"
+              className="h-full w-full object-contain drop-shadow-sm"
+            />
+          </div>
+        </Link>
       </SidebarHeader>
 
       <SidebarContent className="bg-sidebar-background">
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-sidebar-foreground/70">Principal</SidebarGroupLabel>
+        <SidebarGroup className="pt-6">
+          <SidebarGroupLabel className="text-sidebar-foreground/60 font-semibold tracking-wider text-xs uppercase mb-2">
+            Gestão Integrada
+          </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="gap-2">
               {mainNavItems.map((item) => {
                 const isActive =
                   location.pathname === item.url ||
@@ -71,15 +79,22 @@ export function AppSidebar() {
                       isActive={isActive}
                       tooltip={item.title}
                       className={cn(
-                        'transition-colors duration-200',
+                        'transition-all duration-200 rounded-lg py-5',
                         isActive
-                          ? 'bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90'
-                          : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+                          ? 'bg-sidebar-primary text-sidebar-primary-foreground font-semibold shadow-md'
+                          : 'text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-white',
                       )}
                     >
-                      <Link to={item.url}>
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.title}</span>
+                      <Link to={item.url} className="flex items-center gap-3">
+                        <item.icon
+                          className={cn(
+                            'h-5 w-5',
+                            isActive
+                              ? 'text-white'
+                              : 'text-sidebar-foreground/70 group-hover:text-white',
+                          )}
+                        />
+                        <span className="text-[15px]">{item.title}</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -89,7 +104,7 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarGroup className="mt-auto">
+        <SidebarGroup className="mt-auto pb-4">
           <SidebarGroupContent>
             <SidebarMenu>
               {bottomNavItems.map((item) => (
@@ -97,11 +112,11 @@ export function AppSidebar() {
                   <SidebarMenuButton
                     asChild
                     tooltip={item.title}
-                    className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                    className="text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-white py-5 rounded-lg"
                   >
-                    <Link to={item.url}>
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
+                    <Link to={item.url} className="flex items-center gap-3">
+                      <item.icon className="h-5 w-5 text-sidebar-foreground/70 group-hover:text-white" />
+                      <span className="text-[15px]">{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
