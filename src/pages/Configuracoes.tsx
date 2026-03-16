@@ -8,6 +8,7 @@ import {
   Users,
   Shield,
   Workflow,
+  Plug,
 } from 'lucide-react'
 import { DomainSettings } from '@/components/settings/DomainSettings'
 import { NFeSettings } from '@/components/settings/NFeSettings'
@@ -17,6 +18,7 @@ import { HiDoctorSettings } from '@/components/settings/HiDoctorSettings'
 import { UsersSettings } from '@/components/settings/UsersSettings'
 import { AuditLogsSettings } from '@/components/settings/AuditLogsSettings'
 import { IntegrationsSettings } from '@/components/settings/IntegrationsSettings'
+import { Automation360Settings } from '@/components/settings/Automation360Settings'
 import { useAppStore } from '@/stores/app'
 import { Navigate } from 'react-router-dom'
 
@@ -34,7 +36,7 @@ export default function Configuracoes() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Configurações de Produção</h1>
         <p className="text-muted-foreground">
-          Gerencie domínios, chaves de API, permissões de usuários e trilhas de auditoria.
+          Gerencie domínios, integrações, automações visuais e trilhas de auditoria.
         </p>
       </div>
 
@@ -46,7 +48,10 @@ export default function Configuracoes() {
                 <Users className="h-4 w-4" /> Usuários e Permissões
               </TabsTrigger>
               <TabsTrigger value="integracoes" className="gap-2 py-2">
-                <Workflow className="h-4 w-4" /> Integrações e Automação
+                <Plug className="h-4 w-4" /> Integrações (APIs)
+              </TabsTrigger>
+              <TabsTrigger value="automacoes" className="gap-2 py-2">
+                <Workflow className="h-4 w-4" /> Automações 360
               </TabsTrigger>
               <TabsTrigger value="auditoria" className="gap-2 py-2">
                 <Shield className="h-4 w-4" /> Auditoria
@@ -77,6 +82,9 @@ export default function Configuracoes() {
             </TabsContent>
             <TabsContent value="integracoes" className="outline-none">
               <IntegrationsSettings />
+            </TabsContent>
+            <TabsContent value="automacoes" className="outline-none">
+              <Automation360Settings />
             </TabsContent>
             <TabsContent value="auditoria" className="outline-none">
               <AuditLogsSettings />

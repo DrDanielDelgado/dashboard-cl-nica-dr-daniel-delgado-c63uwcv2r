@@ -23,8 +23,8 @@ import {
   XCircle,
   RefreshCw,
   Save,
-  Workflow,
   AlertCircle,
+  Plug,
 } from 'lucide-react'
 
 export function IntegrationsSettings() {
@@ -38,17 +38,6 @@ export function IntegrationsSettings() {
   const [waAutoConfirm, setWaAutoConfirm] = useState(false)
 
   const [metaConnected, setMetaConnected] = useState(false)
-
-  const [automations, setAutomations] = useState([
-    {
-      id: '1',
-      name: 'Mensagem de Boas-vindas',
-      trigger: 'Novo Paciente Cadastrado',
-      active: false,
-    },
-    { id: '2', name: 'Lembrete 24h', trigger: '24h antes da consulta', active: true },
-    { id: '3', name: 'Feedback Pós-consulta', trigger: '1h após a consulta', active: false },
-  ])
 
   const handleTestWa = () => {
     setWaStatus('testing')
@@ -83,19 +72,6 @@ export function IntegrationsSettings() {
     })
   }
 
-  const toggleAutomation = (id: string, name: string) => {
-    setAutomations((prev) =>
-      prev.map((a) => {
-        if (a.id === id) {
-          const newState = !a.active
-          addLog(`Automação ${newState ? 'Ativada' : 'Desativada'}`, `Regra: ${name}`)
-          return { ...a, active: newState }
-        }
-        return a
-      }),
-    )
-  }
-
   const getBadge = (status: 'disconnected' | 'testing' | 'connected' | 'error') => {
     if (status === 'connected')
       return (
@@ -127,7 +103,6 @@ export function IntegrationsSettings() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* WhatsApp Integration Card */}
       <Card>
         <CardHeader className="flex flex-row items-start justify-between pb-4">
           <div className="space-y-1">
@@ -135,7 +110,7 @@ export function IntegrationsSettings() {
               <MessageSquare className="w-5 h-5 text-green-500" /> WhatsApp Business API
             </CardTitle>
             <CardDescription>
-              Gerencie credenciais e dispare lembretes para pacientes automaticamente.
+              Gerencie credenciais para habilitar o envio de mensagens e automações via WhatsApp.
             </CardDescription>
           </div>
           {getBadge(waStatus)}
@@ -173,10 +148,9 @@ export function IntegrationsSettings() {
 
           <div className="flex items-center justify-between border rounded-lg p-4 bg-muted/30">
             <div className="space-y-0.5 pr-4">
-              <Label className="text-base">Envio Automático de Confirmações</Label>
+              <Label className="text-base">Permitir Envios Automáticos</Label>
               <p className="text-sm text-muted-foreground">
-                Dispara mensagens automáticas aos pacientes pedindo confirmação de presença na
-                agenda.
+                Habilita a conta do WhatsApp para ser utilizada pelas Automações 360 do sistema.
               </p>
             </div>
             <Switch
@@ -184,7 +158,7 @@ export function IntegrationsSettings() {
               onCheckedChange={(val) => {
                 setWaAutoConfirm(val)
                 addLog(
-                  `Confirmações automáticas ${val ? 'ativadas' : 'desativadas'}`,
+                  `Permissão de automações WhatsApp ${val ? 'ativada' : 'desativada'}`,
                   'Integrações - WhatsApp',
                 )
               }}
@@ -202,7 +176,6 @@ export function IntegrationsSettings() {
         </CardFooter>
       </Card>
 
-      {/* Meta Suite Integration Card */}
       <Card>
         <CardHeader className="flex flex-row items-start justify-between pb-4">
           <div className="space-y-1">
@@ -231,9 +204,11 @@ export function IntegrationsSettings() {
               <Share2 className="w-10 h-10 text-muted-foreground mb-4 opacity-50" />
               <p className="text-sm text-muted-foreground text-center max-w-sm mb-4">
                 Nenhuma conta vinculada atualmente. Conecte sua página do Facebook e perfil do
-                Instagram para habilitar os recursos avançados de Hub Social.
+                Instagram para habilitar os recursos de Automação 360 para essas redes.
               </p>
-              <Button onClick={handleConnectMeta}>Conectar Conta Meta</Button>
+              <Button onClick={handleConnectMeta}>
+                <Plug className="w-4 h-4 mr-2" /> Conectar Conta Meta
+              </Button>
             </div>
           ) : (
             <div className="grid md:grid-cols-2 gap-4 animate-fade-in">
@@ -257,49 +232,6 @@ export function IntegrationsSettings() {
               </div>
             </div>
           )}
-        </CardContent>
-      </Card>
-
-      {/* Automation Workflow Builder */}
-      <Card>
-        <CardHeader className="pb-4">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Workflow className="w-5 h-5 text-primary" /> Construtor de Regras e Automações
-          </CardTitle>
-          <CardDescription>
-            Defina gatilhos operacionais e ative ou desative templates de comunicação automatizada.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {automations.map((auto) => (
-              <div
-                key={auto.id}
-                className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-lg border transition-all duration-300 gap-4 ${
-                  auto.active ? 'bg-card border-primary/30 shadow-sm' : 'bg-muted/30 opacity-70'
-                }`}
-              >
-                <div className="space-y-1">
-                  <p className="font-semibold text-sm">{auto.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    Gatilho: <span className="font-medium text-foreground">{auto.trigger}</span>
-                  </p>
-                </div>
-                <div className="flex items-center gap-4 shrink-0">
-                  <Badge
-                    variant={auto.active ? 'default' : 'secondary'}
-                    className={auto.active ? 'bg-success hover:bg-success/90 text-white' : ''}
-                  >
-                    {auto.active ? 'Ativado' : 'Inativo'}
-                  </Badge>
-                  <Switch
-                    checked={auto.active}
-                    onCheckedChange={() => toggleAutomation(auto.id, auto.name)}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
         </CardContent>
       </Card>
     </div>
