@@ -20,7 +20,7 @@ const INITIAL_USERS: User[] = [
   {
     id: '1',
     name: 'Dr. Daniel Delgado',
-    email: 'daniel@clinicaintegrada.com.br',
+    email: 'daniel@danieldelgadovascular.com.br',
     role: 'Administrador',
     status: 'active',
     permissions: { dashboard: true, records: true, appointments: true, sync: true, settings: true },
@@ -28,7 +28,7 @@ const INITIAL_USERS: User[] = [
   {
     id: '2',
     name: 'Ana Silva',
-    email: 'ana@clinicaintegrada.com.br',
+    email: 'ana@danieldelgadovascular.com.br',
     role: 'Gerente',
     status: 'active',
     permissions: { dashboard: true, records: true, appointments: true, sync: true, settings: true },
@@ -36,7 +36,7 @@ const INITIAL_USERS: User[] = [
   {
     id: '3',
     name: 'Carlos Médico',
-    email: 'carlos@clinicaintegrada.com.br',
+    email: 'carlos@danieldelgadovascular.com.br',
     role: 'Médico',
     status: 'inactive',
     permissions: {

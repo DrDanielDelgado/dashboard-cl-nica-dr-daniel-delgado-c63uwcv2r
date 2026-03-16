@@ -15,7 +15,7 @@ import { Info, Save } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 
 export function DomainSettings() {
-  const [domain, setDomain] = useState('app.clinicaintegrada.com.br')
+  const [domain, setDomain] = useState('danieldelgadovascular.com.br')
   const { toast } = useToast()
 
   const handleSave = () => {
@@ -48,7 +48,7 @@ export function DomainSettings() {
             id="domain"
             value={domain}
             onChange={(e) => setDomain(e.target.value)}
-            placeholder="ex: app.suaclinica.com.br"
+            placeholder="ex: danieldelgadovascular.com.br"
           />
         </div>
       </CardContent>
