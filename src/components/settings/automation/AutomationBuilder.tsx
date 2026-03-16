@@ -1,156 +1,108 @@
 import { useState } from 'react'
-import { Flow, FlowNode, NodeType } from '@/types/automation'
+import { ArrowLeft, Play, LayoutGrid } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { FlowTree } from './FlowTree'
 import { AutomationConfigPanel } from './AutomationConfigPanel'
-import { Save, ArrowLeft, MessageSquare, Clock, GitBranch, Shuffle } from 'lucide-react'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog'
+import { FlowNode } from '@/types/automation'
 
-interface BuilderProps {
-  flow: Flow
-  onSave: (f: Flow) => void
-  onBack: () => void
-}
+const MOCK_FLOW: FlowNode[] = [
+  {
+    id: '1',
+    type: 'trigger',
+    title: 'Novo Paciente Cadastrado',
+    description: 'Inicia quando um paciente é adicionado ao sistema',
+    status: 'active',
+    children: [
+      {
+        id: '2',
+        type: 'delay',
+        title: 'Aguardar 1 dia',
+        description: 'Espera 24 horas após o cadastro',
+        children: [
+          {
+            id: '3',
+            type: 'action',
+            title: 'Enviar Mensagem de Boas-vindas',
+            description: 'Envia WhatsApp com instruções da clínica',
+          },
+        ],
+      },
+    ],
+  },
+]
 
-export function AutomationBuilder({ flow, onSave, onBack }: BuilderProps) {
-  const [nodes, setNodes] = useState<Record<string, FlowNode>>(flow.nodes)
-  const [editingNodeId, setEditingNodeId] = useState<string | null>(null)
-  const [addNodeContext, setAddNodeContext] = useState<{ parentId: string; branch: string } | null>(
-    null,
-  )
+export function AutomationBuilder() {
+  const [activeNodeId, setActiveNodeId] = useState<string | null>(null)
+  const [nodes, setNodes] = useState<FlowNode[]>(MOCK_FLOW)
 
-  const handleAddBlock = (type: NodeType) => {
-    if (!addNodeContext) return
-    const newId = Math.random().toString(36).substring(7)
+  const activeNode = activeNodeId ? findNode(nodes, activeNodeId) : null
 
-    let title = 'Novo Bloco'
-    if (type === 'message') title = 'Enviar Mensagem'
-    if (type === 'template') title = 'Template WhatsApp'
-    if (type === 'delay') title = 'Aguardar (Delay)'
-    if (type === 'condition') title = 'Condição (If/Else)'
-    if (type === 'ab_test') title = 'Teste A/B'
-
-    const newNode: FlowNode = { id: newId, type, title, config: {} }
-    const { parentId, branch } = addNodeContext
-    const parent = nodes[parentId]
-    const existingChildId = (parent as any)[branch]
-
-    if (existingChildId) {
-      if (type === 'condition' || type === 'ab_test') {
-        newNode.nextTrueId = existingChildId
-      } else {
-        newNode.nextId = existingChildId
+  // Helper to deep find a node
+  function findNode(nodesToSearch: FlowNode[], id: string): FlowNode | null {
+    for (const node of nodesToSearch) {
+      if (node.id === id) return node
+      if (node.children) {
+        const found = findNode(node.children, id)
+        if (found) return found
       }
     }
-
-    setNodes((prev) => ({
-      ...prev,
-      [newId]: newNode,
-      [parentId]: { ...prev[parentId], [branch]: newId },
-    }))
-
-    setAddNodeContext(null)
-    setEditingNodeId(newId)
-  }
-
-  const handleDeleteNode = (id: string) => {
-    const newNodes = { ...nodes }
-    for (const key in newNodes) {
-      const n = newNodes[key]
-      if (n.nextId === id) n.nextId = null
-      if (n.nextTrueId === id) n.nextTrueId = null
-      if (n.nextFalseId === id) n.nextFalseId = null
-    }
-    delete newNodes[id]
-    setNodes(newNodes)
-    setEditingNodeId(null)
+    return null
   }
 
   return (
-    <div className="flex flex-col h-[80vh] min-h-[600px] border rounded-xl overflow-hidden bg-dot-pattern animate-fade-in relative shadow-inner">
-      <div className="flex items-center justify-between p-4 border-b bg-background shadow-sm z-20">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={onBack}>
-            <ArrowLeft className="w-5 h-5" />
+    <div className="flex h-[calc(100vh-4rem)] flex-col bg-slate-50 overflow-hidden rounded-xl border border-slate-200 shadow-sm">
+      {/* Topbar */}
+      <div className="flex h-14 items-center justify-between border-b bg-white px-4">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" className="text-slate-500 hover:text-brand-blue">
+            <ArrowLeft className="h-4 w-4" />
           </Button>
-          <div>
-            <h3 className="font-bold text-lg leading-none">{flow.name}</h3>
-            <span className="text-xs text-muted-foreground">Construtor Visual de Automação</span>
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-brand-red text-white">
+              <LayoutGrid className="h-4 w-4" />
+            </div>
+            <div>
+              <h2 className="text-sm font-semibold text-slate-900">Boas-vindas Paciente</h2>
+              <div className="flex items-center gap-1.5">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500"></span>
+                </span>
+                <span className="text-xs text-slate-500">Ativo</span>
+              </div>
+            </div>
           </div>
         </div>
-        <Button onClick={() => onSave({ ...flow, nodes })}>
-          <Save className="w-4 h-4 mr-2" /> Salvar Fluxo
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            className="text-brand-blue border-brand-blue/30 hover:bg-brand-blue/5"
+          >
+            Testar Fluxo
+          </Button>
+          <Button className="bg-brand-red hover:bg-brand-red/90 text-white shadow-sm">
+            <Play className="mr-2 h-4 w-4" />
+            Publicar Alterações
+          </Button>
+        </div>
       </div>
 
-      <div className="flex-1 overflow-auto p-8 relative bg-muted/5">
-        <div className="flex justify-center min-w-max pb-48 pt-8">
-          <FlowTree
-            nodeId={flow.rootId}
-            nodes={nodes}
-            onEdit={setEditingNodeId}
-            onAdd={(p, b) => setAddNodeContext({ parentId: p, branch: b })}
-            parentId="root"
-            branch="root"
+      {/* Main Canvas Area */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Canvas */}
+        <div className="relative flex-1 overflow-auto bg-grid-pattern">
+          <FlowTree nodes={nodes} activeNodeId={activeNodeId} onSelectNode={setActiveNodeId} />
+        </div>
+
+        {/* Config Panel Right Sidebar */}
+        {activeNodeId && (
+          <AutomationConfigPanel
+            node={activeNode}
+            onClose={() => setActiveNodeId(null)}
+            onSave={() => setActiveNodeId(null)}
           />
-        </div>
+        )}
       </div>
-
-      <Dialog open={!!addNodeContext} onOpenChange={(o) => !o && setAddNodeContext(null)}>
-        <DialogContent className="sm:max-w-[450px]">
-          <DialogHeader>
-            <DialogTitle>Adicionar Novo Bloco</DialogTitle>
-            <DialogDescription>
-              Escolha o tipo de ação ou lógica para inserir no fluxo.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid grid-cols-2 gap-4 py-4">
-            <Button
-              variant="outline"
-              className="h-24 flex flex-col gap-2 border-blue-200 hover:border-blue-500"
-              onClick={() => handleAddBlock('template')}
-            >
-              <MessageSquare className="w-6 h-6 text-blue-600" /> WhatsApp
-            </Button>
-            <Button
-              variant="outline"
-              className="h-24 flex flex-col gap-2 border-orange-200 hover:border-orange-500"
-              onClick={() => handleAddBlock('delay')}
-            >
-              <Clock className="w-6 h-6 text-orange-500" /> Aguardar
-            </Button>
-            <Button
-              variant="outline"
-              className="h-24 flex flex-col gap-2 border-amber-200 hover:border-amber-500"
-              onClick={() => handleAddBlock('condition')}
-            >
-              <GitBranch className="w-6 h-6 text-amber-500" /> Condição
-            </Button>
-            <Button
-              variant="outline"
-              className="h-24 flex flex-col gap-2 border-purple-200 hover:border-purple-500 hover:bg-purple-50"
-              onClick={() => handleAddBlock('ab_test')}
-            >
-              <Shuffle className="w-6 h-6 text-purple-500" /> Teste A/B
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {editingNodeId && nodes[editingNodeId] && (
-        <AutomationConfigPanel
-          node={nodes[editingNodeId]}
-          onClose={() => setEditingNodeId(null)}
-          onUpdate={(n) => setNodes((p) => ({ ...p, [n.id]: n }))}
-          onDelete={() => handleDeleteNode(editingNodeId)}
-        />
-      )}
     </div>
   )
 }

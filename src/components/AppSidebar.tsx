@@ -1,130 +1,115 @@
 import { Link, useLocation } from 'react-router-dom'
 import {
+  Activity,
+  Calendar,
+  CreditCard,
   LayoutDashboard,
-  CalendarDays,
-  CircleDollarSign,
   Package,
-  Users,
-  FileText,
-  FileBox,
-  Stethoscope,
   Settings,
-  Bot,
-  MessageSquareShare,
-  Headset,
+  Users,
+  Workflow,
 } from 'lucide-react'
+
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from '@/components/ui/sidebar'
-import { useAppStore } from '@/stores/app'
+import { cn } from '@/lib/utils'
+import brandLogo from '@/assets/captura-de-tela-2026-03-15-as-21.39.36-d4190.png'
+
+const mainNavItems = [
+  { title: 'Dashboard', icon: LayoutDashboard, url: '/' },
+  { title: 'Agenda', icon: Calendar, url: '/agenda' },
+  { title: 'Pacientes', icon: Users, url: '/pacientes' },
+  { title: 'Prontuários', icon: Activity, url: '/prontuarios' },
+  { title: 'Financeiro', icon: CreditCard, url: '/financeiro' },
+  { title: 'Estoque', icon: Package, url: '/estoque' },
+  { title: 'Automações', icon: Workflow, url: '/automations' },
+]
+
+const bottomNavItems = [{ title: 'Configurações', icon: Settings, url: '/settings' }]
 
 export function AppSidebar() {
   const location = useLocation()
-  const { role } = useAppStore()
-
-  const isSecretary = role === 'Secretária'
-
-  const navItems = [
-    {
-      title: isSecretary ? 'Recepção (Início)' : 'Dashboard',
-      icon: isSecretary ? Headset : LayoutDashboard,
-      url: isSecretary ? '/atendimento' : '/',
-      roles: ['all'],
-    },
-    { title: 'Agenda', icon: CalendarDays, url: '/agenda', roles: ['all'] },
-    {
-      title: 'Financeiro',
-      icon: CircleDollarSign,
-      url: '/financeiro',
-      roles: ['Administrador', 'Gerente', 'Gerenciador', 'Médico', 'Contador'],
-    },
-    {
-      title: 'Estoque',
-      icon: Package,
-      url: '/estoque',
-      roles: ['Administrador', 'Gerente', 'Gerenciador', 'Enfermeira', 'Médico'],
-    },
-    {
-      title: 'CRM & Social',
-      icon: Users,
-      url: '/crm',
-      roles: ['Administrador', 'Gerente', 'Gerenciador'],
-    },
-    {
-      title: 'Chatbot',
-      icon: MessageSquareShare,
-      url: '/chatbot',
-      roles: ['Administrador', 'Gerente', 'Gerenciador'],
-    },
-    {
-      title: 'Prontuários',
-      icon: Stethoscope,
-      url: '/prontuario',
-      roles: ['Administrador', 'Gerente', 'Gerenciador', 'Médico', 'Enfermeira'],
-    },
-    {
-      title: 'Automações',
-      icon: Bot,
-      url: '/automacoes',
-      roles: ['Administrador', 'Gerente', 'Gerenciador'],
-    },
-    {
-      title: 'Documentos',
-      icon: FileText,
-      url: '/documentos',
-      roles: ['Administrador', 'Gerente', 'Gerenciador', 'Médico'],
-    },
-    { title: 'Equipe', icon: FileBox, url: '/equipe', roles: ['all'] },
-    {
-      title: 'Configurações',
-      icon: Settings,
-      url: '/configuracoes',
-      roles: ['Administrador', 'Gerente', 'Gerenciador'],
-    },
-  ]
-
-  const filteredNav = navItems.filter(
-    (item) => item.roles.includes('all') || item.roles.includes(role),
-  )
+  const { state } = useSidebar()
+  const isCollapsed = state === 'collapsed'
 
   return (
-    <Sidebar variant="inset" className="border-r border-sidebar-border bg-sidebar">
-      <SidebarHeader className="h-16 flex items-center justify-center border-b px-4">
-        <div className="flex items-center gap-2 w-full px-2">
-          <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-            <Stethoscope className="h-5 w-5 text-white" />
-          </div>
-          <span className="font-bold text-lg text-sidebar-foreground truncate">
-            Dr. Daniel Delgado
-          </span>
+    <Sidebar className="border-r border-sidebar-border shadow-md">
+      <SidebarHeader className="border-b border-sidebar-border bg-sidebar-background py-5">
+        <div
+          className={cn(
+            'flex items-center justify-center rounded-lg bg-white shadow-sm transition-all duration-300',
+            isCollapsed ? 'mx-auto h-10 w-10 p-1' : 'mx-4 h-20 w-auto p-3',
+          )}
+        >
+          <img src={brandLogo} alt="Dr. Daniel Delgado" className="h-full w-full object-contain" />
         </div>
       </SidebarHeader>
-      <SidebarContent className="py-4">
-        <SidebarMenu>
-          {filteredNav.map((item) => {
-            const isActive = location.pathname === item.url
-            return (
-              <SidebarMenuItem key={item.title}>
-                <SidebarMenuButton asChild isActive={isActive} tooltip={item.title}>
-                  <Link to={item.url} className="flex items-center gap-3">
-                    <item.icon className="h-5 w-5" />
-                    <span>{item.title}</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            )
-          })}
-        </SidebarMenu>
+
+      <SidebarContent className="bg-sidebar-background">
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-sidebar-foreground/70">Principal</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {mainNavItems.map((item) => {
+                const isActive =
+                  location.pathname === item.url ||
+                  (item.url !== '/' && location.pathname.startsWith(item.url))
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive}
+                      tooltip={item.title}
+                      className={cn(
+                        'transition-colors duration-200',
+                        isActive
+                          ? 'bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90'
+                          : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+                      )}
+                    >
+                      <Link to={item.url}>
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup className="mt-auto">
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {bottomNavItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton
+                    asChild
+                    tooltip={item.title}
+                    className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                  >
+                    <Link to={item.url}>
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="p-4 border-t">
-        <div className="text-xs text-muted-foreground text-center w-full">Versão 1.0.1</div>
-      </SidebarFooter>
     </Sidebar>
   )
 }

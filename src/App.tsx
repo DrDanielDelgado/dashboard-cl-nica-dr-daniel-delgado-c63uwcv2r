@@ -1,59 +1,41 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import { Toaster } from '@/components/ui/toaster'
-import { Toaster as Sonner } from '@/components/ui/sonner'
-import { TooltipProvider } from '@/components/ui/tooltip'
-import { AppProvider } from '@/stores/app'
-import { AuditProvider } from '@/stores/audit'
-import { FinanceiroProvider } from '@/stores/financeiro'
-import { HiDoctorProvider } from '@/stores/hidoctor'
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { Layout } from '@/components/Layout'
+import { Toaster } from '@/components/ui/sonner'
+import Index from '@/pages/Index'
+import NotFound from '@/pages/NotFound'
+import { AutomationBuilder } from '@/components/settings/automation/AutomationBuilder'
 
-import Layout from './components/Layout'
-import NotFound from './pages/NotFound'
-import Index from './pages/Index'
-import Atendimento from './pages/Atendimento'
-import Agenda from './pages/Agenda'
-import Financeiro from './pages/Financeiro'
-import Estoque from './pages/Estoque'
-import CRM from './pages/CRM'
-import Chatbot from './pages/Chatbot'
-import Prontuario from './pages/Prontuario'
-import Automacoes from './pages/Automacoes'
-import Documentos from './pages/Documentos'
-import Equipe from './pages/Equipe'
-import Configuracoes from './pages/Configuracoes'
-
-const App = () => (
-  <AppProvider>
-    <AuditProvider>
-      <FinanceiroProvider>
-        <HiDoctorProvider>
-          <BrowserRouter future={{ v7_startTransition: false, v7_relativeSplatPath: false }}>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <Routes>
-                <Route element={<Layout />}>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/atendimento" element={<Atendimento />} />
-                  <Route path="/agenda" element={<Agenda />} />
-                  <Route path="/financeiro" element={<Financeiro />} />
-                  <Route path="/estoque" element={<Estoque />} />
-                  <Route path="/crm" element={<CRM />} />
-                  <Route path="/chatbot" element={<Chatbot />} />
-                  <Route path="/prontuario" element={<Prontuario />} />
-                  <Route path="/automacoes" element={<Automacoes />} />
-                  <Route path="/documentos" element={<Documentos />} />
-                  <Route path="/equipe" element={<Equipe />} />
-                  <Route path="/configuracoes" element={<Configuracoes />} />
-                </Route>
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </TooltipProvider>
-          </BrowserRouter>
-        </HiDoctorProvider>
-      </FinanceiroProvider>
-    </AuditProvider>
-  </AppProvider>
-)
-
-export default App
+export default function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route element={<Layout />}>
+          <Route path="/" element={<Index />} />
+          <Route
+            path="/automations"
+            element={
+              <div className="p-6">
+                <div className="mb-6">
+                  <h1 className="text-3xl font-bold tracking-tight text-brand-blue">Automações</h1>
+                  <p className="text-muted-foreground mt-1">
+                    Crie e gerencie fluxos de automação para sua clínica.
+                  </p>
+                </div>
+                <AutomationBuilder />
+              </div>
+            }
+          />
+          {/* Mock routes for demonstration */}
+          <Route path="/agenda" element={<div className="p-6">Agenda</div>} />
+          <Route path="/pacientes" element={<div className="p-6">Pacientes</div>} />
+          <Route path="/prontuarios" element={<div className="p-6">Prontuários</div>} />
+          <Route path="/financeiro" element={<div className="p-6">Financeiro</div>} />
+          <Route path="/estoque" element={<div className="p-6">Estoque</div>} />
+          <Route path="/settings" element={<div className="p-6">Configurações</div>} />
+          <Route path="*" element={<NotFound />} />
+        </Route>
+      </Routes>
+      <Toaster />
+    </Router>
+  )
+}
