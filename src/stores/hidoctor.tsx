@@ -52,7 +52,9 @@ export function HiDoctorProvider({ children }: { children: React.ReactNode }) {
       try {
         localStorage.setItem('@hidoctor_patients', JSON.stringify(realData))
         localStorage.setItem('@hidoctor_lastSync', time)
-      } catch (e) {}
+      } catch (e) {
+        // ignore localStorage errors
+      }
 
       setProgress(100)
 
