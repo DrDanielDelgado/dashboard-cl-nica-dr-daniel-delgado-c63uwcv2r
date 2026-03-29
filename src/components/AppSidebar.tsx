@@ -27,9 +27,9 @@ import brandLogo from '@/assets/captura-de-tela-2026-03-15-as-21.39.36-d4190.png
 
 const mainNavItems = [
   { title: 'Dashboard', icon: LayoutDashboard, url: '/' },
-  { title: 'Atendimento', icon: Users, url: '/atendimento' },
+  { title: 'Pipeline CRM', icon: Users, url: '/crm' },
   { title: 'Agenda', icon: Calendar, url: '/agenda' },
-  { title: 'Prontuário', icon: Activity, url: '/prontuario' },
+  { title: 'Prontuário 360', icon: Activity, url: '/prontuario' },
   { title: 'Financeiro', icon: CreditCard, url: '/financeiro' },
   { title: 'Estoque', icon: Package, url: '/estoque' },
   { title: 'Automações & MKT', icon: Megaphone, url: '/automations' },

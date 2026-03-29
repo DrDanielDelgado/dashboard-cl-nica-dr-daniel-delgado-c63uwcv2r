@@ -58,25 +58,41 @@ export default function Financeiro() {
   })
 
   return (
-    <div className="space-y-6 animate-slide-up">
+    <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Financeiro & Faturamento</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+            Transações & Financeiro
+          </h1>
           <p className="text-muted-foreground">
-            Controle de caixa, orçamentos, emissão de NF-e MG, Links de Pagamento e Boletos C6.
+            Gestão de faturamento, NF-e MG, links de pagamento e boletos C6 integrados ao pipeline.
           </p>
         </div>
-        <Button onClick={() => setRelatoriosOpen(true)}>
-          <FileDown className="w-4 h-4 mr-2" /> Exportar Relatórios
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setRelatoriosOpen(true)}
+            className="border-brand-blue text-brand-blue hover:bg-brand-blue/5"
+          >
+            <FileDown className="w-4 h-4 mr-2" /> Exportar Planilha
+          </Button>
+        </div>
       </div>
 
       <Tabs defaultValue="fluxo" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 max-w-2xl mb-4">
-          <TabsTrigger value="fluxo">Dashboard & Caixa</TabsTrigger>
-          <TabsTrigger value="orcamento">Orçamentos</TabsTrigger>
-          <TabsTrigger value="nfe">NF-e (SEF-MG)</TabsTrigger>
-          <TabsTrigger value="c6">Banco C6</TabsTrigger>
+        <TabsList className="flex flex-wrap h-auto w-fit max-w-full justify-start mb-6 bg-white border shadow-sm">
+          <TabsTrigger value="fluxo" className="px-6 py-2.5">
+            Visão Geral (Pipeline)
+          </TabsTrigger>
+          <TabsTrigger value="orcamento" className="px-6 py-2.5">
+            Propostas / Orçamentos
+          </TabsTrigger>
+          <TabsTrigger value="nfe" className="px-6 py-2.5">
+            Emissão NF-e (SEF-MG)
+          </TabsTrigger>
+          <TabsTrigger value="c6" className="px-6 py-2.5">
+            Boletos (C6 Bank)
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="fluxo" className="space-y-4">

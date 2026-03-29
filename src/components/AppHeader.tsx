@@ -1,5 +1,6 @@
+import { useState } from 'react'
 import { Bell, Search, MapPin } from 'lucide-react'
-import { Input } from '@/components/ui/input'
+import { GlobalSearch } from './GlobalSearch'
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -16,6 +17,7 @@ import brandLogo from '@/assets/captura-de-tela-2026-03-15-as-21.39.36-d4190.png
 
 export function AppHeader() {
   const { location, setLocation, role } = useAppStore()
+  const [searchOpen, setSearchOpen] = useState(false)
 
   return (
     <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-4 border-b bg-background/95 px-6 backdrop-blur-md shadow-sm">
@@ -49,12 +51,17 @@ export function AppHeader() {
         </div>
 
         <div className="flex-1 max-w-xl relative hidden md:block">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Buscar pacientes, prontuários, agendamentos..."
-            className="w-full bg-muted/40 pl-10 rounded-full border-none focus-visible:ring-brand-blue/30 focus-visible:bg-white transition-colors"
-          />
+          <button
+            onClick={() => setSearchOpen(true)}
+            className="w-full flex items-center justify-between bg-muted/40 text-sm text-muted-foreground pl-10 pr-3 py-2.5 rounded-full border border-transparent hover:bg-muted/60 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-blue/30"
+          >
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+            <span>Buscar pacientes, consultas, relatórios...</span>
+            <kbd className="hidden sm:inline-flex h-5 items-center gap-1 rounded border bg-white px-1.5 font-mono text-[10px] font-medium text-slate-500 shadow-sm opacity-100">
+              <span className="text-xs">⌘</span>K
+            </kbd>
+          </button>
+          <GlobalSearch open={searchOpen} setOpen={setSearchOpen} />
         </div>
       </div>
 

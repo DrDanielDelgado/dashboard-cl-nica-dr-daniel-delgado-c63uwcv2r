@@ -5,6 +5,7 @@ import { ProtectedRoute } from '@/components/ProtectedRoute'
 import Index from '@/pages/Index'
 import NotFound from '@/pages/NotFound'
 import Atendimento from '@/pages/Atendimento'
+import CRM from '@/pages/CRM'
 import Estoque from '@/pages/Estoque'
 import Automations from '@/pages/Automations'
 import Prontuario from '@/pages/Prontuario'
@@ -31,6 +32,7 @@ export default function App() {
                     {/* Common Routes - Accessible by Secretary and others */}
                     <Route path="/" element={<Index />} />
                     <Route path="/atendimento" element={<Atendimento />} />
+                    <Route path="/crm" element={<CRM />} />
                     <Route path="/estoque" element={<Estoque />} />
                     <Route path="/automations" element={<Automations />} />
                     <Route path="/prontuario" element={<Prontuario />} />
