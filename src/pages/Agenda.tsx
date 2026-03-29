@@ -15,7 +15,16 @@ import { RelatoriosAgendaDialog } from '@/components/agenda/RelatoriosAgendaDial
 
 export default function Agenda() {
   const { location } = useAppStore()
-  const { selectedDate, setSelectedDate, isSyncing, lastSync, syncWithGoogle } = useAgendaStore()
+  const {
+    selectedDate,
+    setSelectedDate,
+    isSyncing,
+    lastSync,
+    syncWithGoogle,
+    googleToken,
+    connectGoogle,
+    disconnectGoogle,
+  } = useAgendaStore()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [exportOpen, setExportOpen] = useState(false)
 
@@ -28,13 +37,29 @@ export default function Agenda() {
             Agenda Integrada - {location}
           </h1>
           <div className="flex items-center gap-3 mt-2 flex-wrap">
-            <Badge variant="outline" className="bg-blue-50 text-brand-blue border-blue-200">
-              danieldelgadovascular@gmail.com
-            </Badge>
+            {googleToken ? (
+              <Badge variant="outline" className="bg-blue-50 text-brand-blue border-blue-200">
+                Google Calendar Conectado
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="bg-slate-50 text-slate-500 border-slate-200">
+                Google Calendar Desconectado
+              </Badge>
+            )}
             {lastSync && (
               <span className="text-xs text-muted-foreground font-medium">
                 Última sync: {lastSync}
               </span>
+            )}
+            {googleToken && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={disconnectGoogle}
+                className="h-6 px-2 text-xs text-muted-foreground hover:text-destructive"
+              >
+                Desconectar
+              </Button>
             )}
           </div>
         </div>
@@ -46,15 +71,25 @@ export default function Agenda() {
           >
             <FileDown className="w-4 h-4 mr-2" /> Exportar
           </Button>
-          <Button
-            variant="outline"
-            onClick={syncWithGoogle}
-            disabled={isSyncing}
-            className="flex-1 md:flex-none border-brand-blue/20 text-brand-blue hover:bg-brand-blue/5"
-          >
-            <RefreshCcw className={`w-4 h-4 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
-            Sincronizar
-          </Button>
+          {googleToken ? (
+            <Button
+              variant="outline"
+              onClick={syncWithGoogle}
+              disabled={isSyncing}
+              className="flex-1 md:flex-none border-brand-blue/20 text-brand-blue hover:bg-brand-blue/5"
+            >
+              <RefreshCcw className={`w-4 h-4 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
+              Sincronizar
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              onClick={connectGoogle}
+              className="flex-1 md:flex-none border-brand-blue/20 text-brand-blue hover:bg-brand-blue/5"
+            >
+              <CalendarIcon className="w-4 h-4 mr-2" /> Conectar Google
+            </Button>
+          )}
           <Button
             onClick={() => setDialogOpen(true)}
             className="flex-1 md:flex-none bg-brand-red hover:bg-brand-red/90 text-white shadow-md"
@@ -90,6 +125,10 @@ export default function Agenda() {
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full bg-amber-500 ring-2 ring-amber-500/20" />{' '}
                   Retorno
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-indigo-500 ring-2 ring-indigo-500/20" />{' '}
+                  Google Calendar
                 </div>
               </div>
             </div>

@@ -25,9 +25,12 @@ import {
   Save,
   AlertCircle,
   Plug,
+  Calendar as CalendarIcon,
 } from 'lucide-react'
+import { useAgendaStore } from '@/stores/agenda'
 
 export function IntegrationsSettings() {
+  const { googleToken, connectGoogle, disconnectGoogle } = useAgendaStore()
   const { addLog } = useAuditStore()
   const { toast } = useToast()
 
@@ -230,6 +233,58 @@ export function IntegrationsSettings() {
                   <p className="font-medium text-foreground">@clinicadelgado</p>
                 </div>
               </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-start justify-between pb-4">
+          <div className="space-y-1">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <CalendarIcon className="w-5 h-5 text-indigo-500" /> Google Calendar
+            </CardTitle>
+            <CardDescription>
+              Sincronize sua agenda com o Google Calendar para visualização bidirecional.
+            </CardDescription>
+          </div>
+          {googleToken ? (
+            <Badge variant="outline" className="bg-success/10 text-success border-success/20">
+              <CheckCircle2 className="w-3 h-3 mr-1" /> Conectado
+            </Badge>
+          ) : (
+            <Badge variant="outline">
+              <AlertCircle className="w-3 h-3 mr-1" /> Desconectado
+            </Badge>
+          )}
+        </CardHeader>
+        <CardContent>
+          {!googleToken ? (
+            <div className="flex flex-col items-center justify-center py-8 border-2 border-dashed rounded-lg bg-muted/10 transition-colors hover:bg-muted/20">
+              <CalendarIcon className="w-10 h-10 text-muted-foreground mb-4 opacity-50" />
+              <p className="text-sm text-muted-foreground text-center max-w-sm mb-4">
+                Conecte seu Google Calendar para sincronizar agendamentos e evitar conflitos de
+                horários na clínica.
+              </p>
+              <Button onClick={connectGoogle}>
+                <Plug className="w-4 h-4 mr-2" /> Conectar Google Calendar
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between border rounded-lg p-4 bg-muted/30">
+              <div className="space-y-0.5 pr-4">
+                <Label className="text-base">Sincronização Ativa</Label>
+                <p className="text-sm text-muted-foreground">
+                  Os eventos do seu Google Calendar estão sendo sincronizados bidirecionalmente.
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                className="text-destructive hover:bg-destructive/10 hover:text-destructive border-destructive/20"
+                onClick={disconnectGoogle}
+              >
+                Desconectar
+              </Button>
             </div>
           )}
         </CardContent>

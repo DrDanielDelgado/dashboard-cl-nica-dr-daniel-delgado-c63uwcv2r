@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { MessageSquare, CheckCheck, Trash } from 'lucide-react'
+import { MessageSquare, CheckCheck, Trash, Lock } from 'lucide-react'
 import { useAgendaStore, AgendaEvent, getLocalDateStr } from '@/stores/agenda'
 
 interface EventDialogProps {
@@ -91,7 +91,16 @@ export function EventDialog({
           <DialogTitle>{event ? 'Editar Agendamento' : 'Novo Agendamento'}</DialogTitle>
         </DialogHeader>
 
-        {event && (
+        {event?.source === 'google' && (
+          <div className="flex gap-2 p-3 bg-indigo-50 text-indigo-800 rounded-lg border border-indigo-100 items-center mb-2">
+            <Lock className="w-4 h-4" />
+            <span className="text-sm font-medium">
+              Evento sincronizado do Google Calendar. (Somente Leitura)
+            </span>
+          </div>
+        )}
+
+        {event && event.source !== 'google' && (
           <div className="flex gap-2 p-3 bg-muted/30 rounded-lg border items-center justify-between">
             <div className="text-sm">
               <span className="text-muted-foreground block text-xs">Status Notificação</span>
@@ -131,6 +140,7 @@ export function EventDialog({
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               placeholder="Ex: Retorno - João"
+              disabled={event?.source === 'google'}
             />
           </div>
           <div className="space-y-2">
@@ -139,6 +149,7 @@ export function EventDialog({
               value={formData.patientName}
               onChange={(e) => setFormData({ ...formData, patientName: e.target.value })}
               placeholder="Nome do paciente"
+              disabled={event?.source === 'google'}
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -148,6 +159,7 @@ export function EventDialog({
                 type="date"
                 value={formData.date}
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                disabled={event?.source === 'google'}
               />
             </div>
             <div className="space-y-2">
@@ -155,6 +167,7 @@ export function EventDialog({
               <Select
                 value={formData.type}
                 onValueChange={(val: any) => setFormData({ ...formData, type: val })}
+                disabled={event?.source === 'google'}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -174,6 +187,7 @@ export function EventDialog({
                 type="time"
                 value={formData.startTime}
                 onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
+                disabled={event?.source === 'google'}
               />
             </div>
             <div className="space-y-2">
@@ -182,6 +196,7 @@ export function EventDialog({
                 type="time"
                 value={formData.endTime}
                 onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
+                disabled={event?.source === 'google'}
               />
             </div>
           </div>
@@ -190,6 +205,7 @@ export function EventDialog({
             <Select
               value={formData.status}
               onValueChange={(val: any) => setFormData({ ...formData, status: val })}
+              disabled={event?.source === 'google'}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -203,7 +219,7 @@ export function EventDialog({
           </div>
         </div>
         <DialogFooter className="flex items-center justify-between sm:justify-between w-full mt-2 border-t pt-4">
-          {event ? (
+          {event && event.source !== 'google' ? (
             <Button
               type="button"
               variant="ghost"
@@ -217,14 +233,16 @@ export function EventDialog({
           )}
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Cancelar
+              {event?.source === 'google' ? 'Fechar' : 'Cancelar'}
             </Button>
-            <Button
-              onClick={handleSave}
-              className="bg-brand-blue text-white hover:bg-brand-blue/90"
-            >
-              {event ? 'Atualizar Evento' : 'Salvar Evento'}
-            </Button>
+            {event?.source !== 'google' && (
+              <Button
+                onClick={handleSave}
+                className="bg-brand-blue text-white hover:bg-brand-blue/90"
+              >
+                {event ? 'Atualizar Evento' : 'Salvar Evento'}
+              </Button>
+            )}
           </div>
         </DialogFooter>
       </DialogContent>

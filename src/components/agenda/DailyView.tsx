@@ -1,7 +1,7 @@
 import { useAgendaStore, AgendaEvent, getLocalDateStr } from '@/stores/agenda'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Badge } from '@/components/ui/badge'
-import { User, Clock, MessageSquare, CheckCheck } from 'lucide-react'
+import { User, Clock, MessageSquare, CheckCheck, Calendar as CalendarIcon } from 'lucide-react'
 import { useState } from 'react'
 import { EventDialog } from './EventDialog'
 
@@ -51,17 +51,21 @@ export function DailyView() {
                   top: `${top + 16}px`,
                   height: `${height}px`,
                   backgroundColor:
-                    event.type === 'Consulta'
-                      ? '#eff6ff'
-                      : event.type === 'Procedimento'
-                        ? '#ecfdf5'
-                        : '#fffbeb',
+                    event.source === 'google'
+                      ? '#e0e7ff'
+                      : event.type === 'Consulta'
+                        ? '#eff6ff'
+                        : event.type === 'Procedimento'
+                          ? '#ecfdf5'
+                          : '#fffbeb',
                   borderColor:
-                    event.type === 'Consulta'
-                      ? '#bfdbfe'
-                      : event.type === 'Procedimento'
-                        ? '#a7f3d0'
-                        : '#fde68a',
+                    event.source === 'google'
+                      ? '#c7d2fe'
+                      : event.type === 'Consulta'
+                        ? '#bfdbfe'
+                        : event.type === 'Procedimento'
+                          ? '#a7f3d0'
+                          : '#fde68a',
                 }}
                 onClick={(e) => {
                   e.stopPropagation()
@@ -70,6 +74,9 @@ export function DailyView() {
               >
                 <div className="flex justify-between items-start">
                   <h4 className="font-semibold text-sm text-slate-800 flex items-center gap-2">
+                    {event.source === 'google' && (
+                      <CalendarIcon className="w-3.5 h-3.5 text-indigo-500" />
+                    )}
                     {event.title}
                     {event.waStatus === 'confirmed' && (
                       <CheckCheck
@@ -92,9 +99,11 @@ export function DailyView() {
                   <span className="flex items-center gap-1">
                     <Clock className="w-3 h-3" /> {event.startTime} - {event.endTime}
                   </span>
-                  <span className="flex items-center gap-1">
-                    <User className="w-3 h-3" /> {event.patientName}
-                  </span>
+                  {event.patientName && (
+                    <span className="flex items-center gap-1 truncate">
+                      <User className="w-3 h-3" /> {event.patientName}
+                    </span>
+                  )}
                 </div>
               </div>
             )

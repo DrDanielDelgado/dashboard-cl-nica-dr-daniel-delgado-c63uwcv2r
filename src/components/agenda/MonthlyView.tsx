@@ -1,7 +1,7 @@
 import { useAgendaStore, AgendaEvent, getLocalDateStr } from '@/stores/agenda'
 import { useState } from 'react'
 import { EventDialog } from './EventDialog'
-import { CheckCheck, MessageSquare } from 'lucide-react'
+import { CheckCheck, MessageSquare, Calendar as CalendarIcon } from 'lucide-react'
 
 export function MonthlyView() {
   const { events, selectedDate, setSelectedDate } = useAgendaStore()
@@ -84,21 +84,27 @@ export function MonthlyView() {
                       className="text-[10px] truncate px-1.5 py-0.5 rounded border border-transparent hover:border-slate-300 transition-colors cursor-pointer shrink-0 flex justify-between items-center"
                       style={{
                         backgroundColor:
-                          e.type === 'Consulta'
-                            ? '#eff6ff'
-                            : e.type === 'Procedimento'
-                              ? '#ecfdf5'
-                              : '#fffbeb',
+                          e.source === 'google'
+                            ? '#e0e7ff'
+                            : e.type === 'Consulta'
+                              ? '#eff6ff'
+                              : e.type === 'Procedimento'
+                                ? '#ecfdf5'
+                                : '#fffbeb',
                         color:
-                          e.type === 'Consulta'
-                            ? '#1d4ed8'
-                            : e.type === 'Procedimento'
-                              ? '#047857'
-                              : '#b45309',
+                          e.source === 'google'
+                            ? '#4338ca'
+                            : e.type === 'Consulta'
+                              ? '#1d4ed8'
+                              : e.type === 'Procedimento'
+                                ? '#047857'
+                                : '#b45309',
                       }}
                     >
-                      <span className="truncate">
-                        <span className="font-semibold">{e.startTime}</span> - {e.title}
+                      <span className="truncate flex items-center gap-1">
+                        {e.source === 'google' && <CalendarIcon className="w-2.5 h-2.5 shrink-0" />}
+                        <span className="font-semibold shrink-0">{e.startTime}</span>{' '}
+                        <span className="truncate">- {e.title}</span>
                       </span>
                       <span className="flex items-center ml-1 shrink-0">
                         {e.waStatus === 'confirmed' && (

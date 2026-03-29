@@ -19,6 +19,7 @@ export interface AgendaEvent {
   status: 'confirmed' | 'pending' | 'cancelled'
   googleSync?: boolean
   waStatus?: 'pending' | 'sent' | 'confirmed'
+  source?: 'local' | 'google'
 }
 
 const loadAgenda = (): AgendaEvent[] => {
@@ -49,6 +50,7 @@ const loadAgenda = (): AgendaEvent[] => {
       patientName: 'Maria Silva',
       status: 'confirmed',
       waStatus: 'confirmed',
+      source: 'local',
     },
     {
       id: 'evt-2',
@@ -60,6 +62,7 @@ const loadAgenda = (): AgendaEvent[] => {
       patientName: 'João Santos',
       status: 'pending',
       waStatus: 'sent',
+      source: 'local',
     },
     {
       id: 'evt-3',
@@ -71,6 +74,7 @@ const loadAgenda = (): AgendaEvent[] => {
       patientName: 'Ana Costa',
       status: 'confirmed',
       waStatus: 'confirmed',
+      source: 'local',
     },
     {
       id: 'evt-4',
@@ -82,9 +86,12 @@ const loadAgenda = (): AgendaEvent[] => {
       patientName: 'Carlos Mendes',
       status: 'pending',
       waStatus: 'pending',
+      source: 'local',
     },
   ]
 }
+
+const GOOGLE_CLIENT_ID = '233596869914-q77esj199e46qvqni860a3per7hlodmt.apps.googleusercontent.com'
 
 interface AgendaState {
   events: AgendaEvent[]
@@ -92,6 +99,9 @@ interface AgendaState {
   setSelectedDate: (d: Date) => void
   isSyncing: boolean
   lastSync: string | null
+  googleToken: string | null
+  connectGoogle: () => void
+  disconnectGoogle: () => void
   syncWithGoogle: () => Promise<void>
   addEvent: (event: Omit<AgendaEvent, 'id'>) => void
   updateEvent: (id: string, event: Partial<AgendaEvent>) => void
@@ -109,33 +119,174 @@ export function AgendaProvider({ children }: { children: React.ReactNode }) {
   const [lastSync, setLastSync] = useState<string | null>(
     localStorage.getItem('@db_agenda_sync') || null,
   )
+  const [googleToken, setGoogleToken] = useState<string | null>(
+    localStorage.getItem('@db_google_token') || null,
+  )
 
   useEffect(() => {
     localStorage.setItem('@db_agenda', JSON.stringify(events))
   }, [events])
 
-  const syncWithGoogle = async () => {
-    setIsSyncing(true)
-    await new Promise((r) => setTimeout(r, 1200))
-    const syncTime = new Date().toLocaleString('pt-BR')
-    setLastSync(syncTime)
-    localStorage.setItem('@db_agenda_sync', syncTime)
-    setIsSyncing(false)
+  useEffect(() => {
+    const hash = window.location.hash
+    if (hash.includes('access_token=')) {
+      const params = new URLSearchParams(hash.replace('#', '?'))
+      const token = params.get('access_token')
+      if (token) {
+        setGoogleToken(token)
+        localStorage.setItem('@db_google_token', token)
+        window.history.replaceState(null, '', window.location.pathname + window.location.search)
+        toast({
+          title: 'Google Calendar Conectado',
+          description: 'Autorização realizada com sucesso.',
+        })
+
+        setTimeout(() => performSync(token), 500)
+      }
+    }
+  }, [])
+
+  const connectGoogle = () => {
+    const redirectUri = window.location.origin + window.location.pathname
+    const params = new URLSearchParams({
+      client_id: GOOGLE_CLIENT_ID,
+      redirect_uri: redirectUri,
+      response_type: 'token',
+      scope: 'https://www.googleapis.com/auth/calendar.events',
+      prompt: 'consent',
+    })
+    window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`
+  }
+
+  const disconnectGoogle = () => {
+    setGoogleToken(null)
+    localStorage.removeItem('@db_google_token')
+    setEvents((prev) => prev.filter((e) => e.source !== 'google'))
     toast({
-      title: 'Sincronização Concluída',
-      description: 'Agenda de danieldelgadovascular@gmail.com foi atualizada com sucesso.',
+      title: 'Google Calendar Desconectado',
+      description: 'A sincronização foi interrompida.',
     })
   }
 
+  const performSync = async (token: string) => {
+    setIsSyncing(true)
+    try {
+      const timeMin = new Date()
+      timeMin.setDate(timeMin.getDate() - 30)
+      const timeMax = new Date()
+      timeMax.setDate(timeMax.getDate() + 90)
+
+      const res = await fetch(
+        `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin.toISOString()}&timeMax=${timeMax.toISOString()}&singleEvents=true&orderBy=startTime`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      )
+
+      if (!res.ok) {
+        if (res.status === 401) {
+          disconnectGoogle()
+          throw new Error('Token expirado. Por favor, conecte novamente.')
+        }
+        throw new Error('Falha ao buscar eventos do Google.')
+      }
+
+      const data = await res.json()
+
+      const mappedEvents: AgendaEvent[] = (data.items || [])
+        .filter((item: any) => item.start?.dateTime && item.end?.dateTime)
+        .map((item: any) => {
+          const start = new Date(item.start.dateTime)
+          const end = new Date(item.end.dateTime)
+          return {
+            id: `google-${item.id}`,
+            title: item.summary || 'Evento Google',
+            date: getLocalDateStr(start),
+            startTime: start.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+            endTime: end.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+            type: 'Google',
+            patientName: '',
+            status: 'confirmed',
+            source: 'google',
+          }
+        })
+
+      setEvents((prev) => {
+        const localEvents = prev.filter((e) => e.source !== 'google')
+        return [...localEvents, ...mappedEvents]
+      })
+
+      const syncTime = new Date().toLocaleString('pt-BR')
+      setLastSync(syncTime)
+      localStorage.setItem('@db_agenda_sync', syncTime)
+      toast({
+        title: 'Sincronização Concluída',
+        description: 'Eventos do Google Calendar atualizados.',
+      })
+    } catch (error: any) {
+      toast({
+        title: 'Erro na Sincronização',
+        description: error.message || 'Não foi possível sincronizar com o Google.',
+        variant: 'destructive',
+      })
+    } finally {
+      setIsSyncing(false)
+    }
+  }
+
+  const syncWithGoogle = async () => {
+    if (!googleToken) {
+      connectGoogle()
+      return
+    }
+    await performSync(googleToken)
+  }
+
+  const pushToGoogle = async (event: AgendaEvent, token: string) => {
+    try {
+      const startStr = `${event.date}T${event.startTime}:00`
+      const endStr = `${event.date}T${event.endTime}:00`
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
+
+      const res = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          summary: event.title,
+          description: `Paciente: ${event.patientName}\nTipo: ${event.type}`,
+          start: { dateTime: startStr, timeZone: tz },
+          end: { dateTime: endStr, timeZone: tz },
+        }),
+      })
+
+      if (!res.ok && res.status === 401) {
+        disconnectGoogle()
+      }
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
   const addEvent = (e: Omit<AgendaEvent, 'id'>) => {
-    setEvents((prev) => [
-      ...prev,
-      { ...e, id: Math.random().toString(36).substring(7), googleSync: true, waStatus: 'pending' },
-    ])
+    const newEvent = {
+      ...e,
+      id: Math.random().toString(36).substring(7),
+      googleSync: true,
+      waStatus: 'pending' as const,
+      source: 'local' as const,
+    }
+    setEvents((prev) => [...prev, newEvent])
     toast({
       title: 'Agendamento Criado',
       description: 'O evento foi adicionado e salvo na base de dados.',
     })
+
+    if (googleToken) {
+      pushToGoogle(newEvent as AgendaEvent, googleToken)
+    }
   }
 
   const updateEvent = (id: string, e: Partial<AgendaEvent>) => {
@@ -181,6 +332,9 @@ export function AgendaProvider({ children }: { children: React.ReactNode }) {
         setSelectedDate,
         isSyncing,
         lastSync,
+        googleToken,
+        connectGoogle,
+        disconnectGoogle,
         syncWithGoogle,
         addEvent,
         updateEvent,
