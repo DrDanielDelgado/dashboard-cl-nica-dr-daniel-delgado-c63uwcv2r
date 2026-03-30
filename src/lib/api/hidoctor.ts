@@ -1,4 +1,5 @@
 import { Patient } from '@/types/paciente'
+import pb from '@/lib/pocketbase/client'
 
 const firstNames = [
   'Ana',
@@ -88,16 +89,16 @@ export const syncHiDoctorData = async (
   crm: string,
   password: string,
 ): Promise<Patient[]> => {
-  // Simula a requisição HTTP real para a API do HiNetX
+  // Simula a requisição HTTP real para a API do HiNetX via Proxy
   try {
-    await fetch('https://api.hinetx.com.br/v2/prontuarios/sync', {
+    await pb.send('/backend/v1/hidoctor/sync', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${serial}-${crm}`,
       },
       body: JSON.stringify({ password }),
-    }).catch(() => {})
+    })
   } catch (e) {
     // A requisição vai falhar sem uma API real operante, nós capturamos o erro
     // para continuar e retornar o mock volumétrico gerado como resposta da API.
