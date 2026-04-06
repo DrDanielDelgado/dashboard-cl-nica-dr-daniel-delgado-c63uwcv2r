@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
@@ -18,15 +18,44 @@ import { toast } from '@/hooks/use-toast'
 import { OrcamentosTab } from '@/components/financeiro/OrcamentosTab'
 import { RelatoriosDialog } from '@/components/financeiro/RelatoriosDialog'
 import useFinanceiroStore from '@/stores/financeiro'
+import { useRealtime } from '@/hooks/use-realtime'
+import { getBudgets } from '@/services/api'
 
 export default function Financeiro() {
-  const { budgets } = useFinanceiroStore()
+  const { budgets, setBudgets } = useFinanceiroStore()
   const [relatoriosOpen, setRelatoriosOpen] = useState(false)
+
+  const loadData = async () => {
+    try {
+      const res = await getBudgets()
+      setBudgets(
+        res.map((r: any) => ({
+          id: r.id,
+          patientId: r.patient,
+          patient: r.expand?.patient?.name || r.items?.patient || 'Desconhecido',
+          procedure: r.items?.procedure || '',
+          value: r.items?.value || r.amount,
+          discount: r.items?.discount || 0,
+          finalValue: r.amount,
+          validityDate: r.items?.validityDate || r.created,
+          paymentMethods: r.items?.paymentMethods || [],
+          status: r.status.toLowerCase(),
+          unit: r.items?.unit || '',
+          createdAt: r.created,
+        })),
+      )
+    } catch (e) {}
+  }
+
+  useEffect(() => {
+    loadData()
+  }, [])
+  useRealtime('budgets', () => loadData())
 
   const handleNFe = () => {
     toast({
       title: 'NFe Emitida com Sucesso',
-      description: 'A nota fiscal foi processada pela SEF-MG e salva no histórico.',
+      description: 'A nota fiscal foi processada pela SEF-MG.',
     })
   }
 
@@ -37,22 +66,19 @@ export default function Financeiro() {
   const faturamentoAprovado = budgets
     .filter((b) => b.status === 'approved')
     .reduce((acc, b) => acc + b.finalValue, 0)
-
   const faturamentoPago = budgets
     .filter((b) => b.status === 'paid')
     .reduce((acc, b) => acc + b.finalValue, 0)
-
   const projecaoReceita = budgets
-    .filter((b) => b.status === 'pending' || b.status === 'sent')
+    .filter((b) => b.status === 'pending' || b.status === 'sent' || b.status === 'draft')
     .reduce((acc, b) => acc + b.finalValue, 0)
-
   const receitasMes = faturamentoPago
   const totalProjecao = faturamentoAprovado + projecaoReceita + faturamentoPago
   const percentageAprovado =
     totalProjecao > 0 ? ((faturamentoAprovado + faturamentoPago) / totalProjecao) * 100 : 0
 
   const followUps = budgets.filter((b) => {
-    if (b.status !== 'pending') return false
+    if (b.status !== 'pending' && b.status !== 'sent') return false
     const diff = new Date(b.validityDate).getTime() - new Date().getTime()
     return diff > 0 && diff <= 48 * 60 * 60 * 1000
   })
@@ -65,7 +91,7 @@ export default function Financeiro() {
             Transações & Financeiro
           </h1>
           <p className="text-muted-foreground">
-            Gestão de faturamento, NF-e MG, links de pagamento e boletos C6 integrados ao pipeline.
+            Gestão de faturamento, NF-e MG, links de pagamento e boletos C6 integrados.
           </p>
         </div>
         <div className="flex gap-2">
@@ -107,7 +133,6 @@ export default function Financeiro() {
                 <div className="text-2xl font-bold text-emerald-700">
                   R$ {receitasMes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </div>
-                <p className="text-xs text-emerald-700/80 mt-1">Status 'Pago'</p>
               </CardContent>
             </Card>
             <Card>
@@ -136,7 +161,6 @@ export default function Financeiro() {
                 <div className="text-2xl font-bold text-muted-foreground">
                   R$ {projecaoReceita.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">Pendentes / Enviados</p>
               </CardContent>
             </Card>
             <Card className="bg-orange-500/10 border-orange-500/20">
@@ -147,7 +171,6 @@ export default function Financeiro() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-orange-600">{followUps.length}</div>
-                <p className="text-xs text-orange-600/80 mt-1">Vencendo em até 48h</p>
               </CardContent>
             </Card>
           </div>
@@ -155,10 +178,6 @@ export default function Financeiro() {
           <Card>
             <CardHeader>
               <CardTitle>Projeção de Conversão de Orçamentos</CardTitle>
-              <CardDescription>
-                Acompanhe o volume financeiro de propostas aprovadas ou pagas em relação ao total
-                negociado.
-              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex justify-between text-sm font-medium">
@@ -175,10 +194,6 @@ export default function Financeiro() {
                 </span>
               </div>
               <Progress value={percentageAprovado} className="h-4" />
-              <p className="text-xs text-muted-foreground text-center">
-                {percentageAprovado.toFixed(1)}% do volume financeiro projetado já foi convertido em
-                faturamento garantido ou recebido.
-              </p>
             </CardContent>
           </Card>
         </TabsContent>
@@ -189,22 +204,11 @@ export default function Financeiro() {
               <CardTitle className="flex items-center gap-2">
                 <Building2 className="h-5 w-5" /> Integração SEF-MG
               </CardTitle>
-              <CardDescription>
-                Emissão direta de Nota Fiscal Eletrônica de Serviços.
-              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4 max-w-md">
               <div className="space-y-2">
                 <Label>CPF/CNPJ do Tomador</Label>
                 <Input placeholder="000.000.000-00" />
-              </div>
-              <div className="space-y-2">
-                <Label>Valor do Serviço (R$)</Label>
-                <Input type="number" placeholder="1500.00" />
-              </div>
-              <div className="space-y-2">
-                <Label>Descrição do Serviço</Label>
-                <Input placeholder="Consulta / Procedimento Médico" />
               </div>
               <Button onClick={handleNFe} className="w-full mt-4">
                 <FileText className="mr-2 h-4 w-4" /> Transmitir NF-e
@@ -217,18 +221,13 @@ export default function Financeiro() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Receipt className="h-5 w-5 text-black" /> Emissão de Boletos C6 Bank
+                <Receipt className="h-5 w-5" /> Boletos C6 Bank
               </CardTitle>
-              <CardDescription>Gere boletos de cobrança na sua conta PJ C6.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4 max-w-md">
               <div className="space-y-2">
-                <Label>Paciente / Pagador</Label>
+                <Label>Paciente</Label>
                 <Input placeholder="Nome Completo" />
-              </div>
-              <div className="space-y-2">
-                <Label>Vencimento</Label>
-                <Input type="date" />
               </div>
               <Button
                 onClick={handleBoleto}
@@ -244,7 +243,6 @@ export default function Financeiro() {
           <OrcamentosTab />
         </TabsContent>
       </Tabs>
-
       <RelatoriosDialog open={relatoriosOpen} onOpenChange={setRelatoriosOpen} />
     </div>
   )

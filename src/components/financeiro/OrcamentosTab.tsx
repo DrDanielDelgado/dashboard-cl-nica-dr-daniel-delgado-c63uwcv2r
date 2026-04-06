@@ -9,7 +9,6 @@ import {
   MessageCircle,
   Link as LinkIcon,
   CheckCircle,
-  CreditCard,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -32,19 +31,13 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { OrcamentoFormDialog } from './OrcamentoFormDialog'
 import { OrcamentoPreviewDialog } from './OrcamentoPreviewDialog'
-import { Budget } from '@/types/financeiro'
+import { Budget } from '@/stores/financeiro'
 import { useToast } from '@/hooks/use-toast'
 import useFinanceiroStore from '@/stores/financeiro'
+import { createBudget, updateBudget, deleteBudget } from '@/services/api'
 
 export function OrcamentosTab() {
-  const {
-    budgets,
-    addBudget,
-    updateBudget,
-    deleteBudget,
-    updateBudgetStatus,
-    generatePaymentLink,
-  } = useFinanceiroStore()
+  const { budgets, generatePaymentLink } = useFinanceiroStore()
   const [search, setSearch] = useState('')
   const [formOpen, setFormOpen] = useState(false)
   const [previewOpen, setPreviewOpen] = useState(false)
@@ -54,7 +47,7 @@ export function OrcamentosTab() {
   const filtered = budgets.filter((b) => b.patient?.toLowerCase().includes(search.toLowerCase()))
 
   const getStatusBadge = (status: string) => {
-    switch (status) {
+    switch (status.toLowerCase()) {
       case 'paid':
         return (
           <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 border-emerald-300">
@@ -80,6 +73,7 @@ export function OrcamentosTab() {
           </Badge>
         )
       case 'declined':
+      case 'rejected':
         return (
           <Badge
             variant="destructive"
@@ -88,8 +82,6 @@ export function OrcamentosTab() {
             Recusado
           </Badge>
         )
-      case 'refunded':
-        return <Badge variant="secondary">Reembolsado</Badge>
       case 'expired':
         return <Badge variant="destructive">Expirado</Badge>
       default:
@@ -97,20 +89,50 @@ export function OrcamentosTab() {
     }
   }
 
-  const handleDelete = (id: string) => {
-    deleteBudget(id)
-    toast({ title: 'Orçamento Excluído', description: 'O orçamento foi removido com sucesso.' })
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteBudget(id)
+      toast({ title: 'Orçamento Excluído', description: 'O orçamento foi removido com sucesso.' })
+    } catch (err: any) {
+      toast({ title: 'Erro', description: err.message, variant: 'destructive' })
+    }
   }
 
-  const handleSave = (budget: Budget) => {
-    if (budget.id) {
-      updateBudget(budget)
-      toast({ title: 'Orçamento Atualizado', description: 'As alterações foram salvas.' })
-    } else {
-      addBudget(budget)
-      toast({ title: 'Orçamento Criado', description: 'Novo orçamento gerado com sucesso.' })
+  const handleSave = async (budget: Budget) => {
+    try {
+      const payload = {
+        patient: budget.patientId,
+        amount: budget.finalValue,
+        status: budget.status.charAt(0).toUpperCase() + budget.status.slice(1),
+        items: {
+          procedure: budget.procedure,
+          value: budget.value,
+          discount: budget.discount,
+          validityDate: budget.validityDate,
+          paymentMethods: budget.paymentMethods,
+          unit: budget.unit,
+        },
+      }
+      if (budget.id) {
+        await updateBudget(budget.id, payload)
+        toast({ title: 'Orçamento Atualizado', description: 'As alterações foram salvas.' })
+      } else {
+        await createBudget(payload)
+        toast({ title: 'Orçamento Criado', description: 'Novo orçamento gerado com sucesso.' })
+      }
+      setFormOpen(false)
+    } catch (e: any) {
+      toast({ title: 'Erro', description: e.message, variant: 'destructive' })
     }
-    setFormOpen(false)
+  }
+
+  const handleStatusUpdate = async (id: string, status: string) => {
+    try {
+      await updateBudget(id, { status: status.charAt(0).toUpperCase() + status.slice(1) })
+      toast({ title: 'Status Atualizado' })
+    } catch (err: any) {
+      toast({ title: 'Erro', description: err.message, variant: 'destructive' })
+    }
   }
 
   const handleWhatsApp = (budget: Budget) => {
@@ -121,7 +143,7 @@ export function OrcamentosTab() {
 
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank')
     if (budget.status === 'pending' || budget.status === 'draft') {
-      updateBudgetStatus(budget.id, 'sent')
+      handleStatusUpdate(budget.id, 'Sent')
     }
     toast({
       title: 'Enviado via WhatsApp',
@@ -142,8 +164,7 @@ export function OrcamentosTab() {
           <div>
             <CardTitle>Gerenciamento de Orçamentos e Cobranças</CardTitle>
             <CardDescription>
-              Crie orçamentos, envie aprovações por WhatsApp e gere links de pagamento
-              (Stripe/Pagar.me).
+              Crie orçamentos, envie aprovações por WhatsApp e gerencie os recebimentos.
             </CardDescription>
           </div>
           <Button
@@ -218,17 +239,13 @@ export function OrcamentosTab() {
                         <DropdownMenuContent align="end">
                           {budget.status !== 'paid' && (
                             <>
-                              <DropdownMenuItem onClick={() => generatePaymentLink(budget.id)}>
-                                <LinkIcon className="w-4 h-4 mr-2" /> Gerar Link Pagamento
-                              </DropdownMenuItem>
+                              {generatePaymentLink && (
+                                <DropdownMenuItem onClick={() => generatePaymentLink(budget.id)}>
+                                  <LinkIcon className="w-4 h-4 mr-2" /> Gerar Link Pagamento
+                                </DropdownMenuItem>
+                              )}
                               <DropdownMenuItem
-                                onClick={() => {
-                                  updateBudgetStatus(budget.id, 'paid')
-                                  toast({
-                                    title: 'Pagamento Confirmado',
-                                    description: 'O status foi atualizado para Pago.',
-                                  })
-                                }}
+                                onClick={() => handleStatusUpdate(budget.id, 'paid')}
                               >
                                 <CheckCircle className="w-4 h-4 mr-2 text-emerald-600" /> Marcar
                                 como Pago

@@ -32,12 +32,39 @@ import { Search, RefreshCw, Database, Eye, ChevronLeft, ChevronRight, Lock } fro
 import { useHiDoctorStore } from '@/stores/hidoctor'
 import { PatientDetailsDialog } from './PatientDetailsDialog'
 import { Patient } from '@/types/paciente'
+import { PatientFormDialog } from './PatientFormDialog'
+import { getPatients } from '@/services/api'
+import { useRealtime } from '@/hooks/use-realtime'
 
 export function PacientesList() {
-  const { patients, isSyncing, progress, lastSync, syncData } = useHiDoctorStore()
+  const { patients, setPatients, isSyncing, progress, lastSync, syncData } = useHiDoctorStore()
   const [search, setSearch] = useState('')
   const [unitFilter, setUnitFilter] = useState('Todas')
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null)
+  const [createOpen, setCreateOpen] = useState(false)
+
+  const loadData = async () => {
+    try {
+      const data = await getPatients()
+      setPatients(
+        data.map((p: any) => ({
+          id: p.id,
+          fullName: p.name,
+          cpf: p.cpf || '',
+          phone: p.phone || '',
+          email: p.email || '',
+          lastConsultation: p.updated,
+          unit: 'Juiz de Fora',
+          status: 'Ativo',
+        })),
+      )
+    } catch (e) {}
+  }
+
+  useEffect(() => {
+    loadData()
+  }, [])
+  useRealtime('patients', () => loadData())
   const [currentPage, setCurrentPage] = useState(1)
 
   const [authOpen, setAuthOpen] = useState(false)
@@ -96,15 +123,21 @@ export function PacientesList() {
                 Conectado como: Dr. Daniel Delgado (CRM: 37525) | Serial: H80ARQW43
               </CardDescription>
             </div>
-            <Button
-              onClick={handleSyncClick}
-              disabled={isSyncing}
-              size="lg"
-              className="w-full sm:w-auto shadow-sm"
-            >
-              <RefreshCw className={`w-4 h-4 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
-              {isSyncing ? 'Sincronizando...' : 'Sincronizar com HiDoctor'}
-            </Button>
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Button onClick={() => setCreateOpen(true)} size="lg" className="flex-1 sm:flex-none">
+                Novo Paciente
+              </Button>
+              <Button
+                onClick={handleSyncClick}
+                disabled={isSyncing}
+                size="lg"
+                variant="outline"
+                className="flex-1 sm:flex-none shadow-sm"
+              >
+                <RefreshCw className={`w-4 h-4 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
+                {isSyncing ? 'Sinc...' : 'Sync HiDoctor'}
+              </Button>
+            </div>
           </div>
         </CardHeader>
         {isSyncing && (
@@ -241,6 +274,8 @@ export function PacientesList() {
         open={!!selectedPatient}
         onOpenChange={(val) => !val && setSelectedPatient(null)}
       />
+
+      <PatientFormDialog open={createOpen} onOpenChange={setCreateOpen} />
 
       <Dialog open={authOpen} onOpenChange={setAuthOpen}>
         <DialogContent className="sm:max-w-md">

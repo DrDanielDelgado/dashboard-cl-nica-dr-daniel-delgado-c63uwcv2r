@@ -22,8 +22,10 @@ import { Badge } from '@/components/ui/badge'
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
 import { Calendar } from '@/components/ui/calendar'
 import { CalendarIcon } from 'lucide-react'
-import { Budget } from '@/types/financeiro'
+import { Budget } from '@/stores/financeiro'
 import { useAppStore } from '@/stores/app'
+import { getPatients } from '@/services/api'
+import { useToast } from '@/hooks/use-toast'
 
 const PAYMENT_METHODS = ['Cartão de Crédito', 'Cartão de Débito', 'PIX', 'Dinheiro']
 const PROCEDURES = [
@@ -31,7 +33,6 @@ const PROCEDURES = [
   'Escleroterapia',
   'Laser',
   'Espuma',
-  'Aneurisma de Aorta',
   'Check-up Vascular',
 ]
 
@@ -47,6 +48,8 @@ export function OrcamentoFormDialog({
   onSave: (b: Budget) => void
 }) {
   const { location } = useAppStore()
+  const { toast } = useToast()
+  const [patients, setPatients] = useState<any[]>([])
   const [formData, setFormData] = useState<Partial<Budget>>({
     value: 0,
     discount: 0,
@@ -55,6 +58,10 @@ export function OrcamentoFormDialog({
     status: 'pending',
     unit: location,
   })
+
+  useEffect(() => {
+    getPatients().then(setPatients).catch(console.error)
+  }, [])
 
   useEffect(() => {
     if (open) {
@@ -80,16 +87,20 @@ export function OrcamentoFormDialog({
 
   const togglePayment = (method: string) => {
     const current = formData.paymentMethods || []
-    if (current.includes(method)) {
+    if (current.includes(method))
       setFormData({ ...formData, paymentMethods: current.filter((m) => m !== method) })
-    } else {
-      setFormData({ ...formData, paymentMethods: [...current, method] })
-    }
+    else setFormData({ ...formData, paymentMethods: [...current, method] })
   }
 
   const handleSave = () => {
-    if (!formData.patient || !formData.procedure || !formData.validityDate || !formData.unit) return
-    if (!formData.createdAt) formData.createdAt = new Date().toISOString()
+    if (!formData.patientId) {
+      toast({ title: 'Erro', description: 'Selecione o paciente', variant: 'destructive' })
+      return
+    }
+    if (!formData.procedure) {
+      toast({ title: 'Erro', description: 'Selecione o procedimento', variant: 'destructive' })
+      return
+    }
     onSave(formData as Budget)
   }
 
@@ -98,19 +109,26 @@ export function OrcamentoFormDialog({
       <DialogContent className="sm:max-w-[500px] overflow-y-auto max-h-[90vh]">
         <DialogHeader>
           <DialogTitle>{budget ? 'Editar Orçamento' : 'Novo Orçamento'}</DialogTitle>
-          <DialogDescription className="sr-only">Preencha os dados do orçamento.</DialogDescription>
         </DialogHeader>
-
         <div className="grid gap-4 py-4">
           <div className="space-y-2">
             <Label>Paciente</Label>
-            <Input
-              placeholder="Nome do paciente"
-              value={formData.patient || ''}
-              onChange={(e) => setFormData({ ...formData, patient: e.target.value })}
-            />
+            <Select
+              value={formData.patientId}
+              onValueChange={(v) => setFormData({ ...formData, patientId: v })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione um paciente" />
+              </SelectTrigger>
+              <SelectContent>
+                {patients.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-
           <div className="space-y-2">
             <Label>Procedimento</Label>
             <Select
@@ -129,24 +147,6 @@ export function OrcamentoFormDialog({
               </SelectContent>
             </Select>
           </div>
-
-          <div className="space-y-2">
-            <Label>Unidade de Atendimento</Label>
-            <Select
-              value={formData.unit}
-              onValueChange={(v: any) => setFormData({ ...formData, unit: v })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione a unidade" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Juiz de Fora">Juiz de Fora</SelectItem>
-                <SelectItem value="Leopoldina">Leopoldina</SelectItem>
-                <SelectItem value="Além Paraíba">Além Paraíba</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Valor Total (R$)</Label>
@@ -165,10 +165,9 @@ export function OrcamentoFormDialog({
               />
             </div>
           </div>
-
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Valor Final Líquido</Label>
+              <Label>Valor Final</Label>
               <Input
                 readOnly
                 className="bg-muted font-bold"
@@ -176,7 +175,7 @@ export function OrcamentoFormDialog({
               />
             </div>
             <div className="space-y-2">
-              <Label>Validade do Orçamento</Label>
+              <Label>Validade</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
@@ -187,7 +186,7 @@ export function OrcamentoFormDialog({
                     {formData.validityDate ? (
                       new Date(formData.validityDate).toLocaleDateString('pt-BR')
                     ) : (
-                      <span>Selecionar data</span>
+                      <span>Selecionar</span>
                     )}
                   </Button>
                 </PopoverTrigger>
@@ -203,9 +202,8 @@ export function OrcamentoFormDialog({
               </Popover>
             </div>
           </div>
-
           <div className="space-y-2">
-            <Label>Formas de Pagamento Aceitas</Label>
+            <Label>Pagamento Aceito</Label>
             <div className="flex gap-2 flex-wrap">
               {PAYMENT_METHODS.map((m) => (
                 <Badge
@@ -219,7 +217,6 @@ export function OrcamentoFormDialog({
               ))}
             </div>
           </div>
-
           <div className="space-y-2">
             <Label>Status</Label>
             <Select
@@ -234,22 +231,12 @@ export function OrcamentoFormDialog({
                 <SelectItem value="pending">Pendente</SelectItem>
                 <SelectItem value="sent">Enviado via WA</SelectItem>
                 <SelectItem value="approved">Aprovado</SelectItem>
+                <SelectItem value="paid">Pago</SelectItem>
                 <SelectItem value="declined">Recusado</SelectItem>
-                <SelectItem value="expired">Expirado</SelectItem>
               </SelectContent>
             </Select>
           </div>
-
-          <div className="space-y-2">
-            <Label>Observações / Condições</Label>
-            <Textarea
-              placeholder="Ex: Parcelamento em 10x, pagamento à vista..."
-              value={formData.observations || ''}
-              onChange={(e) => setFormData({ ...formData, observations: e.target.value })}
-            />
-          </div>
         </div>
-
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar

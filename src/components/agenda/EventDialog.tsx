@@ -16,8 +16,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { MessageSquare, CheckCheck, Trash, Lock } from 'lucide-react'
-import { useAgendaStore, AgendaEvent, getLocalDateStr } from '@/stores/agenda'
+import { Trash } from 'lucide-react'
+import { AgendaEvent, getLocalDateStr } from '@/stores/agenda'
+import {
+  createAppointment,
+  updateAppointment,
+  deleteAppointment,
+  getPatients,
+} from '@/services/api'
+import { useToast } from '@/hooks/use-toast'
 
 interface EventDialogProps {
   open: boolean
@@ -34,7 +41,8 @@ export function EventDialog({
   defaultDate,
   defaultStartTime,
 }: EventDialogProps) {
-  const { addEvent, updateEvent, deleteEvent, sendWaReminder, confirmWaReminder } = useAgendaStore()
+  const { toast } = useToast()
+  const [patients, setPatients] = useState<any[]>([])
 
   const [formData, setFormData] = useState<Partial<AgendaEvent>>({
     title: '',
@@ -44,10 +52,13 @@ export function EventDialog({
       ? `${String(parseInt(defaultStartTime.split(':')[0]) + 1).padStart(2, '0')}:${defaultStartTime.split(':')[1]}`
       : '09:30',
     type: 'Consulta',
-    patientName: '',
+    patientId: '',
     status: 'pending',
-    waStatus: 'pending',
   })
+
+  useEffect(() => {
+    getPatients().then(setPatients).catch(console.error)
+  }, [])
 
   useEffect(() => {
     if (event) {
@@ -61,26 +72,61 @@ export function EventDialog({
           ? `${String(parseInt(defaultStartTime.split(':')[0]) + 1).padStart(2, '0')}:${defaultStartTime.split(':')[1]}`
           : '09:30',
         type: 'Consulta',
-        patientName: '',
+        patientId: '',
         status: 'pending',
-        waStatus: 'pending',
       })
     }
   }, [event, defaultDate, defaultStartTime, open])
 
-  const handleSave = () => {
-    if (event) {
-      updateEvent(event.id, formData)
-    } else {
-      addEvent(formData as Omit<AgendaEvent, 'id'>)
+  const handleSave = async () => {
+    if (!formData.patientId) {
+      toast({ title: 'Erro', description: 'Selecione um paciente', variant: 'destructive' })
+      return
     }
-    onOpenChange(false)
+    try {
+      const start = `${formData.date} ${formData.startTime}:00.000Z`
+      const end = `${formData.date} ${formData.endTime}:00.000Z`
+      const payload = {
+        title: formData.title,
+        start,
+        end,
+        status:
+          formData.status === 'confirmed'
+            ? 'Confirmed'
+            : formData.status === 'cancelled'
+              ? 'Cancelled'
+              : 'Scheduled',
+        type:
+          formData.type === 'Consulta'
+            ? 'Consultation'
+            : formData.type === 'Procedimento'
+              ? 'Surgery'
+              : 'Follow-up',
+        patient: formData.patientId,
+      }
+
+      if (event && event.id) {
+        await updateAppointment(event.id, payload)
+        toast({ title: 'Agendamento atualizado' })
+      } else {
+        await createAppointment(payload)
+        toast({ title: 'Agendamento criado' })
+      }
+      onOpenChange(false)
+    } catch (err: any) {
+      toast({ title: 'Erro ao salvar', description: err.message, variant: 'destructive' })
+    }
   }
 
-  const handleDelete = () => {
-    if (event) {
-      deleteEvent(event.id)
-      onOpenChange(false)
+  const handleDelete = async () => {
+    if (event && event.id) {
+      try {
+        await deleteAppointment(event.id)
+        toast({ title: 'Agendamento excluído' })
+        onOpenChange(false)
+      } catch (err: any) {
+        toast({ title: 'Erro ao excluir', description: err.message, variant: 'destructive' })
+      }
     }
   }
 
@@ -91,65 +137,31 @@ export function EventDialog({
           <DialogTitle>{event ? 'Editar Agendamento' : 'Novo Agendamento'}</DialogTitle>
         </DialogHeader>
 
-        {event?.source === 'google' && (
-          <div className="flex gap-2 p-3 bg-indigo-50 text-indigo-800 rounded-lg border border-indigo-100 items-center mb-2">
-            <Lock className="w-4 h-4" />
-            <span className="text-sm font-medium">
-              Evento sincronizado do Google Calendar. (Somente Leitura)
-            </span>
-          </div>
-        )}
-
-        {event && event.source !== 'google' && (
-          <div className="flex gap-2 p-3 bg-muted/30 rounded-lg border items-center justify-between">
-            <div className="text-sm">
-              <span className="text-muted-foreground block text-xs">Status Notificação</span>
-              <span className="font-medium flex items-center gap-1">
-                {event.waStatus === 'confirmed' ? (
-                  <>
-                    <CheckCheck className="w-4 h-4 text-green-600" /> Confirmado via WA
-                  </>
-                ) : event.waStatus === 'sent' ? (
-                  <>
-                    <MessageSquare className="w-4 h-4 text-blue-500" /> Lembrete Enviado
-                  </>
-                ) : (
-                  <span className="text-muted-foreground">Pendente</span>
-                )}
-              </span>
-            </div>
-            <div className="flex gap-2">
-              {event.waStatus !== 'confirmed' && (
-                <Button variant="outline" size="sm" onClick={() => sendWaReminder(event.id)}>
-                  <MessageSquare className="w-3 h-3 mr-1" /> Reenviar
-                </Button>
-              )}
-              {event.waStatus === 'sent' && (
-                <Button variant="secondary" size="sm" onClick={() => confirmWaReminder(event.id)}>
-                  Confirmar
-                </Button>
-              )}
-            </div>
-          </div>
-        )}
-
         <div className="grid gap-4 py-2">
+          <div className="space-y-2">
+            <Label>Paciente</Label>
+            <Select
+              value={formData.patientId}
+              onValueChange={(val: string) => setFormData({ ...formData, patientId: val })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione um paciente" />
+              </SelectTrigger>
+              <SelectContent>
+                {patients.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <div className="space-y-2">
             <Label>Título / Descrição</Label>
             <Input
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              placeholder="Ex: Retorno - João"
-              disabled={event?.source === 'google'}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Paciente</Label>
-            <Input
-              value={formData.patientName}
-              onChange={(e) => setFormData({ ...formData, patientName: e.target.value })}
-              placeholder="Nome do paciente"
-              disabled={event?.source === 'google'}
+              placeholder="Ex: Retorno - Procedimento Laser"
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -159,7 +171,6 @@ export function EventDialog({
                 type="date"
                 value={formData.date}
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                disabled={event?.source === 'google'}
               />
             </div>
             <div className="space-y-2">
@@ -167,7 +178,6 @@ export function EventDialog({
               <Select
                 value={formData.type}
                 onValueChange={(val: any) => setFormData({ ...formData, type: val })}
-                disabled={event?.source === 'google'}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -187,7 +197,6 @@ export function EventDialog({
                 type="time"
                 value={formData.startTime}
                 onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                disabled={event?.source === 'google'}
               />
             </div>
             <div className="space-y-2">
@@ -196,7 +205,6 @@ export function EventDialog({
                 type="time"
                 value={formData.endTime}
                 onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
-                disabled={event?.source === 'google'}
               />
             </div>
           </div>
@@ -205,7 +213,6 @@ export function EventDialog({
             <Select
               value={formData.status}
               onValueChange={(val: any) => setFormData({ ...formData, status: val })}
-              disabled={event?.source === 'google'}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -219,7 +226,7 @@ export function EventDialog({
           </div>
         </div>
         <DialogFooter className="flex items-center justify-between sm:justify-between w-full mt-2 border-t pt-4">
-          {event && event.source !== 'google' ? (
+          {event && event.id ? (
             <Button
               type="button"
               variant="ghost"
@@ -233,16 +240,14 @@ export function EventDialog({
           )}
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
-              {event?.source === 'google' ? 'Fechar' : 'Cancelar'}
+              Cancelar
             </Button>
-            {event?.source !== 'google' && (
-              <Button
-                onClick={handleSave}
-                className="bg-brand-blue text-white hover:bg-brand-blue/90"
-              >
-                {event ? 'Atualizar Evento' : 'Salvar Evento'}
-              </Button>
-            )}
+            <Button
+              onClick={handleSave}
+              className="bg-brand-blue text-white hover:bg-brand-blue/90"
+            >
+              {event ? 'Atualizar Evento' : 'Salvar Evento'}
+            </Button>
           </div>
         </DialogFooter>
       </DialogContent>

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -12,6 +12,8 @@ import { WeeklyView } from '@/components/agenda/WeeklyView'
 import { MonthlyView } from '@/components/agenda/MonthlyView'
 import { EventDialog } from '@/components/agenda/EventDialog'
 import { RelatoriosAgendaDialog } from '@/components/agenda/RelatoriosAgendaDialog'
+import { useRealtime } from '@/hooks/use-realtime'
+import { getAppointments } from '@/services/api'
 
 export default function Agenda() {
   const { location } = useAppStore()
@@ -24,9 +26,53 @@ export default function Agenda() {
     googleToken,
     connectGoogle,
     disconnectGoogle,
+    setEvents,
   } = useAgendaStore()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [exportOpen, setExportOpen] = useState(false)
+
+  const loadData = async () => {
+    try {
+      const appts = await getAppointments()
+      setEvents(
+        appts.map((a: any) => {
+          const startParts = a.start.split(' ')
+          const endParts = a.end.split(' ')
+          return {
+            id: a.id,
+            title: a.title || 'Consulta',
+            date: startParts[0],
+            startTime: startParts[1] ? startParts[1].substring(0, 5) : '09:00',
+            endTime: endParts[1] ? endParts[1].substring(0, 5) : '09:30',
+            type:
+              a.type === 'Consultation'
+                ? 'Consulta'
+                : a.type === 'Surgery'
+                  ? 'Procedimento'
+                  : 'Retorno',
+            patientName: a.expand?.patient?.name || 'Sem Paciente',
+            patientId: a.patient,
+            status:
+              a.status === 'Confirmed'
+                ? 'confirmed'
+                : a.status === 'Cancelled'
+                  ? 'cancelled'
+                  : 'pending',
+            waStatus: 'pending',
+          }
+        }),
+      )
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  useEffect(() => {
+    loadData()
+  }, [])
+  useRealtime('appointments', () => {
+    loadData()
+  })
 
   return (
     <div className="flex flex-col h-full space-y-6 animate-fade-in">
@@ -125,10 +171,6 @@ export default function Agenda() {
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full bg-amber-500 ring-2 ring-amber-500/20" />{' '}
                   Retorno
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-indigo-500 ring-2 ring-indigo-500/20" />{' '}
-                  Google Calendar
                 </div>
               </div>
             </div>

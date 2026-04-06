@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Clock, Phone, Search, Calendar, MoreHorizontal, MessageCircle } from 'lucide-react'
@@ -6,6 +6,8 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { toast } from '@/hooks/use-toast'
+import { useRealtime } from '@/hooks/use-realtime'
+import { getLeads, updateLead } from '@/services/api'
 
 type Lead = {
   id: string
@@ -18,59 +20,6 @@ type Lead = {
   value: number
 }
 
-const INITIAL_LEADS: Lead[] = [
-  {
-    id: '1',
-    name: 'Ana Silva',
-    treatment: 'Escleroterapia',
-    phone: '(32) 99999-1111',
-    lastContact: 'Hoje',
-    nextAppt: '15/04/2026',
-    status: 'first_consult',
-    value: 350,
-  },
-  {
-    id: '2',
-    name: 'Carlos Santos',
-    treatment: 'Laser Transdérmico',
-    phone: '(32) 98888-2222',
-    lastContact: 'Ontem',
-    nextAppt: 'Agendar',
-    status: 'pre_op',
-    value: 1200,
-  },
-  {
-    id: '3',
-    name: 'Marcos Paulo',
-    treatment: 'Cirurgia Varizes',
-    phone: '(32) 97777-3333',
-    lastContact: 'Há 2 dias',
-    nextAppt: '20/04/2026',
-    status: 'post_op',
-    value: 4500,
-  },
-  {
-    id: '4',
-    name: 'Juliana Costa',
-    treatment: 'Consulta Retorno',
-    phone: '(32) 96666-4444',
-    lastContact: 'Há 1 sem',
-    nextAppt: '10/05/2026',
-    status: 'recovery',
-    value: 0,
-  },
-  {
-    id: '5',
-    name: 'Roberto Almeida',
-    treatment: 'Avaliação Doppler',
-    phone: '(32) 95555-5555',
-    lastContact: 'Hoje',
-    nextAppt: '18/04/2026',
-    status: 'first_consult',
-    value: 450,
-  },
-]
-
 const PIPELINE_COLUMNS = [
   { id: 'first_consult', title: '1ª Consulta', color: 'border-l-blue-500' },
   { id: 'pre_op', title: 'Pré-Operatório / Orçamento', color: 'border-l-yellow-500' },
@@ -79,8 +28,38 @@ const PIPELINE_COLUMNS = [
 ]
 
 export default function CRM() {
-  const [leads, setLeads] = useState<Lead[]>(INITIAL_LEADS)
+  const [leads, setLeads] = useState<Lead[]>([])
   const [search, setSearch] = useState('')
+
+  const loadLeads = async () => {
+    try {
+      const data = await getLeads()
+      setLeads(
+        data.map((d: any) => ({
+          id: d.id,
+          name: d.name || d.expand?.patient?.name || 'Lead',
+          treatment: d.notes || 'Avaliação',
+          phone: d.expand?.patient?.phone || '',
+          lastContact: 'Hoje',
+          nextAppt: 'Agendar',
+          status:
+            d.stage === 'Consultation' || d.stage === 'Lead'
+              ? 'first_consult'
+              : d.stage === 'Pre-Op'
+                ? 'pre_op'
+                : d.stage === 'Post-Op'
+                  ? 'post_op'
+                  : 'recovery',
+          value: d.value || 0,
+        })),
+      )
+    } catch (e) {}
+  }
+
+  useEffect(() => {
+    loadLeads()
+  }, [])
+  useRealtime('leads', () => loadLeads())
 
   const handleDragStart = (e: React.DragEvent, id: string) => {
     e.dataTransfer.setData('leadId', id)
@@ -90,17 +69,35 @@ export default function CRM() {
     e.preventDefault()
   }
 
-  const handleDrop = (e: React.DragEvent, statusId: string) => {
+  const handleDrop = async (e: React.DragEvent, statusId: string) => {
     e.preventDefault()
     const leadId = e.dataTransfer.getData('leadId')
     const lead = leads.find((l) => l.id === leadId)
 
     if (lead && lead.status !== statusId) {
       setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, status: statusId } : l)))
-      toast({
-        title: 'Pipeline Atualizado',
-        description: `${lead.name} movido para ${PIPELINE_COLUMNS.find((c) => c.id === statusId)?.title}.`,
-      })
+      try {
+        const newStage =
+          statusId === 'first_consult'
+            ? 'Consultation'
+            : statusId === 'pre_op'
+              ? 'Pre-Op'
+              : statusId === 'post_op'
+                ? 'Post-Op'
+                : 'Concluded'
+        await updateLead(leadId, { stage: newStage })
+        toast({
+          title: 'Pipeline Atualizado',
+          description: `${lead.name} movido para ${PIPELINE_COLUMNS.find((c) => c.id === statusId)?.title}.`,
+        })
+      } catch (err: any) {
+        toast({
+          title: 'Erro ao atualizar pipeline',
+          description: err.message,
+          variant: 'destructive',
+        })
+        loadLeads()
+      }
     }
   }
 
@@ -129,7 +126,7 @@ export default function CRM() {
             />
           </div>
           <Button className="bg-brand-blue hover:bg-brand-blue/90 text-white shadow-sm">
-            Novo Paciente
+            Novo Lead
           </Button>
         </div>
       </div>
@@ -213,7 +210,7 @@ export default function CRM() {
 
                       <div className="flex items-center justify-between pt-2 border-t border-slate-100">
                         <span className="text-xs font-mono text-slate-500 flex items-center gap-1.5">
-                          <Phone className="w-3.5 h-3.5" /> {lead.phone}
+                          <Phone className="w-3.5 h-3.5" /> {lead.phone || '-'}
                         </span>
                         <Button
                           size="sm"
