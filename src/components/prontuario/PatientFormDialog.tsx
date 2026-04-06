@@ -22,6 +22,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { createPatient } from '@/services/api'
 import { useToast } from '@/hooks/use-toast'
+import { extractFieldErrors, getErrorMessage } from '@/lib/pocketbase/errors'
 
 const schema = z.object({
   name: z.string().min(1, 'Nome é obrigatório'),
@@ -47,12 +48,27 @@ export function PatientFormDialog({
   const onSubmit = async (values: z.infer<typeof schema>) => {
     try {
       setLoading(true)
-      await createPatient(values)
+
+      const payload: any = { ...values }
+      // PocketBase requires a valid email format or no field at all.
+      // If the email is empty, we remove it from the payload to avoid a 400 validation error.
+      if (!payload.email) {
+        delete payload.email
+      }
+
+      await createPatient(payload)
       toast({ title: 'Sucesso', description: 'Paciente cadastrado com sucesso.' })
       form.reset()
       onOpenChange(false)
     } catch (err: any) {
-      toast({ title: 'Erro', description: err.message, variant: 'destructive' })
+      const fieldErrors = extractFieldErrors(err)
+      if (Object.keys(fieldErrors).length > 0) {
+        Object.entries(fieldErrors).forEach(([field, message]) => {
+          form.setError(field as any, { type: 'manual', message })
+        })
+      } else {
+        toast({ title: 'Erro', description: getErrorMessage(err), variant: 'destructive' })
+      }
     } finally {
       setLoading(false)
     }
