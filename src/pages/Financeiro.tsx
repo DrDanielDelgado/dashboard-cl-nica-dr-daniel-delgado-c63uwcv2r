@@ -44,7 +44,9 @@ export default function Financeiro() {
           createdAt: r.created,
         })),
       )
-    } catch (e) {}
+    } catch (e) {
+      console.error(e)
+    }
   }
 
   useEffect(() => {

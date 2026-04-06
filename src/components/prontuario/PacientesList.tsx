@@ -58,7 +58,9 @@ export function PacientesList() {
           status: 'Ativo',
         })),
       )
-    } catch (e) {}
+    } catch (e) {
+      console.error(e)
+    }
   }
 
   useEffect(() => {

@@ -53,7 +53,9 @@ export default function CRM() {
           value: d.value || 0,
         })),
       )
-    } catch (e) {}
+    } catch (e) {
+      console.error(e)
+    }
   }
 
   useEffect(() => {
