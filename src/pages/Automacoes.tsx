@@ -42,6 +42,7 @@ import {
   Plus,
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
+import { WhatsAppMessagesPanel } from '@/components/settings/WhatsAppMessagesPanel'
 
 const INITIAL_FLOWS = [
   {
@@ -346,42 +347,7 @@ export default function Automacoes() {
         </TabsContent>
 
         <TabsContent value="logs">
-          <Card>
-            <CardHeader>
-              <CardTitle>Histórico de Disparos Recentes</CardTitle>
-              <CardDescription>
-                Acompanhe em tempo real o status de entrega e leitura das automações enviadas.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Paciente</TableHead>
-                    <TableHead>Unidade</TableHead>
-                    <TableHead>Horário Agendado</TableHead>
-                    <TableHead>Tipo (Fluxo)</TableHead>
-                    <TableHead>Status WhatsApp</TableHead>
-                    <TableHead className="text-right">Registro</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {MOCK_LOGS.map((log) => (
-                    <TableRow key={log.id}>
-                      <TableCell className="font-medium">{log.patient}</TableCell>
-                      <TableCell className="text-muted-foreground">{log.unit}</TableCell>
-                      <TableCell>{log.time}</TableCell>
-                      <TableCell className="text-muted-foreground">{log.type}</TableCell>
-                      <TableCell>{getStatusBadge(log.status)}</TableCell>
-                      <TableCell className="text-right text-muted-foreground text-xs font-mono">
-                        {log.timestamp}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+          <WhatsAppMessagesPanel />
         </TabsContent>
       </Tabs>
     </div>

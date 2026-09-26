@@ -63,7 +63,7 @@ export default function Configuracoes() {
             <FileSignature className="h-4 w-4" /> Fiscal (NF-e MG)
           </TabsTrigger>
           <TabsTrigger value="whatsapp" className="gap-2 py-2">
-            <MessageSquare className="h-4 w-4" /> WhatsApp Legado
+            <MessageSquare className="h-4 w-4" /> WhatsApp Cloud API
           </TabsTrigger>
           <TabsTrigger value="banco" className="gap-2 py-2">
             <Landmark className="h-4 w-4" /> Financeiro (C6 Bank)

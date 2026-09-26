@@ -305,12 +305,52 @@ export function AgendaProvider({ children }: { children: React.ReactNode }) {
     })
   }
 
-  const sendWaReminder = (id: string) => {
-    setEvents((prev) => prev.map((ev) => (ev.id === id ? { ...ev, waStatus: 'sent' } : ev)))
-    toast({
-      title: 'Lembrete Enviado',
-      description: 'Notificação automática disparada via API do WhatsApp.',
-    })
+  const sendWaReminder = async (id: string) => {
+    const ev = events.find((e) => e.id === id)
+    setEvents((prev) => prev.map((e) => (e.id === id ? { ...e, waStatus: 'sending' } : e)))
+
+    try {
+      const { sendWhatsAppMessage } = await import('@/services/whatsapp')
+      const pName = ev?.patientName || 'Paciente'
+      const apptDate = ev?.date || ''
+      const apptTime = ev?.startTime || ''
+
+      const res = await sendWhatsAppMessage({
+        appointmentId: id,
+        patientId: ev?.patientId,
+        recipientName: pName,
+        type: 'reminder',
+        text: `Olá ${pName}, confirmamos sua consulta com Dr. Daniel Delgado amanhã às ${apptTime}. Responda SIM para confirmar presença.`,
+      })
+
+      if (res.success) {
+        setEvents((prev) => prev.map((e) => (e.id === id ? { ...e, waStatus: 'sent' } : e)))
+        toast({
+          title: 'Lembrete Enviado via WhatsApp API',
+          description: `Mensagem enviada com sucesso para ${pName}.`,
+        })
+      } else if (res.pendingConfig) {
+        setEvents((prev) => prev.map((e) => (e.id === id ? { ...e, waStatus: 'pending' } : e)))
+        toast({
+          title: 'Lembrete Registrado (Pendente)',
+          description:
+            'Aguardando credenciais do Meta no painel de configurações para disparo real.',
+        })
+      } else {
+        setEvents((prev) => prev.map((e) => (e.id === id ? { ...e, waStatus: 'failed' } : e)))
+        toast({
+          variant: 'destructive',
+          title: 'Erro ao Enviar Lembrete',
+          description: res.error || 'Falha na comunicação com a WhatsApp Cloud API.',
+        })
+      }
+    } catch (err: any) {
+      setEvents((prev) => prev.map((e) => (e.id === id ? { ...e, waStatus: 'pending' } : e)))
+      toast({
+        title: 'Lembrete Salvo',
+        description: 'Não foi possível disparar em tempo real; mantido como pendente.',
+      })
+    }
   }
 
   const confirmWaReminder = (id: string) => {

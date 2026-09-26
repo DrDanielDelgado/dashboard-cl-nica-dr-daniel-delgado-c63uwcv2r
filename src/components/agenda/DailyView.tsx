@@ -1,7 +1,14 @@
 import { useAgendaStore, AgendaEvent, getLocalDateStr } from '@/stores/agenda'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Badge } from '@/components/ui/badge'
-import { User, Clock, MessageSquare, CheckCheck, Calendar as CalendarIcon } from 'lucide-react'
+import {
+  User,
+  Clock,
+  MessageSquare,
+  CheckCheck,
+  Calendar as CalendarIcon,
+  Check,
+} from 'lucide-react'
 import { useState } from 'react'
 import { EventDialog } from './EventDialog'
 
@@ -81,13 +88,22 @@ export function DailyView() {
                     {event.waStatus === 'confirmed' && (
                       <CheckCheck
                         className="w-3.5 h-3.5 text-green-600"
-                        title="Confirmado via WA"
+                        title="Confirmado via WhatsApp"
                       />
+                    )}
+                    {event.waStatus === 'read' && (
+                      <CheckCheck
+                        className="w-3.5 h-3.5 text-emerald-500"
+                        title="Lido no WhatsApp"
+                      />
+                    )}
+                    {event.waStatus === 'delivered' && (
+                      <Check className="w-3.5 h-3.5 text-blue-500" title="Entregue via WhatsApp" />
                     )}
                     {event.waStatus === 'sent' && (
                       <MessageSquare
-                        className="w-3.5 h-3.5 text-blue-500"
-                        title="Lembrete Enviado"
+                        className="w-3.5 h-3.5 text-sky-500"
+                        title="Lembrete Enviado via WhatsApp Cloud API"
                       />
                     )}
                   </h4>

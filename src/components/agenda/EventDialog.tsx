@@ -16,8 +16,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Trash } from 'lucide-react'
-import { AgendaEvent, getLocalDateStr } from '@/stores/agenda'
+import { Trash, MessageSquare } from 'lucide-react'
+import { AgendaEvent, getLocalDateStr, useAgendaStore } from '@/stores/agenda'
 import {
   createAppointment,
   updateAppointment,
@@ -42,7 +42,9 @@ export function EventDialog({
   defaultStartTime,
 }: EventDialogProps) {
   const { toast } = useToast()
+  const { sendWaReminder } = useAgendaStore()
   const [patients, setPatients] = useState<any[]>([])
+  const [sendingWa, setSendingWa] = useState(false)
 
   const [formData, setFormData] = useState<Partial<AgendaEvent>>({
     title: '',
@@ -225,19 +227,44 @@ export function EventDialog({
             </Select>
           </div>
         </div>
-        <DialogFooter className="flex items-center justify-between sm:justify-between w-full mt-2 border-t pt-4">
-          {event && event.id ? (
-            <Button
-              type="button"
-              variant="ghost"
-              className="text-destructive hover:bg-destructive/10"
-              onClick={handleDelete}
-            >
-              <Trash className="w-4 h-4 mr-2" /> Excluir
-            </Button>
-          ) : (
-            <div />
-          )}
+        <DialogFooter className="flex flex-wrap items-center justify-between sm:justify-between w-full mt-2 border-t pt-4 gap-2">
+          <div className="flex items-center gap-2">
+            {event && event.id && (
+              <Button
+                type="button"
+                variant="ghost"
+                className="text-destructive hover:bg-destructive/10"
+                onClick={handleDelete}
+              >
+                <Trash className="w-4 h-4 mr-2" /> Excluir
+              </Button>
+            )}
+            {event && event.id && (
+              <Button
+                type="button"
+                variant="outline"
+                className="text-green-700 dark:text-green-400 border-green-600/30 hover:bg-green-50"
+                disabled={sendingWa}
+                onClick={async () => {
+                  setSendingWa(true)
+                  try {
+                    const selPatient = patients.find((p) => p.id === formData.patientId)
+                    await sendWaReminder(event.id, {
+                      patientName: selPatient?.name || event.patientName,
+                      patientPhone: selPatient?.phone,
+                      date: formData.date,
+                      time: formData.startTime,
+                    })
+                  } finally {
+                    setSendingWa(false)
+                  }
+                }}
+              >
+                <MessageSquare className="w-4 h-4 mr-1.5" />
+                {sendingWa ? 'Enviando...' : 'Enviar Lembrete WhatsApp'}
+              </Button>
+            )}
+          </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar

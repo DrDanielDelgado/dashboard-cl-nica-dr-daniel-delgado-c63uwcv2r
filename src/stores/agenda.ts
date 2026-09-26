@@ -29,9 +29,14 @@ interface AgendaState {
   syncWithGoogle: () => void
   connectGoogle: () => void
   disconnectGoogle: () => void
+  sendWaReminder: (
+    id: string,
+    options?: { patientName?: string; patientPhone?: string; date?: string; time?: string },
+  ) => Promise<void>
+  confirmWaReminder: (id: string) => void
 }
 
-export const useAgendaStore = create<AgendaState>((set) => ({
+export const useAgendaStore = create<AgendaState>((set, get) => ({
   events: [],
   setEvents: (events) => set({ events }),
   selectedDate: new Date(),
@@ -42,4 +47,45 @@ export const useAgendaStore = create<AgendaState>((set) => ({
   syncWithGoogle: () => {},
   connectGoogle: () => {},
   disconnectGoogle: () => {},
+  sendWaReminder: async (
+    id: string,
+    options?: { patientName?: string; patientPhone?: string; date?: string; time?: string },
+  ) => {
+    const current = get().events.find((e) => e.id === id)
+    set((state) => ({
+      events: state.events.map((e) => (e.id === id ? { ...e, waStatus: 'sending' } : e)),
+    }))
+
+    try {
+      const { sendWhatsAppMessage } = await import('@/services/whatsapp')
+      const pName = options?.patientName || current?.patientName || 'Paciente'
+      const apptDate = options?.date || current?.date || ''
+      const apptTime = options?.time || current?.startTime || ''
+
+      const res = await sendWhatsAppMessage({
+        appointmentId: id,
+        patientId: current?.patientId,
+        to: options?.patientPhone,
+        recipientName: pName,
+        type: 'reminder',
+        text: `Olá ${pName}, lembramos de sua consulta na Clínica Dr. Daniel Delgado agendada para ${apptDate} às ${apptTime}. Responda SIM para confirmar sua presença.`,
+      })
+
+      const finalStatus = res.success ? 'sent' : res.pendingConfig ? 'pending' : 'failed'
+      set((state) => ({
+        events: state.events.map((e) => (e.id === id ? { ...e, waStatus: finalStatus } : e)),
+      }))
+    } catch (_) {
+      set((state) => ({
+        events: state.events.map((e) => (e.id === id ? { ...e, waStatus: 'pending' } : e)),
+      }))
+    }
+  },
+  confirmWaReminder: (id: string) => {
+    set((state) => ({
+      events: state.events.map((e) =>
+        e.id === id ? { ...e, waStatus: 'confirmed', status: 'confirmed' } : e,
+      ),
+    }))
+  },
 }))

@@ -34,10 +34,24 @@ export default function Agenda() {
   const loadData = async () => {
     try {
       const appts = await getAppointments()
+      let waLogsMap: Record<string, string> = {}
+      try {
+        const { getWhatsAppMessages } = await import('@/services/whatsapp')
+        const msgs = await getWhatsAppMessages()
+        msgs.forEach((m) => {
+          if (m.appointment && !waLogsMap[m.appointment]) {
+            waLogsMap[m.appointment] = m.status
+          }
+        })
+      } catch {
+        /* intentionally ignored */
+      }
+
       setEvents(
         appts.map((a: any) => {
           const startParts = a.start.split(' ')
           const endParts = a.end.split(' ')
+          const loggedWaStatus = waLogsMap[a.id]
           return {
             id: a.id,
             title: a.title || 'Consulta',
@@ -58,7 +72,7 @@ export default function Agenda() {
                 : a.status === 'Cancelled'
                   ? 'cancelled'
                   : 'pending',
-            waStatus: 'pending',
+            waStatus: loggedWaStatus || (a.status === 'Confirmed' ? 'confirmed' : 'pending'),
           }
         }),
       )
@@ -71,6 +85,9 @@ export default function Agenda() {
     loadData()
   }, [])
   useRealtime('appointments', () => {
+    loadData()
+  })
+  useRealtime('whatsapp_messages', () => {
     loadData()
   })
 
