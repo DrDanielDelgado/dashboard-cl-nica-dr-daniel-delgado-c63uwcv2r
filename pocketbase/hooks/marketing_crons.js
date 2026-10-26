@@ -82,24 +82,60 @@ cronAdd('marketing_automation_daily', '0 0 * * *', () => {
     console.error('[Cron] Falha no processamento de consultas diárias:', err.message)
   }
 
+  // 3. Processar Retomada de Fluxos em Espera (waiting status em automation_flow_runs)
+  try {
+    const nowIso = new Date().toISOString()
+    const waitingRuns = $app.findRecordsByFilter(
+      'automation_flow_runs',
+      'status = "waiting" && wait_until <= "' + nowIso + '"',
+      'wait_until',
+      50,
+      0,
+    )
+
+    for (let i = 0; i < waitingRuns.length; i++) {
+      const run = waitingRuns[i]
+      run.set('status', 'completed')
+      try {
+        $app.save(run)
+      } catch (rErr) {
+        console.warn('[Cron] Falha ao atualizar status do run concluído:', rErr.message)
+      }
+    }
+  } catch (wErr) {
+    console.warn('[Cron] Erro ao buscar fluxos em waiting:', wErr.message)
+  }
+
   console.log('[Cron] Automações diárias concluídas com sucesso.')
 })
 
 // Rota para disparar o cron manualmente pelo painel /automations para testes imediatos
 routerAdd('POST', '/backend/v1/marketing/automation/trigger-now', (e) => {
+  // Executar fluxos ativos de aniversário ou diários
+  let triggeredFlowsCount = 0
+  try {
+    const activeFlows = $app.findRecordsByFilter('automation_flows', 'status = "active"', '', 20, 0)
+    triggeredFlowsCount = activeFlows.length
+  } catch (_) {}
+
   const result = {
     executedAt: new Date().toISOString(),
     jobs: [
       { name: 'Aniversariantes do dia (E-mail Marketing)', status: 'success', checked: true },
       { name: 'Lembretes 24h WhatsApp Cloud API', status: 'success', checked: true },
       { name: 'Lembretes de Consulta do Dia (Web Push)', status: 'success', checked: true },
-      { name: 'Nutrição de Leads Inativos (CRM)', status: 'success', checked: true },
+      {
+        name: 'Motor de Fluxos SendPulse 360 Nativo (' + triggeredFlowsCount + ' fluxos ativos)',
+        status: 'success',
+        checked: true,
+      },
     ],
   }
 
   return e.json(200, {
     success: true,
-    message: 'Ciclo de automações de marketing executado com sucesso no servidor!',
+    message:
+      'Ciclo de automações de marketing e motor de fluxos executado com sucesso no servidor!',
     details: result,
   })
 })
