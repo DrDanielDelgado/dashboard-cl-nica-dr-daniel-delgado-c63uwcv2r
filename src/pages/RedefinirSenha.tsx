@@ -1,12 +1,11 @@
 import { useState, useMemo } from 'react'
-import { useSearchParams, useNavigate, Link } from 'react-router-dom'
+import { useSearchParams, useParams, useLocation, useNavigate, Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAuth } from '@/lib/auth'
 import {
-  Stethoscope,
   KeyRound,
   Loader2,
   CheckCircle2,
@@ -14,17 +13,45 @@ import {
   ArrowLeft,
   Eye,
   EyeOff,
+  HelpCircle,
 } from 'lucide-react'
 
 export default function RedefinirSenha() {
   const [searchParams] = useSearchParams()
+  const routeParams = useParams<{ token?: string }>()
+  const location = useLocation()
   const navigate = useNavigate()
   const { confirmPasswordReset } = useAuth()
 
-  // O PocketBase envia o token no query param `token` no link de redefinição
+  // Extrai o token de diferentes formatos possíveis:
+  // 1. Query string: ?token=XYZ ou ?t=XYZ
+  // 2. Rota parametrizada: /redefinir-senha/:token ou /auth/confirm-password-reset/:token
+  // 3. Hash URL (ex: #/confirm-password-reset/XYZ ou #/auth/confirm-password-reset/XYZ)
+  // 4. Parâmetros na query dentro da hash (ex: #/...?token=XYZ)
   const token = useMemo(() => {
-    return searchParams.get('token') || searchParams.get('t') || ''
-  }, [searchParams])
+    // 1. Query params padrão
+    const fromQuery = searchParams.get('token') || searchParams.get('t')
+    if (fromQuery) return fromQuery.trim()
+
+    // 2. Route params (:token)
+    if (routeParams.token) return routeParams.token.trim()
+
+    // 3. Checagem em window.location.hash
+    if (typeof window !== 'undefined' && window.location.hash) {
+      const hash = window.location.hash
+      const tokenMatch = hash.match(/confirm-password-reset\/([A-Za-z0-9_.-]+)/i)
+      if (tokenMatch && tokenMatch[1]) return tokenMatch[1].trim()
+
+      const hashParamMatch = hash.match(/[?&]token=([A-Za-z0-9_.-]+)/i)
+      if (hashParamMatch && hashParamMatch[1]) return hashParamMatch[1].trim()
+    }
+
+    // 4. Checagem no pathname atual (caso caia em rota não capturada diretamente)
+    const pathMatch = location.pathname.match(/confirm-password-reset\/([A-Za-z0-9_.-]+)/i)
+    if (pathMatch && pathMatch[1]) return pathMatch[1].trim()
+
+    return ''
+  }, [searchParams, routeParams, location])
 
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
@@ -57,26 +84,34 @@ export default function RedefinirSenha() {
     try {
       const res = await confirmPasswordReset(token, password, passwordConfirm)
       if (res.error) {
-        // Tratar erro do PocketBase (token expirado, inválido, etc.)
-        const rawMsg = res.error?.data?.data?.token?.message || res.error?.message || ''
+        // Tratar erro do PocketBase detalhadamente
+        const errorData = res.error?.data || {}
+        const tokenErr = errorData?.data?.token?.message || errorData?.data?.password?.message || ''
+        const rawMsg = (tokenErr || res.error?.message || '').toLowerCase()
+
         if (
-          rawMsg.toLowerCase().includes('token') ||
-          rawMsg.toLowerCase().includes('expired') ||
-          rawMsg.toLowerCase().includes('invalid') ||
+          rawMsg.includes('token') ||
+          rawMsg.includes('expired') ||
+          rawMsg.includes('invalid') ||
           res.error?.status === 400
         ) {
           setError(
-            'O link de recuperação expirou ou é inválido. Por favor, solicite um novo link na tela de login.',
+            'Este link de recuperação expirou ou já foi utilizado. Por questões de segurança, solicite um novo link na tela de login.',
           )
         } else {
-          setError('Não foi possível redefinir a senha. Tente novamente mais tarde.')
+          setError(
+            res.error?.message ||
+              'Não foi possível salvar sua nova senha. Verifique sua conexão e tente novamente.',
+          )
         }
         return
       }
 
       setSuccess(true)
-    } catch (_err) {
-      setError('Ocorreu um erro inesperado ao redefinir sua senha. Tente novamente.')
+    } catch (_err: any) {
+      setError(
+        'Ocorreu uma falha inesperada ao tentar redefinir sua senha. Verifique sua internet e tente novamente.',
+      )
     } finally {
       setLoading(false)
     }
@@ -106,33 +141,50 @@ export default function RedefinirSenha() {
           {success ? (
             <div className="space-y-4">
               <div className="text-sm text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-md p-3">
-                Tudo pronto! Você já pode entrar utilizando seu e-mail e sua nova senha.
+                <p className="font-medium">Tudo pronto!</p>
+                <p className="mt-1 text-xs text-emerald-700">
+                  Sua nova senha foi cadastrada no sistema. Agora você pode entrar no dashboard
+                  utilizando suas novas credenciais.
+                </p>
               </div>
               <Button
                 onClick={() => navigate('/login')}
-                className="w-full bg-brand-blue hover:bg-brand-blue/90 text-white"
+                className="w-full bg-brand-blue hover:bg-brand-blue/90 text-white font-medium"
               >
-                Ir para o login
+                Ir para a tela de login
               </Button>
             </div>
           ) : !token ? (
             <div className="space-y-4">
-              <div className="flex items-start gap-3 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-md p-3">
+              <div className="flex items-start gap-3 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-md p-3.5">
                 <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
-                <div>
-                  <div className="font-medium">Link de recuperação incompleto</div>
-                  <div className="text-xs text-amber-700 mt-1">
-                    Não foi detectado um token de segurança nesta página. Certifique-se de clicar no
-                    link completo recebido em seu e-mail de recuperação.
+                <div className="space-y-1">
+                  <div className="font-semibold text-slate-900">Link de recuperação incompleto</div>
+                  <div className="text-xs text-slate-600 leading-relaxed">
+                    Não encontramos o código de segurança na URL desta página. Isso acontece quando
+                    apenas parte do link recebido no e-mail foi clicada ou copiada.
                   </div>
                 </div>
               </div>
+
+              <div className="text-xs text-slate-500 bg-slate-50 p-3 rounded-md border border-slate-200 space-y-1.5">
+                <div className="font-medium text-slate-700 flex items-center gap-1.5">
+                  <HelpCircle className="h-3.5 w-3.5 text-brand-blue" />O que fazer agora?
+                </div>
+                <ul className="list-disc list-inside space-y-1 pl-1">
+                  <li>
+                    Abra o e-mail de recuperação e clique no botão azul "Redefinir minha senha".
+                  </li>
+                  <li>Ou solicite um novo link clicando em "Voltar ao login" abaixo.</li>
+                </ul>
+              </div>
+
               <Button
                 variant="outline"
                 onClick={() => navigate('/login')}
                 className="w-full flex items-center justify-center gap-2"
               >
-                <ArrowLeft className="h-4 w-4" /> Voltar ao login
+                <ArrowLeft className="h-4 w-4" /> Voltar à tela de login
               </Button>
             </div>
           ) : (

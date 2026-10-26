@@ -67,7 +67,19 @@ export default function Login() {
     try {
       await login(email.trim(), password)
     } catch (err: any) {
-      setError('E-mail ou senha inválidos. Verifique e tente novamente.')
+      // O PocketBase retorna 400 "Failed to authenticate." quando email ou senha não conferem
+      const status = err?.status
+      const rawMsg = err?.message || ''
+
+      if (status === 400 || rawMsg.includes('Failed to authenticate')) {
+        setError(
+          'E-mail ou senha incorretos. Se você acabou de redefinir sua senha no e-mail, certifique-se de digitar a nova senha cadastrada.',
+        )
+      } else if (status === 0 || !navigator.onLine) {
+        setError('Não foi possível conectar ao servidor. Verifique sua conexão com a internet.')
+      } else {
+        setError(rawMsg || 'Falha ao autenticar. Verifique seus dados de acesso e tente novamente.')
+      }
     } finally {
       setLoading(false)
     }
@@ -123,8 +135,18 @@ export default function Login() {
               />
             </div>
             {error && (
-              <div className="text-sm text-brand-red bg-brand-red/5 border border-brand-red/20 rounded-md px-3 py-2">
-                {error}
+              <div className="text-xs sm:text-sm text-brand-red bg-brand-red/5 border border-brand-red/20 rounded-md px-3 py-2 space-y-1">
+                <div>{error}</div>
+                <div className="text-[11px] text-slate-500 pt-0.5 border-t border-brand-red/10">
+                  Esqueceu ou não tem certeza da sua senha?{' '}
+                  <button
+                    type="button"
+                    onClick={handleOpenRecovery}
+                    className="text-brand-blue font-medium underline hover:text-brand-blue/80"
+                  >
+                    Redefinir agora
+                  </button>
+                </div>
               </div>
             )}
             <Button

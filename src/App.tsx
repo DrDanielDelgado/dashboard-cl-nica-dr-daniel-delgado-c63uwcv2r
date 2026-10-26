@@ -38,8 +38,18 @@ function AppRoutes() {
     return (
       <Router>
         <Routes>
+          {/* Rotas públicas de recuperação e redefinição de senha com suporte a múltiplos formatos */}
           <Route path="/redefinir-senha" element={<RedefinirSenha />} />
+          <Route path="/redefinir-senha/:token" element={<RedefinirSenha />} />
           <Route path="/reset-password" element={<RedefinirSenha />} />
+          <Route path="/reset-password/:token" element={<RedefinirSenha />} />
+          {/* Suporte a links padrão do PocketBase caso abertos no frontend */}
+          <Route path="/auth/confirm-password-reset/:token" element={<RedefinirSenha />} />
+          <Route path="/auth/confirm-password-reset" element={<RedefinirSenha />} />
+          <Route path="/confirm-password-reset/:token" element={<RedefinirSenha />} />
+          <Route path="/confirm-password-reset" element={<RedefinirSenha />} />
+          <Route path="/_/#/auth/confirm-password-reset/:token" element={<RedefinirSenha />} />
+
           <Route path="/login" element={<Login />} />
           <Route path="*" element={<Login />} />
         </Routes>
@@ -94,7 +104,13 @@ function AppRoutes() {
             <Route path="/chat-paciente" element={<ChatPaciente />} />
             {/* Rotas de redefinição de senha mesmo autenticado */}
             <Route path="/redefinir-senha" element={<RedefinirSenha />} />
+            <Route path="/redefinir-senha/:token" element={<RedefinirSenha />} />
             <Route path="/reset-password" element={<RedefinirSenha />} />
+            <Route path="/reset-password/:token" element={<RedefinirSenha />} />
+            <Route path="/auth/confirm-password-reset/:token" element={<RedefinirSenha />} />
+            <Route path="/auth/confirm-password-reset" element={<RedefinirSenha />} />
+            <Route path="/confirm-password-reset/:token" element={<RedefinirSenha />} />
+            <Route path="/confirm-password-reset" element={<RedefinirSenha />} />
           </Routes>
           <Toaster />
         </Router>
