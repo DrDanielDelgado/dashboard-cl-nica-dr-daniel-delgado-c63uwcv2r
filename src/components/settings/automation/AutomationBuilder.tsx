@@ -39,7 +39,13 @@ const MOCK_FLOW: FlowNode[] = [
   },
 ]
 
-export function AutomationBuilder() {
+interface AutomationBuilderProps {
+  flow?: Flow
+  onSave?: (updatedFlow: Flow) => void
+  onBack?: () => void
+}
+
+export function AutomationBuilder({ flow, onSave, onBack }: AutomationBuilderProps = {}) {
   const [activeNodeId, setActiveNodeId] = useState<string | null>(null)
   const [nodes, setNodes] = useState<FlowNode[]>(MOCK_FLOW)
 
@@ -61,6 +67,11 @@ export function AutomationBuilder() {
       {/* Topbar */}
       <div className="flex h-14 shrink-0 items-center justify-between border-b bg-white px-4">
         <div className="flex items-center gap-4">
+          {onBack && (
+            <Button variant="ghost" size="icon" onClick={onBack} className="mr-1">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          )}
           <div className="flex items-center gap-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-red text-white shadow-sm">
               <Workflow className="h-4 w-4" />

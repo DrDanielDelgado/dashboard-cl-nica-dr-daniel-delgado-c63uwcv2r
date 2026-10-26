@@ -16,6 +16,7 @@ import {
   HelpCircle,
 } from 'lucide-react'
 
+// Interface e componente de redefinição de senha com suporte total a tokens via query param e route params
 export default function RedefinirSenha() {
   const [searchParams] = useSearchParams()
   const routeParams = useParams<{ token?: string }>()

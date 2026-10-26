@@ -307,7 +307,7 @@ export function OrcamentosTab() {
       <OrcamentoPreviewDialog
         open={previewOpen}
         onOpenChange={setPreviewOpen}
-        budget={selectedBudget}
+        budget={selectedBudget as any}
       />
     </div>
   )

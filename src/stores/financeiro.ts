@@ -3,7 +3,7 @@ import { create } from 'zustand'
 export interface Budget {
   id: string
   patient: string
-  patientId: string
+  patientId?: string
   procedure: string
   value: number
   discount: number
@@ -11,15 +11,16 @@ export interface Budget {
   validityDate: string
   paymentMethods: string[]
   paymentLink?: string
-  status: string
+  status: 'pending' | 'approved' | 'expired' | 'draft' | 'sent' | 'declined' | 'paid' | 'refunded' | string
   observations?: string
-  unit: string
+  unit: 'Juiz de Fora' | 'Leopoldina' | 'Além Paraíba' | string
   createdAt: string
 }
 
 interface FinanceiroState {
   budgets: Budget[]
   setBudgets: (b: Budget[]) => void
+  generatePaymentLink?: (id: string) => void
 }
 
 const useFinanceiroStore = create<FinanceiroState>((set) => ({

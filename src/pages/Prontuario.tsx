@@ -188,7 +188,7 @@ export default function Prontuario() {
                           key={budget.id}
                           className="hover:bg-muted/30 cursor-pointer"
                           onClick={() => {
-                            setSelectedBudget(budget)
+                            setSelectedBudget(budget as any)
                             setPreviewOpen(true)
                           }}
                         >

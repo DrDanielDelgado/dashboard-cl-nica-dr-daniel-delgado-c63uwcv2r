@@ -4,6 +4,7 @@ export interface Patient {
   dob: string
   cpf: string
   phone: string
+  email?: string
   unit: 'Juiz de Fora' | 'Leopoldina' | 'Além Paraíba'
   lastConsultation: string
   status: 'Ativo' | 'Em Tratamento' | 'Alta' | 'Inativo'

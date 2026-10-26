@@ -86,25 +86,24 @@ export function DailyView() {
                     )}
                     {event.title}
                     {event.waStatus === 'confirmed' && (
-                      <CheckCheck
-                        className="w-3.5 h-3.5 text-green-600"
-                        title="Confirmado via WhatsApp"
-                      />
+                      <span title="Confirmado via WhatsApp">
+                        <CheckCheck className="w-3.5 h-3.5 text-green-600" />
+                      </span>
                     )}
                     {event.waStatus === 'read' && (
-                      <CheckCheck
-                        className="w-3.5 h-3.5 text-emerald-500"
-                        title="Lido no WhatsApp"
-                      />
+                      <span title="Lido no WhatsApp">
+                        <CheckCheck className="w-3.5 h-3.5 text-emerald-500" />
+                      </span>
                     )}
                     {event.waStatus === 'delivered' && (
-                      <Check className="w-3.5 h-3.5 text-blue-500" title="Entregue via WhatsApp" />
+                      <span title="Entregue via WhatsApp">
+                        <Check className="w-3.5 h-3.5 text-blue-500" />
+                      </span>
                     )}
                     {event.waStatus === 'sent' && (
-                      <MessageSquare
-                        className="w-3.5 h-3.5 text-sky-500"
-                        title="Lembrete Enviado via WhatsApp Cloud API"
-                      />
+                      <span title="Lembrete Enviado via WhatsApp Cloud API">
+                        <MessageSquare className="w-3.5 h-3.5 text-sky-500" />
+                      </span>
                     )}
                   </h4>
                   <Badge variant="outline" className="text-[10px] bg-white/50">

@@ -152,7 +152,7 @@ export function RelatoriosDialog({
       <RelatorioPreviewDialog
         open={previewOpen}
         onOpenChange={setPreviewOpen}
-        data={getFilteredBudgets()}
+        data={getFilteredBudgets() as any}
         filters={{ units, startDate, endDate, status }}
       />
     </>
