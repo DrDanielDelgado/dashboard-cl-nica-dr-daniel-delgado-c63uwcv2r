@@ -31,8 +31,14 @@ import { cn } from '@/lib/utils'
 
 export default function Prontuario() {
   const { budgets } = useFinanceiroStore()
-  const { patients } = useHiDoctorStore()
+  const { patients, fetchPatients, loadSettings } = useHiDoctorStore()
   const { role } = useAppStore()
+
+  // Garante carregamento dos pacientes do banco PocketBase ao abrir /prontuario
+  useMemo(() => {
+    fetchPatients()
+    loadSettings()
+  }, [])
 
   const isSecretary = role === 'Secretária'
 

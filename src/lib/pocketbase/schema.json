@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-26T11:42:06.447Z",
+  "generatedAt": "2026-10-26T12:10:05.297Z",
   "collections": [
     {
       "name": "users",
@@ -1212,6 +1212,176 @@
         "CREATE INDEX idx_partner_logs_partner ON partner_api_logs (partner)",
         "CREATE INDEX idx_partner_logs_created ON partner_api_logs (created DESC)",
         "CREATE INDEX idx_partner_logs_status ON partner_api_logs (status)"
+      ]
+    },
+    {
+      "name": "hidoctor_settings",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != ''",
+        "view": "@request.auth.id != ''",
+        "create": "@request.auth.id != ''",
+        "update": "@request.auth.id != ''",
+        "delete": "@request.auth.id != ''"
+      },
+      "fields": [
+        {
+          "name": "name",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "serial",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "crm",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "password",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "api_url",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "is_active",
+          "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "last_sync_status",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["never", "success", "warning", "failed", "running"]
+        },
+        {
+          "name": "last_sync_at",
+          "type": "date",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "last_sync_message",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "synced_patients_count",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "connection_test_details",
+          "type": "json",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": ["CREATE UNIQUE INDEX idx_hidoctor_settings_name ON hidoctor_settings (name)"]
+    },
+    {
+      "name": "hidoctor_sync_logs",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != ''",
+        "view": "@request.auth.id != ''",
+        "create": "@request.auth.id != ''",
+        "update": "@request.auth.id != ''",
+        "delete": "@request.auth.id != ''"
+      },
+      "fields": [
+        {
+          "name": "trigger_type",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["manual", "scheduled", "file_import", "test"]
+        },
+        {
+          "name": "status",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["success", "failed", "partial"]
+        },
+        {
+          "name": "records_imported",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "records_updated",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "duration_seconds",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "message",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "error_details",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_hidoctor_logs_created ON hidoctor_sync_logs (created DESC)",
+        "CREATE INDEX idx_hidoctor_logs_status ON hidoctor_sync_logs (status)"
       ]
     }
   ]
