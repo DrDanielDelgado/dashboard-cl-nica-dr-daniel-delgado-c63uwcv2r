@@ -11,7 +11,16 @@ export interface Budget {
   validityDate: string
   paymentMethods: string[]
   paymentLink?: string
-  status: 'pending' | 'approved' | 'expired' | 'draft' | 'sent' | 'declined' | 'paid' | 'refunded' | string
+  status:
+    | 'pending'
+    | 'approved'
+    | 'expired'
+    | 'draft'
+    | 'sent'
+    | 'declined'
+    | 'paid'
+    | 'refunded'
+    | string
   observations?: string
   unit: 'Juiz de Fora' | 'Leopoldina' | 'Além Paraíba' | string
   createdAt: string

@@ -4,7 +4,15 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Calendar } from '@/components/ui/calendar'
-import { RefreshCcw, Plus, Calendar as CalendarIcon, FileDown } from 'lucide-react'
+import {
+  RefreshCcw,
+  Plus,
+  Calendar as CalendarIcon,
+  FileDown,
+  Link2,
+  Copy,
+  Check,
+} from 'lucide-react'
 import { useAgendaStore } from '@/stores/agenda'
 import { useAppStore } from '@/stores/app'
 import { DailyView } from '@/components/agenda/DailyView'
@@ -30,6 +38,18 @@ export default function Agenda() {
   } = useAgendaStore()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [exportOpen, setExportOpen] = useState(false)
+  const [icsCopied, setIcsCopied] = useState(false)
+  const icsUrl = `${import.meta.env.VITE_POCKETBASE_URL || ''}/backend/v1/agenda.ics?token=ics-clinica-dd-2026`
+
+  const copyIcsUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(icsUrl)
+      setIcsCopied(true)
+      setTimeout(() => setIcsCopied(false), 2000)
+    } catch {
+      /* clipboard indisponível */
+    }
+  }
 
   const loadData = async () => {
     try {
@@ -124,6 +144,23 @@ export default function Agenda() {
                 Desconectar
               </Button>
             )}
+            <span className="text-xs text-muted-foreground flex items-center gap-1">
+              <Link2 className="h-3 w-3" />
+              <button
+                type="button"
+                onClick={copyIcsUrl}
+                className="underline underline-offset-2 hover:text-brand-blue"
+                title="Copiar link ICS para assinar no Google Calendar"
+              >
+                {icsCopied ? (
+                  <>
+                    <Check className="h-3 w-3 inline mr-1" /> Link copiado!
+                  </>
+                ) : (
+                  'Copiar link da agenda (ICS)'
+                )}
+              </button>
+            </span>
           </div>
         </div>
         <div className="flex gap-2 w-full md:w-auto flex-wrap">
