@@ -12,6 +12,12 @@ interface AuthState {
   loading: boolean
   login: (email: string, password: string) => Promise<void>
   logout: () => void
+  requestPasswordReset: (email: string) => Promise<{ error: any }>
+  confirmPasswordReset: (
+    token: string,
+    password: string,
+    passwordConfirm?: string,
+  ) => Promise<{ error: any }>
 }
 
 const AuthContext = createContext<AuthState | undefined>(undefined)
@@ -44,9 +50,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     pb.authStore.clear()
   }
 
+  const requestPasswordReset = async (email: string) => {
+    try {
+      await pb.collection('users').requestPasswordReset(email.trim())
+      return { error: null }
+    } catch (error) {
+      return { error }
+    }
+  }
+
+  const confirmPasswordReset = async (
+    token: string,
+    password: string,
+    passwordConfirm?: string,
+  ) => {
+    try {
+      await pb
+        .collection('users')
+        .confirmPasswordReset(token.trim(), password, passwordConfirm ?? password)
+      return { error: null }
+    } catch (error) {
+      return { error }
+    }
+  }
+
   return React.createElement(
     AuthContext.Provider,
-    { value: { user, loading, login, logout } },
+    {
+      value: {
+        user,
+        loading,
+        login,
+        logout,
+        requestPasswordReset,
+        confirmPasswordReset,
+      },
+    },
     children,
   )
 }

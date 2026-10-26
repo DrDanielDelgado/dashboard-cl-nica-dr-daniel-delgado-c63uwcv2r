@@ -4,6 +4,7 @@ import { Toaster } from '@/components/ui/sonner'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import Index from '@/pages/Index'
 import Login from '@/pages/Login'
+import RedefinirSenha from '@/pages/RedefinirSenha'
 import NotFound from '@/pages/NotFound'
 import Atendimento from '@/pages/Atendimento'
 import CRM from '@/pages/CRM'
@@ -35,10 +36,15 @@ function AppRoutes() {
 
   if (!user) {
     return (
-      <>
-        <Login />
+      <Router>
+        <Routes>
+          <Route path="/redefinir-senha" element={<RedefinirSenha />} />
+          <Route path="/reset-password" element={<RedefinirSenha />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="*" element={<Login />} />
+        </Routes>
         <Toaster />
-      </>
+      </Router>
     )
   }
 
@@ -86,6 +92,9 @@ function AppRoutes() {
             </Route>
             {/* Rota pública para chat de paciente */}
             <Route path="/chat-paciente" element={<ChatPaciente />} />
+            {/* Rotas de redefinição de senha mesmo autenticado */}
+            <Route path="/redefinir-senha" element={<RedefinirSenha />} />
+            <Route path="/reset-password" element={<RedefinirSenha />} />
           </Routes>
           <Toaster />
         </Router>
