@@ -55,3 +55,30 @@ onRecordAfterUpdateSuccess((e) => {
     console.log('sync webhook falhou (update): ' + (err && err.message ? err.message : err))
   }
 }, 'appointments')
+
+onRecordAfterDeleteSuccess((e) => {
+  try {
+    const url =
+      $os.getenv('SYNC_WEBHOOK_URL') ||
+      'https://maestro.adapta.one/webhooks/generic/fe449a7728e661fefc6710442f81150df49ef1226b1dabb9192d8ce0f93e1f0e'
+    const secret = $os.getenv('SYNC_WEBHOOK_SECRET') || ''
+    $http.send({
+      url: url,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Webhook-Secret': secret,
+      },
+      body: JSON.stringify({
+        source: 'pocketbase',
+        collection: 'appointments',
+        action: 'delete',
+        id: e.record.id,
+        ts: new Date().toISOString(),
+      }),
+      timeout: 5,
+    })
+  } catch (err) {
+    console.log('sync webhook falhou (delete): ' + (err && err.message ? err.message : err))
+  }
+}, 'appointments')
