@@ -2,19 +2,18 @@
 // O Maestro executa então a sincronização bidirecional com o Google Calendar.
 // Falhas são silenciosas: a varredura periódica cobre o que escapar.
 
-const SYNC_WEBHOOK_URL =
-  $os.getenv('SYNC_WEBHOOK_URL') ||
-  'https://maestro.adapta.one/webhooks/generic/fe449a7728e661fefc6710442f81150df49ef1226b1dabb9192d8ce0f93e1f0e'
-const SYNC_WEBHOOK_SECRET = $os.getenv('SYNC_WEBHOOK_SECRET') || ''
-
 onRecordAfterCreateSuccess((e) => {
   try {
+    const url =
+      $os.getenv('SYNC_WEBHOOK_URL') ||
+      'https://maestro.adapta.one/webhooks/generic/fe449a7728e661fefc6710442f81150df49ef1226b1dabb9192d8ce0f93e1f0e'
+    const secret = $os.getenv('SYNC_WEBHOOK_SECRET') || ''
     $http.send({
-      url: SYNC_WEBHOOK_URL,
+      url: url,
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-Webhook-Secret': SYNC_WEBHOOK_SECRET,
+        'X-Webhook-Secret': secret,
       },
       body: JSON.stringify({
         source: 'pocketbase',
@@ -32,12 +31,16 @@ onRecordAfterCreateSuccess((e) => {
 
 onRecordAfterUpdateSuccess((e) => {
   try {
+    const url =
+      $os.getenv('SYNC_WEBHOOK_URL') ||
+      'https://maestro.adapta.one/webhooks/generic/fe449a7728e661fefc6710442f81150df49ef1226b1dabb9192d8ce0f93e1f0e'
+    const secret = $os.getenv('SYNC_WEBHOOK_SECRET') || ''
     $http.send({
-      url: SYNC_WEBHOOK_URL,
+      url: url,
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-Webhook-Secret': SYNC_WEBHOOK_SECRET,
+        'X-Webhook-Secret': secret,
       },
       body: JSON.stringify({
         source: 'pocketbase',
