@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-26T21:30:15.987Z",
+  "generatedAt": "2026-10-26T21:45:01.925Z",
   "collections": [
     {
       "name": "users",
@@ -37,6 +37,24 @@
           "required": false,
           "system": false,
           "autodateTriggers": ["onCreate", "onUpdate"]
+        },
+        {
+          "name": "crm_numero",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "crm_uf",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "last_cfm_access",
+          "type": "date",
+          "required": false,
+          "system": false
         }
       ],
       "indexes": [
@@ -1382,6 +1400,80 @@
       "indexes": [
         "CREATE INDEX idx_hidoctor_logs_created ON hidoctor_sync_logs (created DESC)",
         "CREATE INDEX idx_hidoctor_logs_status ON hidoctor_sync_logs (status)"
+      ]
+    },
+    {
+      "name": "integration_access_logs",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != \"\"",
+        "view": "@request.auth.id != \"\"",
+        "create": "@request.auth.id != \"\"",
+        "update": null,
+        "delete": null
+      },
+      "fields": [
+        {
+          "name": "user",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "users"
+        },
+        {
+          "name": "user_name",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "action",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "integration_name",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "target_url",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "ip_address",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "details",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_int_access_action ON integration_access_logs (action)",
+        "CREATE INDEX idx_int_access_created ON integration_access_logs (created DESC)"
       ]
     }
   ]
