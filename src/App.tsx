@@ -15,6 +15,7 @@ import Prontuario from '@/pages/Prontuario'
 import Financeiro from '@/pages/Financeiro'
 import Configuracoes from '@/pages/Configuracoes'
 import Agenda from '@/pages/Agenda'
+import ConexoesApi from '@/pages/ConexoesApi'
 
 import { AppProvider } from '@/stores/app'
 import { AuditProvider } from '@/stores/audit'
@@ -36,6 +37,7 @@ export default function App() {
               <Route path="/assistente-ia" element={<AssistenteIA />} />
               <Route path="/prontuario" element={<Prontuario />} />
               <Route path="/agenda" element={<Agenda />} />
+              <Route path="/conexoes-api" element={<ConexoesApi />} />
 
               {/* Highly Protected Route - Financeiro (No Secretary) */}
               <Route

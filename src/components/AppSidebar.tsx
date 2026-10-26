@@ -10,6 +10,7 @@ import {
   Megaphone,
   Mail,
   Bot,
+  Webhook,
 } from 'lucide-react'
 
 import {
@@ -37,6 +38,7 @@ const mainNavItems = [
   { title: 'Marketing', icon: Mail, url: '/marketing' },
   { title: 'Assistente IA', icon: Bot, url: '/assistente-ia' },
   { title: 'Automações & MKT', icon: Megaphone, url: '/automations' },
+  { title: 'Conexões & API', icon: Webhook, url: '/conexoes-api' },
 ]
 
 const bottomNavItems = [{ title: 'Configurações', icon: Settings, url: '/configuracoes' }]
