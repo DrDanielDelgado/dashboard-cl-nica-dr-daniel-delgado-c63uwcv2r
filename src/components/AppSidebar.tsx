@@ -8,6 +8,8 @@ import {
   Settings,
   Users,
   Megaphone,
+  Mail,
+  Bot,
 } from 'lucide-react'
 
 import {
@@ -32,6 +34,8 @@ const mainNavItems = [
   { title: 'Prontuário 360', icon: Activity, url: '/prontuario' },
   { title: 'Financeiro', icon: CreditCard, url: '/financeiro' },
   { title: 'Estoque', icon: Package, url: '/estoque' },
+  { title: 'Marketing', icon: Mail, url: '/marketing' },
+  { title: 'Assistente IA', icon: Bot, url: '/assistente-ia' },
   { title: 'Automações & MKT', icon: Megaphone, url: '/automations' },
 ]
 

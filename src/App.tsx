@@ -8,6 +8,9 @@ import Atendimento from '@/pages/Atendimento'
 import CRM from '@/pages/CRM'
 import Estoque from '@/pages/Estoque'
 import Automations from '@/pages/Automations'
+import Marketing from '@/pages/Marketing'
+import AssistenteIA from '@/pages/AssistenteIA'
+import ChatPaciente from '@/pages/ChatPaciente'
 import Prontuario from '@/pages/Prontuario'
 import Financeiro from '@/pages/Financeiro'
 import Configuracoes from '@/pages/Configuracoes'
@@ -29,6 +32,8 @@ export default function App() {
               <Route path="/crm" element={<CRM />} />
               <Route path="/estoque" element={<Estoque />} />
               <Route path="/automations" element={<Automations />} />
+              <Route path="/marketing" element={<Marketing />} />
+              <Route path="/assistente-ia" element={<AssistenteIA />} />
               <Route path="/prontuario" element={<Prontuario />} />
               <Route path="/agenda" element={<Agenda />} />
 
@@ -56,6 +61,8 @@ export default function App() {
 
               <Route path="*" element={<NotFound />} />
             </Route>
+            {/* Rota pública para chat de paciente */}
+            <Route path="/chat-paciente" element={<ChatPaciente />} />
           </Routes>
           <Toaster />
         </Router>

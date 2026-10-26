@@ -10,24 +10,53 @@ export function AiAssistant() {
   const [messages, setMessages] = useState<{ role: 'user' | 'ai'; text: string }[]>([
     {
       role: 'ai',
-      text: 'Olá! Sou a assistente virtual da clínica do Dr. Daniel Delgado. Como posso ajudar com a agenda, prontuários ou estoque hoje?',
+      text: 'Olá! Sou a assistente virtual nativa da clínica do Dr. Daniel Delgado. Posso tirar dúvidas sobre procedimentos vasculares ou consultar agenda e pacientes.',
     },
   ])
   const [input, setInput] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [conversationId, setConversationId] = useState<string | null>(null)
 
-  const handleSend = () => {
-    if (!input.trim()) return
-    setMessages((prev) => [...prev, { role: 'user', text: input }])
+  const handleSend = async () => {
+    if (!input.trim() || loading) return
+    const userText = input.trim()
+    setMessages((prev) => [...prev, { role: 'user', text: userText }])
     setInput('')
-    setTimeout(() => {
+    setLoading(true)
+
+    try {
+      const res = await fetch(`${import.meta.env.VITE_POCKETBASE_URL}/backend/v1/agent/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: userText,
+          conversation_id: conversationId,
+        }),
+      })
+
+      const data = await res.json()
+      if (data.conversation_id) setConversationId(data.conversation_id)
+
       setMessages((prev) => [
         ...prev,
         {
           role: 'ai',
-          text: 'Entendido. Estou analisando os dados da clínica para te responder com precisão.',
+          text: data.content || 'Resposta processada com sucesso.',
         },
       ])
-    }, 1000)
+    } catch (_) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'ai',
+          text: 'Não foi possível consultar o agente no momento. Tente novamente em instantes.',
+        },
+      ])
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (

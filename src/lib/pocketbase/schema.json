@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-26T20:49:41.540Z",
+  "generatedAt": "2026-10-26T10:59:18.532Z",
   "collections": [
     {
       "name": "users",
@@ -420,6 +420,316 @@
         "CREATE INDEX idx_wamsg_wa_id ON whatsapp_messages (whatsapp_message_id)",
         "CREATE INDEX idx_wamsg_phone ON whatsapp_messages (phone)"
       ]
+    },
+    {
+      "name": "email_campaigns",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != ''",
+        "view": "@request.auth.id != ''",
+        "create": "@request.auth.id != ''",
+        "update": "@request.auth.id != ''",
+        "delete": "@request.auth.id != ''"
+      },
+      "fields": [
+        {
+          "name": "title",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "subject",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "content",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "target_filter",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["all", "with_appointments", "leads_only"]
+        },
+        {
+          "name": "status",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["draft", "sending", "sent", "failed"]
+        },
+        {
+          "name": "sent_count",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "failed_count",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "sent_at",
+          "type": "date",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_ecampaign_status ON email_campaigns (status)",
+        "CREATE INDEX idx_ecampaign_created ON email_campaigns (created DESC)"
+      ]
+    },
+    {
+      "name": "email_logs",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != ''",
+        "view": "@request.auth.id != ''",
+        "create": "@request.auth.id != ''",
+        "update": "@request.auth.id != ''",
+        "delete": "@request.auth.id != ''"
+      },
+      "fields": [
+        {
+          "name": "campaign",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "email_campaigns"
+        },
+        {
+          "name": "patient",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "patients"
+        },
+        {
+          "name": "recipient_email",
+          "type": "email",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "recipient_name",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "subject",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "status",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["sent", "failed", "opened"]
+        },
+        {
+          "name": "error_message",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "sent_at",
+          "type": "date",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_elog_campaign ON email_logs (campaign)",
+        "CREATE INDEX idx_elog_status ON email_logs (status)"
+      ]
+    },
+    {
+      "name": "push_subscriptions",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != ''",
+        "view": "@request.auth.id != ''",
+        "create": "@request.auth.id != ''",
+        "update": "@request.auth.id != ''",
+        "delete": "@request.auth.id != ''"
+      },
+      "fields": [
+        {
+          "name": "user",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "users"
+        },
+        {
+          "name": "patient",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "patients"
+        },
+        {
+          "name": "endpoint",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "p256dh",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "auth_key",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "user_agent",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "is_active",
+          "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "last_notified",
+          "type": "date",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_psub_endpoint ON push_subscriptions (endpoint)",
+        "CREATE INDEX idx_psub_active ON push_subscriptions (is_active)"
+      ]
+    },
+    {
+      "name": "push_notifications",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != ''",
+        "view": "@request.auth.id != ''",
+        "create": "@request.auth.id != ''",
+        "update": "@request.auth.id != ''",
+        "delete": "@request.auth.id != ''"
+      },
+      "fields": [
+        {
+          "name": "title",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "body",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "url",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "target",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["all", "staff", "patients"]
+        },
+        {
+          "name": "sent_count",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "status",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["sent", "failed"]
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": ["CREATE INDEX idx_pnotif_created ON push_notifications (created DESC)"]
     }
   ]
 }
