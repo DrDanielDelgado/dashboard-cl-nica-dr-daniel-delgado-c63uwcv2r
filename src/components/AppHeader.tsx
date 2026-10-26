@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { Bell, Search, MapPin } from 'lucide-react'
+import { Bell, Search, MapPin, LogOut } from 'lucide-react'
 import { GlobalSearch } from './GlobalSearch'
+import { useAuth } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -17,6 +18,7 @@ import brandLogo from '@/assets/captura-de-tela-2026-03-15-as-21.39.36-d4190.png
 
 export function AppHeader() {
   const { location, setLocation, role } = useAppStore()
+  const { logout } = useAuth()
   const [searchOpen, setSearchOpen] = useState(false)
 
   return (
@@ -88,6 +90,15 @@ export function AppHeader() {
             <AvatarImage src="https://img.usecurling.com/ppl/thumbnail?gender=male&seed=4" />
             <AvatarFallback className="bg-brand-blue text-white font-bold">DD</AvatarFallback>
           </Avatar>
+          <Button
+            variant="ghost"
+            size="icon"
+            title="Sair da conta"
+            className="text-slate-400 hover:text-brand-red hover:bg-brand-red/5"
+            onClick={() => logout()}
+          >
+            <LogOut className="h-4 w-4" />
+          </Button>
         </div>
       </div>
     </header>

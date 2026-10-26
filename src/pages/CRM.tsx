@@ -7,7 +7,15 @@ import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { toast } from '@/hooks/use-toast'
 import { useRealtime } from '@/hooks/use-realtime'
-import { getLeads, updateLead } from '@/services/api'
+import { getLeads, createLead, updateLead } from '@/services/api'
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Label } from '@/components/ui/label'
 
 type Lead = {
   id: string
@@ -30,6 +38,10 @@ const PIPELINE_COLUMNS = [
 export default function CRM() {
   const [leads, setLeads] = useState<Lead[]>([])
   const [search, setSearch] = useState('')
+  const [showNewLead, setShowNewLead] = useState(false)
+  const [newName, setNewName] = useState('')
+  const [newValue, setNewValue] = useState('')
+  const [saving, setSaving] = useState(false)
 
   const loadLeads = async () => {
     try {
@@ -103,6 +115,23 @@ export default function CRM() {
     }
   }
 
+  const handleCreateLead = async () => {
+    if (!newName.trim()) return
+    setSaving(true)
+    try {
+      await createLead({ name: newName.trim(), stage: 'Lead', value: Number(newValue) || 0 })
+      toast({ title: 'Lead criado', description: `${newName.trim()} adicionado ao pipeline.` })
+      setShowNewLead(false)
+      setNewName('')
+      setNewValue('')
+      loadLeads()
+    } catch (err: any) {
+      toast({ title: 'Erro ao criar lead', description: err.message, variant: 'destructive' })
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const filteredLeads = leads.filter((l) => l.name.toLowerCase().includes(search.toLowerCase()))
 
   return (
@@ -127,7 +156,10 @@ export default function CRM() {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          <Button className="bg-brand-blue hover:bg-brand-blue/90 text-white shadow-sm">
+          <Button
+            className="bg-brand-blue hover:bg-brand-blue/90 text-white shadow-sm"
+            onClick={() => setShowNewLead(true)}
+          >
             Novo Lead
           </Button>
         </div>
@@ -235,6 +267,47 @@ export default function CRM() {
           )
         })}
       </div>
+
+      <Dialog open={showNewLead} onOpenChange={setShowNewLead}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Novo Lead</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="lead-name">Nome do paciente/lead</Label>
+              <Input
+                id="lead-name"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                placeholder="Ex.: Maria Souza"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="lead-value">Valor estimado (R$)</Label>
+              <Input
+                id="lead-value"
+                type="number"
+                value={newValue}
+                onChange={(e) => setNewValue(e.target.value)}
+                placeholder="0,00"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowNewLead(false)}>
+              Cancelar
+            </Button>
+            <Button
+              className="bg-brand-blue hover:bg-brand-blue/90 text-white"
+              onClick={handleCreateLead}
+              disabled={saving || !newName.trim()}
+            >
+              {saving ? 'Salvando...' : 'Criar Lead'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
