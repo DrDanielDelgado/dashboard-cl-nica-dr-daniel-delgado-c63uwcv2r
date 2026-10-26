@@ -1,6 +1,7 @@
-// Notifica o Maestro em tempo real quando um agendamento é criado/editado.
+// Notifica o Maestro em tempo real quando um agendamento é criado/editado/excluído.
 // O Maestro executa então a sincronização bidirecional com o Google Calendar.
 // Falhas são silenciosas: a varredura periódica cobre o que escapar.
+// IMPORTANTE: sempre terminar com e.next() para não bloquear realtime/handlers.
 
 onRecordAfterCreateSuccess((e) => {
   try {
@@ -26,6 +27,8 @@ onRecordAfterCreateSuccess((e) => {
     })
   } catch (err) {
     console.log('sync webhook falhou (create): ' + (err && err.message ? err.message : err))
+  } finally {
+    e.next()
   }
 }, 'appointments')
 
@@ -53,6 +56,8 @@ onRecordAfterUpdateSuccess((e) => {
     })
   } catch (err) {
     console.log('sync webhook falhou (update): ' + (err && err.message ? err.message : err))
+  } finally {
+    e.next()
   }
 }, 'appointments')
 
@@ -80,5 +85,7 @@ onRecordAfterDeleteSuccess((e) => {
     })
   } catch (err) {
     console.log('sync webhook falhou (delete): ' + (err && err.message ? err.message : err))
+  } finally {
+    e.next()
   }
 }, 'appointments')
