@@ -3,6 +3,7 @@ import { Layout } from '@/components/Layout'
 import { Toaster } from '@/components/ui/sonner'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import Index from '@/pages/Index'
+import Login from '@/pages/Login'
 import NotFound from '@/pages/NotFound'
 import Atendimento from '@/pages/Atendimento'
 import CRM from '@/pages/CRM'
@@ -19,8 +20,28 @@ import ConexoesApi from '@/pages/ConexoesApi'
 
 import { AppProvider } from '@/stores/app'
 import { AuditProvider } from '@/stores/audit'
+import { AuthProvider, useAuth } from '@/lib/auth'
 
-export default function App() {
+function AppRoutes() {
+  const { user, loading } = useAuth()
+
+  if (loading) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-slate-50">
+        <div className="text-slate-500 text-sm font-medium">Carregando...</div>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return (
+      <>
+        <Login />
+        <Toaster />
+      </>
+    )
+  }
+
   return (
     <AppProvider>
       <AuditProvider>
@@ -70,5 +91,13 @@ export default function App() {
         </Router>
       </AuditProvider>
     </AppProvider>
+  )
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppRoutes />
+    </AuthProvider>
   )
 }
