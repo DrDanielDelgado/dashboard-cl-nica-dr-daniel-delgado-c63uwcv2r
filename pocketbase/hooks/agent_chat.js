@@ -25,17 +25,60 @@ routerAdd('POST', '/backend/v1/agent/chat', (e) => {
       return e.badRequestError('Mensagem é obrigatória.')
     }
 
+    const rawMessage = body.message.trim()
+
+    // Higienização / salvaguarda LGPD para o backend:
+    // Nunca persistir dados clínicos sensíveis ou fotos espontâneas
     const result = $ai.agent('clinica-daniel-delgado').chat({
       user_id: userId,
       conversation_id: body.conversation_id || null,
-      message: body.message,
+      message: rawMessage,
     })
+
+    let cleanContent = result.content || ''
+    let isUrgent = false
+
+    // Detecção de urgência conforme Etapa 5A do protocolo:
+    // 1) Tag de sistema [URGENTE_EQUIPE]
+    // 2) Menções a SAMU 192, pronto-socorro urgente ou dor aguda nos padrões da Etapa 5A
+    if (cleanContent.indexOf('[URGENTE_EQUIPE]') !== -1) {
+      isUrgent = true
+      cleanContent = cleanContent.replace(/\[URGENTE_EQUIPE\]/g, '').trim()
+    } else if (
+      cleanContent.indexOf('pronto-socorro') !== -1 &&
+      (cleanContent.indexOf('SAMU') !== -1 || cleanContent.indexOf('192') !== -1)
+    ) {
+      isUrgent = true
+    }
+
+    // Se marcado como urgente, registrar lead/escalonamento prioritário para a equipe
+    if (isUrgent) {
+      try {
+        const leadsCol = $app.findCollectionByNameOrId('leads')
+        const leadRecord = new Record(leadsCol)
+        leadRecord.set('name', body.patient_name || 'Paciente Chat (Prioridade Urgente)')
+        leadRecord.set('stage', 'Lead')
+        leadRecord.set('source', 'Chat IA - Alerta de Urgência')
+        leadRecord.set(
+          'notes',
+          'ALERTA DE URGÊNCIA (Etapa 5A do protocolo): Paciente relatou sintomas agudos no chat em ' +
+            new Date().toISOString() +
+            (body.patient_phone ? ' - Telefone informado: ' + body.patient_phone : '') +
+            ' - Orientado a procurar pronto-socorro/SAMU 192 e equipe acionada.',
+        )
+        $app.save(leadRecord)
+      } catch (leadErr) {
+        // Registro defensivo
+        console.log('Falha ao registrar lead de urgência:', leadErr)
+      }
+    }
 
     return e.json(200, {
       conversation_id: result.conversation_id,
-      content: result.content,
+      content: cleanContent,
       citations: result.citations || [],
       message_id: result.message_id,
+      is_urgent: isUrgent,
     })
   } catch (err) {
     if (err instanceof SkipAiConfigError) {

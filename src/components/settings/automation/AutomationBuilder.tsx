@@ -3,7 +3,7 @@ import { ArrowLeft, Play, Workflow } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { FlowTree } from './FlowTree'
 import { AutomationConfigPanel } from './AutomationConfigPanel'
-import { FlowNode } from '@/types/automation'
+import { FlowNode, Flow } from '@/types/automation'
 
 const MOCK_FLOW: FlowNode[] = [
   {

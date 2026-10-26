@@ -86,7 +86,7 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4">
+    <div className="min-h-screen w-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4">
       <Card className="w-full max-w-md shadow-lg border-slate-200">
         <CardHeader className="text-center space-y-3">
           <div className="mx-auto w-14 h-14 rounded-full bg-brand-blue/10 flex items-center justify-center">
@@ -167,6 +167,30 @@ export default function Login() {
           </form>
         </CardContent>
       </Card>
+
+      {/* Rodapé com Links Oficiais de Políticas e Atendimento */}
+      <div className="mt-6 flex flex-wrap items-center justify-center gap-4 text-xs text-slate-500">
+        <a
+          href="/politica-cancelamento"
+          className="hover:text-slate-800 dark:hover:text-slate-300 underline transition-colors"
+        >
+          Política de Cancelamento
+        </a>
+        <span>•</span>
+        <a
+          href="/politica-privacidade"
+          className="hover:text-slate-800 dark:hover:text-slate-300 underline transition-colors"
+        >
+          Política de Privacidade
+        </a>
+        <span>•</span>
+        <a
+          href="/chat-paciente"
+          className="hover:text-slate-800 dark:hover:text-slate-300 underline transition-colors"
+        >
+          Chat com Assistente
+        </a>
+      </div>
 
       {/* Diálogo de Recuperação de Senha */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

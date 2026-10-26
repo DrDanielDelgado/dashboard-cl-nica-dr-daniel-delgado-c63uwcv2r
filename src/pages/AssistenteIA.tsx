@@ -305,6 +305,22 @@ export default function AssistenteIA() {
                     <span>Acesso a Dados:</span>
                     <span className="font-medium text-emerald-600">Pacientes, Agenda, CRM</span>
                   </div>
+                  <div className="pt-2 border-t mt-2 flex flex-col gap-1 text-[11px]">
+                    <a
+                      href="/politica-cancelamento"
+                      target="_blank"
+                      className="text-brand-blue hover:underline"
+                    >
+                      → Política de Cancelamento
+                    </a>
+                    <a
+                      href="/politica-privacidade"
+                      target="_blank"
+                      className="text-brand-blue hover:underline"
+                    >
+                      → Política de Privacidade (LGPD)
+                    </a>
+                  </div>
                 </CardContent>
               </Card>
             </div>

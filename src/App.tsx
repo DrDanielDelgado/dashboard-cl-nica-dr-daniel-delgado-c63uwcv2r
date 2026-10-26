@@ -13,6 +13,8 @@ import Automations from '@/pages/Automations'
 import Marketing from '@/pages/Marketing'
 import AssistenteIA from '@/pages/AssistenteIA'
 import ChatPaciente from '@/pages/ChatPaciente'
+import PoliticaCancelamento from '@/pages/PoliticaCancelamento'
+import PoliticaPrivacidade from '@/pages/PoliticaPrivacidade'
 import Prontuario from '@/pages/Prontuario'
 import Financeiro from '@/pages/Financeiro'
 import Configuracoes from '@/pages/Configuracoes'
@@ -49,12 +51,20 @@ function AppRoutes() {
     </>
   )
 
+  // Rotas públicas institucionais (acessíveis sem autenticação e com autenticação)
+  const publicPagesRoutes = (
+    <>
+      <Route path="/chat-paciente" element={<ChatPaciente />} />
+      <Route path="/politica-cancelamento" element={<PoliticaCancelamento />} />
+      <Route path="/politica-privacidade" element={<PoliticaPrivacidade />} />
+    </>
+  )
+
   if (!user) {
     return (
       <Routes>
         {passwordResetRoutes}
-        {/* Rota pública para chat de paciente */}
-        <Route path="/chat-paciente" element={<ChatPaciente />} />
+        {publicPagesRoutes}
         <Route path="/login" element={<Login />} />
         <Route path="*" element={<Login />} />
       </Routes>
@@ -66,8 +76,7 @@ function AppRoutes() {
       <AuditProvider>
         <Routes>
           {passwordResetRoutes}
-          {/* Rota pública para chat de paciente */}
-          <Route path="/chat-paciente" element={<ChatPaciente />} />
+          {publicPagesRoutes}
 
           <Route element={<Layout />}>
             {/* Common Routes - Accessible by Secretary and others */}
