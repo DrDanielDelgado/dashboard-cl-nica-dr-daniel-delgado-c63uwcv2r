@@ -34,86 +34,79 @@ function AppRoutes() {
     )
   }
 
+  // Rotas de recuperação de senha disponíveis tanto anônimo quanto autenticado
+  const passwordResetRoutes = (
+    <>
+      <Route path="/redefinir-senha" element={<RedefinirSenha />} />
+      <Route path="/redefinir-senha/:token" element={<RedefinirSenha />} />
+      <Route path="/reset-password" element={<RedefinirSenha />} />
+      <Route path="/reset-password/:token" element={<RedefinirSenha />} />
+      {/* Compatibilidade com todos os formatos de links enviados pelo PocketBase padrão */}
+      <Route path="/auth/confirm-password-reset/:token" element={<RedefinirSenha />} />
+      <Route path="/auth/confirm-password-reset" element={<RedefinirSenha />} />
+      <Route path="/confirm-password-reset/:token" element={<RedefinirSenha />} />
+      <Route path="/confirm-password-reset" element={<RedefinirSenha />} />
+    </>
+  )
+
   if (!user) {
     return (
-      <Router>
-        <Routes>
-          {/* Rotas públicas de recuperação e redefinição de senha com suporte a múltiplos formatos */}
-          <Route path="/redefinir-senha" element={<RedefinirSenha />} />
-          <Route path="/redefinir-senha/:token" element={<RedefinirSenha />} />
-          <Route path="/reset-password" element={<RedefinirSenha />} />
-          <Route path="/reset-password/:token" element={<RedefinirSenha />} />
-          {/* Suporte a links padrão do PocketBase caso abertos no frontend */}
-          <Route path="/auth/confirm-password-reset/:token" element={<RedefinirSenha />} />
-          <Route path="/auth/confirm-password-reset" element={<RedefinirSenha />} />
-          <Route path="/confirm-password-reset/:token" element={<RedefinirSenha />} />
-          <Route path="/confirm-password-reset" element={<RedefinirSenha />} />
-          <Route path="/_/#/auth/confirm-password-reset/:token" element={<RedefinirSenha />} />
-
-          <Route path="/login" element={<Login />} />
-          <Route path="*" element={<Login />} />
-        </Routes>
-        <Toaster />
-      </Router>
+      <Routes>
+        {passwordResetRoutes}
+        {/* Rota pública para chat de paciente */}
+        <Route path="/chat-paciente" element={<ChatPaciente />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="*" element={<Login />} />
+      </Routes>
     )
   }
 
   return (
     <AppProvider>
       <AuditProvider>
-        <Router>
-          <Routes>
-            <Route element={<Layout />}>
-              {/* Common Routes - Accessible by Secretary and others */}
-              <Route path="/" element={<Index />} />
-              <Route path="/atendimento" element={<Atendimento />} />
-              <Route path="/crm" element={<CRM />} />
-              <Route path="/estoque" element={<Estoque />} />
-              <Route path="/automations" element={<Automations />} />
-              <Route path="/marketing" element={<Marketing />} />
-              <Route path="/assistente-ia" element={<AssistenteIA />} />
-              <Route path="/prontuario" element={<Prontuario />} />
-              <Route path="/agenda" element={<Agenda />} />
-              <Route path="/conexoes-api" element={<ConexoesApi />} />
+        <Routes>
+          {passwordResetRoutes}
+          {/* Rota pública para chat de paciente */}
+          <Route path="/chat-paciente" element={<ChatPaciente />} />
 
-              {/* Highly Protected Route - Financeiro (No Secretary) */}
-              <Route
-                element={
-                  <ProtectedRoute
-                    allowedRoles={['Médico', 'Administrador', 'Gerente', 'Gerenciador', 'Contador']}
-                  />
-                }
-              >
-                <Route path="/financeiro" element={<Financeiro />} />
-              </Route>
+          <Route element={<Layout />}>
+            {/* Common Routes - Accessible by Secretary and others */}
+            <Route path="/" element={<Index />} />
+            <Route path="/atendimento" element={<Atendimento />} />
+            <Route path="/crm" element={<CRM />} />
+            <Route path="/estoque" element={<Estoque />} />
+            <Route path="/automations" element={<Automations />} />
+            <Route path="/marketing" element={<Marketing />} />
+            <Route path="/assistente-ia" element={<AssistenteIA />} />
+            <Route path="/prontuario" element={<Prontuario />} />
+            <Route path="/agenda" element={<Agenda />} />
+            <Route path="/conexoes-api" element={<ConexoesApi />} />
 
-              {/* Admin/Manager Route - Configuracoes */}
-              <Route
-                element={
-                  <ProtectedRoute
-                    allowedRoles={['Médico', 'Administrador', 'Gerente', 'Gerenciador']}
-                  />
-                }
-              >
-                <Route path="/configuracoes" element={<Configuracoes />} />
-              </Route>
-
-              <Route path="*" element={<NotFound />} />
+            {/* Highly Protected Route - Financeiro (No Secretary) */}
+            <Route
+              element={
+                <ProtectedRoute
+                  allowedRoles={['Médico', 'Administrador', 'Gerente', 'Gerenciador', 'Contador']}
+                />
+              }
+            >
+              <Route path="/financeiro" element={<Financeiro />} />
             </Route>
-            {/* Rota pública para chat de paciente */}
-            <Route path="/chat-paciente" element={<ChatPaciente />} />
-            {/* Rotas de redefinição de senha mesmo autenticado */}
-            <Route path="/redefinir-senha" element={<RedefinirSenha />} />
-            <Route path="/redefinir-senha/:token" element={<RedefinirSenha />} />
-            <Route path="/reset-password" element={<RedefinirSenha />} />
-            <Route path="/reset-password/:token" element={<RedefinirSenha />} />
-            <Route path="/auth/confirm-password-reset/:token" element={<RedefinirSenha />} />
-            <Route path="/auth/confirm-password-reset" element={<RedefinirSenha />} />
-            <Route path="/confirm-password-reset/:token" element={<RedefinirSenha />} />
-            <Route path="/confirm-password-reset" element={<RedefinirSenha />} />
-          </Routes>
-          <Toaster />
-        </Router>
+
+            {/* Admin/Manager Route - Configuracoes */}
+            <Route
+              element={
+                <ProtectedRoute
+                  allowedRoles={['Médico', 'Administrador', 'Gerente', 'Gerenciador']}
+                />
+              }
+            >
+              <Route path="/configuracoes" element={<Configuracoes />} />
+            </Route>
+
+            <Route path="*" element={<NotFound />} />
+          </Route>
+        </Routes>
       </AuditProvider>
     </AppProvider>
   )
@@ -122,7 +115,10 @@ function AppRoutes() {
 export default function App() {
   return (
     <AuthProvider>
-      <AppRoutes />
+      <Router>
+        <AppRoutes />
+        <Toaster />
+      </Router>
     </AuthProvider>
   )
 }

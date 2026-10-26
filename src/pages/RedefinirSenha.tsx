@@ -24,30 +24,46 @@ export default function RedefinirSenha() {
   const { confirmPasswordReset } = useAuth()
 
   // Extrai o token de diferentes formatos possíveis:
-  // 1. Query string: ?token=XYZ ou ?t=XYZ
-  // 2. Rota parametrizada: /redefinir-senha/:token ou /auth/confirm-password-reset/:token
-  // 3. Hash URL (ex: #/confirm-password-reset/XYZ ou #/auth/confirm-password-reset/XYZ)
-  // 4. Parâmetros na query dentro da hash (ex: #/...?token=XYZ)
+  // 1. Query string do React Router: ?token=XYZ ou ?t=XYZ
+  // 2. Query string bruta do window.location.search (caso o router não tenha repassado ou haja encoding)
+  // 3. Rota parametrizada: /redefinir-senha/:token ou /auth/confirm-password-reset/:token
+  // 4. Hash URL (ex: #/confirm-password-reset/XYZ ou #/auth/confirm-password-reset/XYZ ou #...?token=XYZ)
+  // 5. Pathname com /redefinir-senha/TOKEN ou /confirm-password-reset/TOKEN
   const token = useMemo(() => {
-    // 1. Query params padrão
+    // 1. Query params padrão do hook
     const fromQuery = searchParams.get('token') || searchParams.get('t')
     if (fromQuery) return fromQuery.trim()
 
-    // 2. Route params (:token)
+    // 2. Verificação direta em window.location.search
+    if (typeof window !== 'undefined' && window.location.search) {
+      try {
+        const rawParams = new URLSearchParams(window.location.search)
+        const rawToken = rawParams.get('token') || rawParams.get('t')
+        if (rawToken) return rawToken.trim()
+      } catch {
+        /* intentionally ignored */
+      }
+    }
+
+    // 3. Route params (:token)
     if (routeParams.token) return routeParams.token.trim()
 
-    // 3. Checagem em window.location.hash
+    // 4. Checagem em window.location.hash (caso cliente de e-mail ou proxy injete fragmentos)
     if (typeof window !== 'undefined' && window.location.hash) {
       const hash = window.location.hash
-      const tokenMatch = hash.match(/confirm-password-reset\/([A-Za-z0-9_.-]+)/i)
+      const tokenMatch = hash.match(
+        /(?:confirm-password-reset|redefinir-senha|reset-password)\/([A-Za-z0-9_.-]+)/i,
+      )
       if (tokenMatch && tokenMatch[1]) return tokenMatch[1].trim()
 
-      const hashParamMatch = hash.match(/[?&]token=([A-Za-z0-9_.-]+)/i)
+      const hashParamMatch = hash.match(/[?&](?:token|t)=([A-Za-z0-9_.-]+)/i)
       if (hashParamMatch && hashParamMatch[1]) return hashParamMatch[1].trim()
     }
 
-    // 4. Checagem no pathname atual (caso caia em rota não capturada diretamente)
-    const pathMatch = location.pathname.match(/confirm-password-reset\/([A-Za-z0-9_.-]+)/i)
+    // 5. Checagem no pathname atual (ex: /redefinir-senha/TOKEN ou /confirm-password-reset/TOKEN)
+    const pathMatch = location.pathname.match(
+      /(?:confirm-password-reset|redefinir-senha|reset-password)\/([A-Za-z0-9_.-]+)/i,
+    )
     if (pathMatch && pathMatch[1]) return pathMatch[1].trim()
 
     return ''
@@ -83,10 +99,14 @@ export default function RedefinirSenha() {
     setLoading(true)
     try {
       const res = await confirmPasswordReset(token, password, passwordConfirm)
-      if (res.error) {
+      if (res && res.error) {
         // Tratar erro do PocketBase detalhadamente
         const errorData = res.error?.data || {}
-        const tokenErr = errorData?.data?.token?.message || errorData?.data?.password?.message || ''
+        const tokenErr =
+          errorData?.data?.token?.message ||
+          errorData?.data?.password?.message ||
+          errorData?.data?.passwordConfirm?.message ||
+          ''
         const rawMsg = (tokenErr || res.error?.message || '').toLowerCase()
 
         if (
@@ -95,9 +115,16 @@ export default function RedefinirSenha() {
           rawMsg.includes('invalid') ||
           res.error?.status === 400
         ) {
-          setError(
-            'Este link de recuperação expirou ou já foi utilizado. Por questões de segurança, solicite um novo link na tela de login.',
-          )
+          // Se for erro de validação de senha específica retornada pela API
+          if (errorData?.data?.password?.message) {
+            setError(errorData.data.password.message)
+          } else if (errorData?.data?.passwordConfirm?.message) {
+            setError(errorData.data.passwordConfirm.message)
+          } else {
+            setError(
+              'Este link de recuperação expirou ou já foi utilizado. Por questões de segurança, solicite um novo link na tela de login.',
+            )
+          }
         } else {
           setError(
             res.error?.message ||
@@ -108,10 +135,17 @@ export default function RedefinirSenha() {
       }
 
       setSuccess(true)
-    } catch (_err: any) {
-      setError(
-        'Ocorreu uma falha inesperada ao tentar redefinir sua senha. Verifique sua internet e tente novamente.',
-      )
+    } catch (err: any) {
+      const msg = err?.message || ''
+      if (msg.toLowerCase().includes('token') || err?.status === 400) {
+        setError(
+          'Este link de recuperação expirou ou já foi utilizado. Por favor, volte ao login e solicite um novo link.',
+        )
+      } else {
+        setError(
+          'Ocorreu uma falha inesperada ao tentar redefinir sua senha. Verifique sua conexão e tente novamente.',
+        )
+      }
     } finally {
       setLoading(false)
     }
