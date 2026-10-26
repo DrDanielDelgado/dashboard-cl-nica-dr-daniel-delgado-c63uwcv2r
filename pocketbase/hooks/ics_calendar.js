@@ -10,7 +10,21 @@ routerAdd('GET', '/backend/v1/agenda.ics', (e) => {
   const toICSDate = (s) => {
     const m = String(s || '').match(/(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2}):(\d{2})/)
     if (!m) return ''
-    return m[1] + m[2] + m[3] + 'T' + m[4] + m[5] + m[6] + 'Z'
+    // O banco grava hora de parede de São Paulo (UTC-3) com sufixo Z.
+    // Converte para UTC real (soma 3h) antes de emitir o ICS.
+    const d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]))
+    d.setUTCHours(d.getUTCHours() + 3)
+    const p = (n) => String(n).padStart(2, '0')
+    return (
+      d.getUTCFullYear() +
+      p(d.getUTCMonth() + 1) +
+      p(d.getUTCDate()) +
+      'T' +
+      p(d.getUTCHours()) +
+      p(d.getUTCMinutes()) +
+      p(d.getUTCSeconds()) +
+      'Z'
+    )
   }
 
   const esc = (s) =>
