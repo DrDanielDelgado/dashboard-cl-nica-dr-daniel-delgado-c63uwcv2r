@@ -1,6 +1,14 @@
 import * as React from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Calendar, Users, CreditCard, Activity, User, BriefcaseMedical } from 'lucide-react'
+import {
+  Calendar,
+  Users,
+  CreditCard,
+  Activity,
+  User,
+  BriefcaseMedical,
+  FileCheck,
+} from 'lucide-react'
 import {
   CommandDialog,
   CommandEmpty,
@@ -53,6 +61,10 @@ export function GlobalSearch({ open, setOpen }: { open: boolean; setOpen: (o: bo
       <CommandList>
         <CommandEmpty>Nenhum resultado encontrado no sistema.</CommandEmpty>
         <CommandGroup heading="Acesso Rápido - Módulos">
+          <CommandItem onSelect={() => runCommand(() => navigate('/prescricao-cfm'))}>
+            <FileCheck className="mr-2 h-4 w-4 text-emerald-600" />
+            <span className="font-medium">Prescrição Eletrônica CFM</span>
+          </CommandItem>
           <CommandItem onSelect={() => runCommand(() => navigate('/crm'))}>
             <Users className="mr-2 h-4 w-4 text-brand-blue" />
             <span className="font-medium">Pipeline Clínico (CRM)</span>

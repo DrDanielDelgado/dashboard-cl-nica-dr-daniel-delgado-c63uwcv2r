@@ -11,6 +11,7 @@ import {
   Mail,
   Bot,
   Webhook,
+  FileCheck,
 } from 'lucide-react'
 
 import {
@@ -33,6 +34,7 @@ const mainNavItems = [
   { title: 'Pipeline CRM', icon: Users, url: '/crm' },
   { title: 'Agenda', icon: Calendar, url: '/agenda' },
   { title: 'Prontuário 360', icon: Activity, url: '/prontuario' },
+  { title: 'Prescrição CFM', icon: FileCheck, url: '/prescricao-cfm' },
   { title: 'Financeiro', icon: CreditCard, url: '/financeiro' },
   { title: 'Estoque', icon: Package, url: '/estoque' },
   { title: 'Marketing', icon: Mail, url: '/marketing' },

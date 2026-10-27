@@ -20,6 +20,7 @@ import Financeiro from '@/pages/Financeiro'
 import Configuracoes from '@/pages/Configuracoes'
 import Agenda from '@/pages/Agenda'
 import ConexoesApi from '@/pages/ConexoesApi'
+import PrescricaoCfm from '@/pages/PrescricaoCfm'
 
 import { AppProvider } from '@/stores/app'
 import { AuditProvider } from '@/stores/audit'
@@ -89,6 +90,7 @@ function AppRoutes() {
             <Route path="/assistente-ia" element={<AssistenteIA />} />
             <Route path="/prontuario" element={<Prontuario />} />
             <Route path="/agenda" element={<Agenda />} />
+            <Route path="/prescricao-cfm" element={<PrescricaoCfm />} />
             <Route path="/conexoes-api" element={<ConexoesApi />} />
 
             {/* Highly Protected Route - Financeiro (No Secretary) */}
