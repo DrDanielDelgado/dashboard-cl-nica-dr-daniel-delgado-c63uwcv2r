@@ -58,7 +58,12 @@ migrate(
         { name: 'qty', type: 'number', required: true },
         { name: 'unit_cost', type: 'number' },
         { name: 'total_cost', type: 'number' },
-        { name: 'patient', type: 'relation', collectionId: 'patients', maxSelect: 1 },
+        {
+          name: 'patient',
+          type: 'relation',
+          collectionId: app.findCollectionByNameOrId('patients').id,
+          maxSelect: 1,
+        },
         { name: 'supplier', type: 'text' },
         { name: 'note', type: 'text' },
         {
