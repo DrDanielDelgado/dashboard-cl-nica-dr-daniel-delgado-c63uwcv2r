@@ -316,197 +316,200 @@ export function AudioRecordDialog({
   }
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(val) => {
-        if (!val) {
-          resetRecording()
-        }
-        onOpenChange(val)
-      }}
-    >
-      <DialogContent className="max-w-lg p-5 sm:p-6">
-        <DialogHeader>
-          <div className="flex items-center gap-2">
-            <Badge
-              variant="outline"
-              className="bg-purple-500/10 text-purple-700 border-purple-500/20"
-            >
-              <Mic className="h-3 w-3 mr-1" /> Gravação de Áudio ao Vivo
-            </Badge>
-            {patientName && (
-              <Badge variant="secondary" className="text-xs truncate max-w-[200px]">
-                {patientName}
-              </Badge>
-            )}
-          </div>
-          <DialogTitle className="text-lg">Gravar Áudio Clínico</DialogTitle>
-          <DialogDescription className="text-xs">
-            Grave notas de voz, orientações, ditados ou relatos de consulta em tempo real. O áudio
-            será anexado à fila de uploads da ficha do paciente.
-          </DialogDescription>
-        </DialogHeader>
-
-        {/* Erro de microfone */}
-        {micError && (
-          <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20 space-y-2 text-foreground">
-            <div className="flex items-center gap-2 text-destructive font-semibold text-xs">
-              <AlertCircle className="h-4 w-4 shrink-0" />
-              <span>{micError.title}</span>
-            </div>
-            <p className="text-xs text-muted-foreground leading-relaxed">{micError.message}</p>
-          </div>
-        )}
-
-        {/* Painel Central de Gravação */}
-        <div className="py-6 flex flex-col items-center justify-center space-y-4 rounded-xl bg-muted/20 border">
-          {/* Cronômetro */}
-          <div className="text-center space-y-1">
-            <div
-              className={`font-mono text-4xl sm:text-5xl font-bold tracking-tight ${
-                recordState === 'recording' ? 'text-destructive animate-pulse' : 'text-foreground'
-              }`}
-            >
-              {formatTime(durationSeconds)}
-            </div>
-            <div className="text-xs text-muted-foreground">
-              {recordState === 'idle' && 'Pronto para gravar'}
-              {recordState === 'recording' && 'Gravando áudio... fale ao microfone'}
-              {recordState === 'recorded' && `Áudio gravado (${formatTime(durationSeconds)})`}
-            </div>
-          </div>
-
-          {/* Botão de Ação Principal */}
-          {recordState === 'idle' && (
-            <Button
-              type="button"
-              onClick={startRecording}
-              size="lg"
-              className="rounded-full w-20 h-20 p-0 bg-destructive hover:bg-destructive/90 text-destructive-foreground shadow-lg transition-transform hover:scale-105 active:scale-95"
-              title="Iniciar Gravação"
-            >
-              <Mic className="h-9 w-9" />
-            </Button>
-          )}
-
-          {recordState === 'recording' && (
-            <div className="flex flex-col items-center gap-3">
-              <Button
-                type="button"
-                onClick={stopRecording}
-                size="lg"
-                className="rounded-full w-20 h-20 p-0 bg-destructive hover:bg-destructive/90 text-destructive-foreground shadow-lg transition-transform active:scale-95 animate-pulse"
-                title="Parar Gravação"
+    <>
+      <Dialog
+        open={open}
+        onOpenChange={(val) => {
+          if (!val) {
+            resetRecording()
+          }
+          onOpenChange(val)
+        }}
+      >
+        <DialogContent className="max-w-lg p-5 sm:p-6">
+          <DialogHeader>
+            <div className="flex items-center gap-2">
+              <Badge
+                variant="outline"
+                className="bg-purple-500/10 text-purple-700 border-purple-500/20"
               >
-                <Square className="h-8 w-8 fill-current" />
-              </Button>
-              <span className="text-[11px] font-medium text-destructive">
-                Clique no quadrado vermelho para concluir
-              </span>
+                <Mic className="h-3 w-3 mr-1" /> Gravação de Áudio ao Vivo
+              </Badge>
+              {patientName && (
+                <Badge variant="secondary" className="text-xs truncate max-w-[200px]">
+                  {patientName}
+                </Badge>
+              )}
+            </div>
+            <DialogTitle className="text-lg">Gravar Áudio Clínico</DialogTitle>
+            <DialogDescription className="text-xs">
+              Grave notas de voz, orientações, ditados ou relatos de consulta em tempo real. O áudio
+              será anexado à fila de uploads da ficha do paciente.
+            </DialogDescription>
+          </DialogHeader>
+
+          {/* Erro de microfone */}
+          {micError && (
+            <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20 space-y-2 text-foreground">
+              <div className="flex items-center gap-2 text-destructive font-semibold text-xs">
+                <AlertCircle className="h-4 w-4 shrink-0" />
+                <span>{micError.title}</span>
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">{micError.message}</p>
             </div>
           )}
 
-          {recordState === 'recorded' && audioUrl && (
-            <div className="w-full max-w-sm px-4 space-y-3 animate-fade-in">
-              <audio
-                ref={audioElementRef}
-                src={audioUrl}
-                onEnded={() => setIsPlayingPreview(false)}
-                className="hidden"
-              />
-
-              <div className="flex items-center justify-center gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={togglePlayPreview}
-                  className="gap-1.5 text-xs h-9"
-                >
-                  {isPlayingPreview ? (
-                    <>
-                      <Pause className="h-3.5 w-3.5" /> Pausar
-                    </>
-                  ) : (
-                    <>
-                      <Play className="h-3.5 w-3.5" /> Ouvir Prévia
-                    </>
-                  )}
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={resetRecording}
-                  className="gap-1.5 text-xs h-9 text-muted-foreground hover:text-foreground"
-                >
-                  <RotateCcw className="h-3.5 w-3.5" /> Regravar
-                </Button>
+          {/* Painel Central de Gravação */}
+          <div className="py-6 flex flex-col items-center justify-center space-y-4 rounded-xl bg-muted/20 border">
+            {/* Cronômetro */}
+            <div className="text-center space-y-1">
+              <div
+                className={`font-mono text-4xl sm:text-5xl font-bold tracking-tight ${
+                  recordState === 'recording' ? 'text-destructive animate-pulse' : 'text-foreground'
+                }`}
+              >
+                {formatTime(durationSeconds)}
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {recordState === 'idle' && 'Pronto para gravar'}
+                {recordState === 'recording' && 'Gravando áudio... fale ao microfone'}
+                {recordState === 'recorded' && `Áudio gravado (${formatTime(durationSeconds)})`}
               </div>
             </div>
+
+            {/* Botão de Ação Principal */}
+            {recordState === 'idle' && (
+              <Button
+                type="button"
+                onClick={startRecording}
+                size="lg"
+                className="rounded-full w-20 h-20 p-0 bg-destructive hover:bg-destructive/90 text-destructive-foreground shadow-lg transition-transform hover:scale-105 active:scale-95"
+                title="Iniciar Gravação"
+              >
+                <Mic className="h-9 w-9" />
+              </Button>
+            )}
+
+            {recordState === 'recording' && (
+              <div className="flex flex-col items-center gap-3">
+                <Button
+                  type="button"
+                  onClick={stopRecording}
+                  size="lg"
+                  className="rounded-full w-20 h-20 p-0 bg-destructive hover:bg-destructive/90 text-destructive-foreground shadow-lg transition-transform active:scale-95 animate-pulse"
+                  title="Parar Gravação"
+                >
+                  <Square className="h-8 w-8 fill-current" />
+                </Button>
+                <span className="text-[11px] font-medium text-destructive">
+                  Clique no quadrado vermelho para concluir
+                </span>
+              </div>
+            )}
+
+            {recordState === 'recorded' && audioUrl && (
+              <div className="w-full max-w-sm px-4 space-y-3 animate-fade-in">
+                <audio
+                  ref={audioElementRef}
+                  src={audioUrl}
+                  onEnded={() => setIsPlayingPreview(false)}
+                  className="hidden"
+                />
+
+                <div className="flex items-center justify-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={togglePlayPreview}
+                    className="gap-1.5 text-xs h-9"
+                  >
+                    {isPlayingPreview ? (
+                      <>
+                        <Pause className="h-3.5 w-3.5" /> Pausar
+                      </>
+                    ) : (
+                      <>
+                        <Play className="h-3.5 w-3.5" /> Ouvir Prévia
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={resetRecording}
+                    className="gap-1.5 text-xs h-9 text-muted-foreground hover:text-foreground"
+                  >
+                    <RotateCcw className="h-3.5 w-3.5" /> Regravar
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Título opcional da gravação */}
+          {recordState === 'recorded' && (
+            <div className="space-y-1.5 animate-fade-in">
+              <Label htmlFor="audioTitle" className="text-xs font-medium">
+                Título do Anexo de Áudio
+              </Label>
+              <Input
+                id="audioTitle"
+                value={audioTitle}
+                onChange={(e) => setAudioTitle(e.target.value)}
+                placeholder="Ex: Anamnese por voz / Nota clínica pós-consulta"
+                className="text-xs h-8"
+              />
+            </div>
           )}
-        </div>
 
-        {/* Título opcional da gravação */}
-        {recordState === 'recorded' && (
-          <div className="space-y-1.5 animate-fade-in">
-            <Label htmlFor="audioTitle" className="text-xs font-medium">
-              Título do Anexo de Áudio
-            </Label>
-            <Input
-              id="audioTitle"
-              value={audioTitle}
-              onChange={(e) => setAudioTitle(e.target.value)}
-              placeholder="Ex: Anamnese por voz / Nota clínica pós-consulta"
-              className="text-xs h-8"
-            />
-          </div>
-        )}
+          <DialogFooter className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-2 pt-3 border-t">
+            <div className="text-[11px] text-muted-foreground flex items-center gap-1">
+              <HelpCircle className="h-3 w-3 shrink-0" />
+              <span>
+                Por privacidade, o microfone desliga sozinho ao finalizar ou fechar esta janela.
+              </span>
+            </div>
+            <div className="flex items-center gap-2 justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => onOpenChange(false)}
+                className="text-xs"
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="button"
+                onClick={handleConfirm}
+                disabled={recordState !== 'recorded'}
+                size="sm"
+                className="gap-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
+              >
+                <Check className="h-3.5 w-3.5" />
+                Adicionar à Fila de Upload
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-        <DialogFooter className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-2 pt-3 border-t">
-          <div className="text-[11px] text-muted-foreground flex items-center gap-1">
-            <HelpCircle className="h-3 w-3 shrink-0" />
-            <span>Por privacidade, o microfone desliga sozinho ao finalizar ou fechar esta janela.</span>
-          </div>
-          <div className="flex items-center gap-2 justify-end">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => onOpenChange(false)}
-              className="text-xs"
-            >
-              Cancelar
-            </Button>
-            <Button
-              type="button"
-              onClick={handleConfirm}
-              disabled={recordState !== 'recorded'}
-              size="sm"
-              className="gap-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
-            >
-              <Check className="h-3.5 w-3.5" />
-              Adicionar à Fila de Upload
-            </Button>
-          </div>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-
-    <LgpdCaptureConsentDialog
-      open={consentModalOpen}
-      onOpenChange={(val) => {
-        setConsentModalOpen(val)
-        if (!val && !hasConsent) {
-          handleConsentDeclined()
-        }
-      }}
-      captureType="audio"
-      patientId={patientId}
-      patientName={patientName}
-      onConsentGranted={handleConsentGranted}
-      onConsentDeclined={handleConsentDeclined}
-    />
+      <LgpdCaptureConsentDialog
+        open={consentModalOpen}
+        onOpenChange={(val) => {
+          setConsentModalOpen(val)
+          if (!val && !hasConsent) {
+            handleConsentDeclined()
+          }
+        }}
+        captureType="audio"
+        patientId={patientId}
+        patientName={patientName}
+        onConsentGranted={handleConsentGranted}
+        onConsentDeclined={handleConsentDeclined}
+      />
     </>
   )
 }

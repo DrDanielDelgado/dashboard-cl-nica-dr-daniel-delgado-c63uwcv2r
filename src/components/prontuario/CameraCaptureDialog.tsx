@@ -271,203 +271,209 @@ export function CameraCaptureDialog({
   }
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(val) => {
-        if (!val) {
-          stopStream()
-        }
-        onOpenChange(val)
-      }}
-    >
-      <DialogContent className="max-w-2xl max-h-[92vh] flex flex-col p-4 sm:p-6">
-        <DialogHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-                <Camera className="h-3 w-3 mr-1" /> Câmera ao Vivo
-              </Badge>
-              {patientName && (
-                <Badge variant="secondary" className="text-xs truncate max-w-[200px] sm:max-w-none">
-                  {patientName}
+    <>
+      <Dialog
+        open={open}
+        onOpenChange={(val) => {
+          if (!val) {
+            stopStream()
+          }
+          onOpenChange(val)
+        }}
+      >
+        <DialogContent className="max-w-2xl max-h-[92vh] flex flex-col p-4 sm:p-6">
+          <DialogHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
+                  <Camera className="h-3 w-3 mr-1" /> Câmera ao Vivo
                 </Badge>
-              )}
-            </div>
-            {hasMultipleCameras && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={toggleFacingMode}
-                disabled={isLoadingStream}
-                className="h-7 text-xs gap-1"
-                title="Alternar entre câmera frontal e traseira"
-              >
-                <FlipHorizontal className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">
-                  {facingMode === 'environment' ? 'Usar Frontal' : 'Usar Traseira'}
-                </span>
-              </Button>
-            )}
-          </div>
-          <DialogTitle className="text-lg">Capturar Foto em Tempo Real</DialogTitle>
-          <DialogDescription className="text-xs">
-            Tire uma ou mais fotos consecutivas pelo computador ou celular. As imagens serão
-            adicionadas diretamente à fila de upload do prontuário do paciente.
-          </DialogDescription>
-        </DialogHeader>
-
-        {/* Viewport da Câmera / Erro */}
-        <div className="relative flex-1 min-h-[260px] sm:min-h-[360px] bg-black rounded-lg overflow-hidden flex items-center justify-center border">
-          {/* Canvas oculto para captura */}
-          <canvas ref={canvasRef} className="hidden" />
-
-          {/* Flash visual */}
-          {flashAnimation && (
-            <div className="absolute inset-0 bg-white/80 z-20 pointer-events-none animate-pulse" />
-          )}
-
-          {cameraError ? (
-            <div className="p-6 text-center max-w-md z-10 space-y-3 bg-background/95 rounded-lg border m-4 shadow-lg text-foreground">
-              <div className="w-12 h-12 rounded-full bg-destructive/10 text-destructive flex items-center justify-center mx-auto">
-                <AlertCircle className="h-6 w-6" />
+                {patientName && (
+                  <Badge
+                    variant="secondary"
+                    className="text-xs truncate max-w-[200px] sm:max-w-none"
+                  >
+                    {patientName}
+                  </Badge>
+                )}
               </div>
-              <h4 className="font-semibold text-sm text-destructive">{cameraError.title}</h4>
-              <p className="text-xs text-muted-foreground leading-relaxed">{cameraError.message}</p>
-              <div className="pt-2 flex flex-wrap justify-center gap-2">
+              {hasMultipleCameras && (
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => startCamera(facingMode)}
-                  className="gap-1.5 text-xs"
+                  onClick={toggleFacingMode}
+                  disabled={isLoadingStream}
+                  className="h-7 text-xs gap-1"
+                  title="Alternar entre câmera frontal e traseira"
                 >
-                  <RotateCcw className="h-3.5 w-3.5" /> Tentar Novamente
+                  <FlipHorizontal className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">
+                    {facingMode === 'environment' ? 'Usar Frontal' : 'Usar Traseira'}
+                  </span>
+                </Button>
+              )}
+            </div>
+            <DialogTitle className="text-lg">Capturar Foto em Tempo Real</DialogTitle>
+            <DialogDescription className="text-xs">
+              Tire uma ou mais fotos consecutivas pelo computador ou celular. As imagens serão
+              adicionadas diretamente à fila de upload do prontuário do paciente.
+            </DialogDescription>
+          </DialogHeader>
+
+          {/* Viewport da Câmera / Erro */}
+          <div className="relative flex-1 min-h-[260px] sm:min-h-[360px] bg-black rounded-lg overflow-hidden flex items-center justify-center border">
+            {/* Canvas oculto para captura */}
+            <canvas ref={canvasRef} className="hidden" />
+
+            {/* Flash visual */}
+            {flashAnimation && (
+              <div className="absolute inset-0 bg-white/80 z-20 pointer-events-none animate-pulse" />
+            )}
+
+            {cameraError ? (
+              <div className="p-6 text-center max-w-md z-10 space-y-3 bg-background/95 rounded-lg border m-4 shadow-lg text-foreground">
+                <div className="w-12 h-12 rounded-full bg-destructive/10 text-destructive flex items-center justify-center mx-auto">
+                  <AlertCircle className="h-6 w-6" />
+                </div>
+                <h4 className="font-semibold text-sm text-destructive">{cameraError.title}</h4>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  {cameraError.message}
+                </p>
+                <div className="pt-2 flex flex-wrap justify-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => startCamera(facingMode)}
+                    className="gap-1.5 text-xs"
+                  >
+                    <RotateCcw className="h-3.5 w-3.5" /> Tentar Novamente
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <video
+                  ref={videoRef}
+                  playsInline
+                  muted
+                  autoPlay
+                  className={`w-full h-full object-cover max-h-[380px] ${
+                    facingMode === 'user' ? '-scale-x-100' : ''
+                  }`}
+                />
+                {isLoadingStream && (
+                  <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white text-xs gap-2 z-10">
+                    <RotateCcw className="h-5 w-5 animate-spin text-primary" />
+                    <span>Conectando à câmera...</span>
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Botão de Disparo sobreposto */}
+            {!cameraError && !isLoadingStream && (
+              <div className="absolute bottom-4 inset-x-0 flex items-center justify-center gap-3 z-10">
+                <Button
+                  type="button"
+                  onClick={capturePhoto}
+                  size="lg"
+                  className="rounded-full w-14 h-14 p-0 bg-white text-primary hover:bg-white/90 shadow-xl border-4 border-primary/50 transition-transform active:scale-95"
+                  title="Tirar foto"
+                >
+                  <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white">
+                    <Camera className="h-5 w-5" />
+                  </div>
                 </Button>
               </div>
+            )}
+          </div>
+
+          {/* Miniaturas das fotos já tiradas nesta sessão */}
+          {capturedPhotos.length > 0 && (
+            <div className="pt-2 space-y-1.5">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-semibold flex items-center gap-1.5 text-foreground">
+                  <ImageIcon className="h-3.5 w-3.5 text-primary" />
+                  {capturedPhotos.length} foto(s) capturada(s)
+                </span>
+                <span className="text-[11px] text-muted-foreground">
+                  Clique no &quot;x&quot; para descartar antes de enviar
+                </span>
+              </div>
+              <div className="flex gap-2 overflow-x-auto pb-1 max-h-24">
+                {capturedPhotos.map((photo, index) => (
+                  <div
+                    key={photo.id}
+                    className="relative group shrink-0 w-20 h-20 rounded-md overflow-hidden border border-border/80 bg-muted"
+                  >
+                    <img
+                      src={photo.dataUrl}
+                      alt={`Captura ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                    <span className="absolute bottom-1 left-1 bg-black/70 text-white text-[10px] px-1 rounded font-mono">
+                      #{index + 1}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemovePhoto(photo.id)}
+                      className="absolute top-1 right-1 bg-destructive/90 text-destructive-foreground rounded-full p-0.5 hover:bg-destructive shadow"
+                      title="Remover foto"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
-          ) : (
-            <>
-              <video
-                ref={videoRef}
-                playsInline
-                muted
-                autoPlay
-                className={`w-full h-full object-cover max-h-[380px] ${
-                  facingMode === 'user' ? '-scale-x-100' : ''
-                }`}
-              />
-              {isLoadingStream && (
-                <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white text-xs gap-2 z-10">
-                  <RotateCcw className="h-5 w-5 animate-spin text-primary" />
-                  <span>Conectando à câmera...</span>
-                </div>
-              )}
-            </>
           )}
 
-          {/* Botão de Disparo sobreposto */}
-          {!cameraError && !isLoadingStream && (
-            <div className="absolute bottom-4 inset-x-0 flex items-center justify-center gap-3 z-10">
+          <DialogFooter className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-2 pt-3 border-t">
+            <div className="text-[11px] text-muted-foreground flex items-center gap-1">
+              <HelpCircle className="h-3 w-3 shrink-0" />
+              <span>Por privacidade, a câmera desliga sozinha ao fechar esta janela.</span>
+            </div>
+            <div className="flex items-center gap-2 justify-end">
               <Button
                 type="button"
-                onClick={capturePhoto}
-                size="lg"
-                className="rounded-full w-14 h-14 p-0 bg-white text-primary hover:bg-white/90 shadow-xl border-4 border-primary/50 transition-transform active:scale-95"
-                title="Tirar foto"
+                variant="outline"
+                size="sm"
+                onClick={() => onOpenChange(false)}
+                className="text-xs"
               >
-                <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white">
-                  <Camera className="h-5 w-5" />
-                </div>
+                Cancelar
+              </Button>
+              <Button
+                type="button"
+                onClick={handleConfirm}
+                disabled={capturedPhotos.length === 0}
+                size="sm"
+                className="gap-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
+              >
+                <Check className="h-3.5 w-3.5" />
+                Adicionar à Fila ({capturedPhotos.length})
               </Button>
             </div>
-          )}
-        </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-        {/* Miniaturas das fotos já tiradas nesta sessão */}
-        {capturedPhotos.length > 0 && (
-          <div className="pt-2 space-y-1.5">
-            <div className="flex items-center justify-between text-xs">
-              <span className="font-semibold flex items-center gap-1.5 text-foreground">
-                <ImageIcon className="h-3.5 w-3.5 text-primary" />
-                {capturedPhotos.length} foto(s) capturada(s)
-              </span>
-              <span className="text-[11px] text-muted-foreground">
-                Clique no &quot;x&quot; para descartar antes de enviar
-              </span>
-            </div>
-            <div className="flex gap-2 overflow-x-auto pb-1 max-h-24">
-              {capturedPhotos.map((photo, index) => (
-                <div
-                  key={photo.id}
-                  className="relative group shrink-0 w-20 h-20 rounded-md overflow-hidden border border-border/80 bg-muted"
-                >
-                  <img
-                    src={photo.dataUrl}
-                    alt={`Captura ${index + 1}`}
-                    className="w-full h-full object-cover"
-                  />
-                  <span className="absolute bottom-1 left-1 bg-black/70 text-white text-[10px] px-1 rounded font-mono">
-                    #{index + 1}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => handleRemovePhoto(photo.id)}
-                    className="absolute top-1 right-1 bg-destructive/90 text-destructive-foreground rounded-full p-0.5 hover:bg-destructive shadow"
-                    title="Remover foto"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <DialogFooter className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-2 pt-3 border-t">
-          <div className="text-[11px] text-muted-foreground flex items-center gap-1">
-            <HelpCircle className="h-3 w-3 shrink-0" />
-            <span>Por privacidade, a câmera desliga sozinha ao fechar esta janela.</span>
-          </div>
-          <div className="flex items-center gap-2 justify-end">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => onOpenChange(false)}
-              className="text-xs"
-            >
-              Cancelar
-            </Button>
-            <Button
-              type="button"
-              onClick={handleConfirm}
-              disabled={capturedPhotos.length === 0}
-              size="sm"
-              className="gap-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
-            >
-              <Check className="h-3.5 w-3.5" />
-              Adicionar à Fila ({capturedPhotos.length})
-            </Button>
-          </div>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-
-    <LgpdCaptureConsentDialog
-      open={consentModalOpen}
-      onOpenChange={(val) => {
-        setConsentModalOpen(val)
-        if (!val && !hasConsent) {
-          handleConsentDeclined()
-        }
-      }}
-      captureType="camera"
-      patientId={patientId}
-      patientName={patientName}
-      onConsentGranted={handleConsentGranted}
-      onConsentDeclined={handleConsentDeclined}
-    />
+      <LgpdCaptureConsentDialog
+        open={consentModalOpen}
+        onOpenChange={(val) => {
+          setConsentModalOpen(val)
+          if (!val && !hasConsent) {
+            handleConsentDeclined()
+          }
+        }}
+        captureType="camera"
+        patientId={patientId}
+        patientName={patientName}
+        onConsentGranted={handleConsentGranted}
+        onConsentDeclined={handleConsentDeclined}
+      />
     </>
   )
 }

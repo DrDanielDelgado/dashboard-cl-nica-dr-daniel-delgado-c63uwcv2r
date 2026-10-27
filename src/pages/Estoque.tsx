@@ -96,8 +96,8 @@ export default function Estoque() {
   const load = useCallback(async () => {
     try {
       const [it, mv] = await Promise.all([getInventory(), getMovements()])
-      setItems(it as InventoryItem[])
-      setMovements(mv as StockMovement[])
+      setItems(it as unknown as InventoryItem[])
+      setMovements(mv as unknown as StockMovement[])
     } catch (e) {
       console.error(e)
     } finally {
