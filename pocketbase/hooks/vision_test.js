@@ -15,22 +15,40 @@ routerAdd('POST', '/backend/v1/vision_test', (e) => {
     }
   }
 
-  // 2) teste com imagem
+  // 2) teste com imagem — formato escolhido pelo chamador
+  const fmt = body.format || 'image_url'
+  let imgPart
+  if (fmt === 'image_url') {
+    imgPart = { type: 'image_url', image_url: { url: body.image || '' } }
+  } else if (fmt === 'image_url_flat') {
+    imgPart = { type: 'image_url', image_url: body.image || '' }
+  } else {
+    imgPart = {
+      type: 'image',
+      source: { type: 'base64', media_type: 'image/png', data: body.b64 || '' },
+    }
+  }
+
   try {
     const reply = $ai.chat({
-      model: 'fast',
+      model: body.model || 'fast',
       messages: [
         {
           role: 'user',
           content: [
             { type: 'text', text: 'Descreva exatamente o texto que aparece na imagem.' },
-            { type: 'image_url', image_url: { url: body.image || '' } },
+            imgPart,
           ],
         },
       ],
     })
-    return e.json(200, { ok: true, mode: 'image', text: reply.choices[0].message.content })
+    return e.json(200, {
+      ok: true,
+      mode: 'image',
+      format: fmt,
+      text: reply.choices[0].message.content,
+    })
   } catch (err) {
-    return e.json(500, { ok: false, mode: 'image', error: String(err) })
+    return e.json(500, { ok: false, mode: 'image', format: fmt, error: String(err) })
   }
 })
