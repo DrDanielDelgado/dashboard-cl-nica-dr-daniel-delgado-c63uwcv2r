@@ -55,6 +55,22 @@ import {
 const fmtBRL = (v?: number) =>
   (Number(v) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
+/** Datas de validade são datas puras: exibir sem converter fuso (evita 1 dia a menos). */
+const fmtDate = (v?: string) => {
+  if (!v) return '—'
+  const m = String(v).match(/(\d{4})-(\d{2})-(\d{2})/)
+  if (!m) return '—'
+  return `${m[3]}/${m[2]}/${m[1]}`
+}
+
+/** Grava a data como data pura (meio-dia UTC) para não deslocar o dia. */
+const toDateField = (v?: string) => {
+  if (!v) return ''
+  const m = String(v).match(/(\d{4})-(\d{2})-(\d{2})/)
+  if (!m) return v
+  return `${m[1]}-${m[2]}-${m[3]} 12:00:00.000Z`
+}
+
 const statusOf = (item: InventoryItem) => {
   const qty = Number(item.current_qty) || 0
   const min = Number(item.min_qty) || 0
@@ -189,7 +205,7 @@ export default function Estoque() {
         category: form.category,
         unit: form.unit,
         batch: form.batch || '',
-        expiry: form.expiry || '',
+        expiry: toDateField(form.expiry),
         current_qty: Number(form.current_qty) || 0,
         min_qty: Number(form.min_qty) || 0,
         unit_cost: Number(form.unit_cost) || 0,
@@ -355,7 +371,7 @@ export default function Estoque() {
                         <span className="text-xs text-slate-500 ml-1">{item.unit || 'un'}</span>
                       </TableCell>
                       <TableCell className="font-medium text-slate-600">
-                        {item.expiry ? new Date(item.expiry).toLocaleDateString('pt-BR') : '—'}
+                        {fmtDate(item.expiry)}
                       </TableCell>
                       <TableCell className="text-right text-slate-700">
                         {item.unit_cost ? fmtBRL(item.unit_cost) : '—'}
@@ -709,8 +725,7 @@ export default function Estoque() {
                   <strong>Lote:</strong> {parsed.batch || '—'}
                 </div>
                 <div className="text-slate-700">
-                  <strong>Validade:</strong>{' '}
-                  {parsed.expiry ? new Date(parsed.expiry).toLocaleDateString('pt-BR') : '—'}
+                  <strong>Validade:</strong> {fmtDate(parsed.expiry)}
                 </div>
                 {parsed.qty ? (
                   <div className="text-slate-700">
