@@ -20,10 +20,20 @@ import { RelatoriosDialog } from '@/components/financeiro/RelatoriosDialog'
 import useFinanceiroStore from '@/stores/financeiro'
 import { useRealtime } from '@/hooks/use-realtime'
 import { getBudgets } from '@/services/api'
+import { getExpenses, updateExpenseStatus, type Expense } from '@/services/inventory'
 
 export default function Financeiro() {
   const { budgets, setBudgets } = useFinanceiroStore()
   const [relatoriosOpen, setRelatoriosOpen] = useState(false)
+  const [expenses, setExpenses] = useState<Expense[]>([])
+
+  const loadExpenses = async () => {
+    try {
+      setExpenses((await getExpenses()) as Expense[])
+    } catch (e) {
+      console.error(e)
+    }
+  }
 
   const loadData = async () => {
     try {
@@ -51,8 +61,10 @@ export default function Financeiro() {
 
   useEffect(() => {
     loadData()
+    loadExpenses()
   }, [])
   useRealtime('budgets', () => loadData())
+  useRealtime('expenses', () => loadExpenses())
 
   const handleNFe = () => {
     toast({
@@ -75,6 +87,18 @@ export default function Financeiro() {
     .filter((b) => b.status === 'pending' || b.status === 'sent' || b.status === 'draft')
     .reduce((acc, b) => acc + b.finalValue, 0)
   const receitasMes = faturamentoPago
+
+  const now = new Date()
+  const expensesMes = expenses.filter((x) => {
+    if (!x.created) return false
+    const d = new Date(x.created.replace(' ', 'T'))
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
+  })
+  const totalDespesasMes = expensesMes.reduce((acc, x) => acc + (Number(x.amount) || 0), 0)
+  const despesasPendentes = expenses.filter(
+    (x) => x.status === 'Pendente' || x.status === 'Atrasado',
+  )
+  const saldoMes = receitasMes - totalDespesasMes
   const totalProjecao = faturamentoAprovado + projecaoReceita + faturamentoPago
   const percentageAprovado =
     totalProjecao > 0 ? ((faturamentoAprovado + faturamentoPago) / totalProjecao) * 100 : 0
@@ -152,7 +176,12 @@ export default function Financeiro() {
                 <CardTitle className="text-sm font-medium">Despesas (Mês)</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-destructive">R$ 0,00</div>
+                <div className="text-2xl font-bold text-destructive">
+                  R$ {totalDespesasMes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {expensesMes.length} lançamento(s) · {despesasPendentes.length} em aberto
+                </p>
               </CardContent>
             </Card>
             <Card>
@@ -176,6 +205,68 @@ export default function Financeiro() {
               </CardContent>
             </Card>
           </div>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Despesas e Resultado</CardTitle>
+              <span
+                className={`text-sm font-bold ${saldoMes >= 0 ? 'text-emerald-600' : 'text-destructive'}`}
+              >
+                Resultado do mês: R${' '}
+                {saldoMes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </span>
+            </CardHeader>
+            <CardContent>
+              {expenses.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-4">
+                  Nenhuma despesa lançada. Entradas de estoque com custo geram despesas aqui
+                  automaticamente.
+                </p>
+              ) : (
+                <div className="divide-y">
+                  {expenses.slice(0, 12).map((x) => (
+                    <div key={x.id} className="flex items-center justify-between py-2 gap-3">
+                      <div className="min-w-0">
+                        <div className="text-sm font-medium text-slate-800 truncate">
+                          {x.description}
+                        </div>
+                        <div className="text-xs text-slate-500">
+                          {x.category}
+                          {x.supplier ? ` · ${x.supplier}` : ''}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <span className="text-sm font-semibold text-slate-700">
+                          R${' '}
+                          {(Number(x.amount) || 0).toLocaleString('pt-BR', {
+                            minimumFractionDigits: 2,
+                          })}
+                        </span>
+                        <Button
+                          size="sm"
+                          variant={x.status === 'Pago' ? 'secondary' : 'outline'}
+                          className={
+                            x.status === 'Pago'
+                              ? 'h-7 text-xs bg-emerald-100 text-emerald-700'
+                              : 'h-7 text-xs'
+                          }
+                          onClick={async () => {
+                            await updateExpenseStatus(
+                              x.id,
+                              x.status === 'Pago' ? 'Pendente' : 'Pago',
+                            )
+                            loadExpenses()
+                          }}
+                        >
+                          {x.status}
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           <Card>
             <CardHeader>

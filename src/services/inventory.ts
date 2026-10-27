@@ -113,6 +113,20 @@ export const registerMovement = async (data: {
   return movement
 }
 
+export type Expense = {
+  id: string
+  description: string
+  category?: string
+  amount?: number
+  paid_at?: string
+  due_date?: string
+  status?: string
+  supplier?: string
+  movement?: string
+  notes?: string
+  created?: string
+}
+
 export const getExpenses = async () => {
   return await pb.collection('expenses').getFullList({ sort: '-created', perPage: 200 })
 }
