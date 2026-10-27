@@ -48,6 +48,7 @@ import {
   registerMovement,
   runOcr,
   parseLabel,
+  aiText,
   type InventoryItem,
   type StockMovement,
 } from '@/services/inventory'
@@ -107,6 +108,9 @@ export default function Estoque() {
   const [ocrBusy, setOcrBusy] = useState(false)
   const [parsed, setParsed] = useState<any>(null)
   const [preview, setPreview] = useState<string>('')
+  const [aiResult, setAiResult] = useState('')
+  const [aiBusy, setAiBusy] = useState(false)
+  const [aiMode, setAiMode] = useState<'translate' | 'explain' | 'structured'>('translate')
   const fileRef = useRef<HTMLInputElement>(null)
 
   const load = useCallback(async () => {
@@ -706,10 +710,52 @@ export default function Estoque() {
 
             {ocrText && (
               <div className="space-y-2">
-                <Label className="text-xs uppercase text-slate-500">Texto reconhecido</Label>
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs uppercase text-slate-500">Texto reconhecido</Label>
+                  <div className="flex gap-1">
+                    {(['translate', 'explain', 'structured'] as const).map((m) => (
+                      <Button
+                        key={m}
+                        type="button"
+                        size="sm"
+                        variant={aiMode === m ? 'default' : 'outline'}
+                        className={
+                          aiMode === m
+                            ? 'h-7 px-2 text-[11px] bg-brand-blue hover:bg-brand-blue/90 text-white'
+                            : 'h-7 px-2 text-[11px]'
+                        }
+                        disabled={aiBusy}
+                        onClick={async () => {
+                          setAiMode(m)
+                          setAiBusy(true)
+                          setAiResult('')
+                          try {
+                            setAiResult(await aiText(ocrText, m))
+                          } catch (e: any) {
+                            setAiResult('Falha: ' + (e?.message || e))
+                          } finally {
+                            setAiBusy(false)
+                          }
+                        }}
+                      >
+                        {m === 'translate' ? 'Traduzir' : m === 'explain' ? 'O que é' : 'Campos'}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
                 <pre className="max-h-32 overflow-auto rounded border border-slate-200 bg-slate-50 p-2 text-xs whitespace-pre-wrap text-slate-700">
                   {ocrText}
                 </pre>
+                {aiBusy && (
+                  <div className="flex items-center gap-2 text-xs text-slate-500">
+                    <Loader2 className="h-3 w-3 animate-spin" /> Consultando IA...
+                  </div>
+                )}
+                {aiResult && (
+                  <div className="rounded border border-violet-200 bg-violet-50 p-2 text-xs whitespace-pre-wrap text-slate-800">
+                    {aiResult}
+                  </div>
+                )}
               </div>
             )}
 

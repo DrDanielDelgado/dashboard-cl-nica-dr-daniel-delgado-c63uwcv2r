@@ -152,6 +152,21 @@ export async function runOcr(
   return String(result?.data?.text || '')
 }
 
+/** Traduz / interpreta o texto do rótulo usando a IA do Skip (só texto). */
+export async function aiText(
+  text: string,
+  action: 'translate' | 'explain' | 'structured' = 'translate',
+): Promise<string> {
+  const res = await fetch(`${PB_URL}/backend/v1/ai_text`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text, action }),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error((data as any)?.error || 'Falha na IA de texto.')
+  return String((data as any)?.text || '')
+}
+
 /** Extrai pistas de medicamento/lote/validade a partir do texto do OCR. */
 export function parseLabel(raw: string) {
   const text = raw.replace(/\r/g, '')
