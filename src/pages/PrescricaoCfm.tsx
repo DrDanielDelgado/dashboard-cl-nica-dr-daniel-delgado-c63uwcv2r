@@ -17,6 +17,9 @@ import {
   RefreshCw,
   Sparkles,
   Save,
+  LogIn,
+  CheckCircle2,
+  ArrowRight,
 } from 'lucide-react'
 import {
   Card,
@@ -31,6 +34,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useToast } from '@/hooks/use-toast'
 import {
   CFM_PRESCRIPTION_URL,
@@ -40,6 +44,7 @@ import {
   getDoctorProfile,
   updateDoctorCrm,
   logCfmAccess,
+  logCfmServicesAccess,
   getCfmAccessLogs,
   IntegrationAccessLog,
 } from '@/services/prescricaoCfm'
@@ -80,6 +85,8 @@ export default function PrescricaoCfm() {
   const [loading, setLoading] = useState(true)
   const [savingCrm, setSavingCrm] = useState(false)
   const [openingPortal, setOpeningPortal] = useState(false)
+  const [openingServices, setOpeningServices] = useState(false)
+  const [activeTab, setActiveTab] = useState('prescricao')
 
   // CRM state
   const [crmNumero, setCrmNumero] = useState('')
@@ -149,14 +156,14 @@ export default function PrescricaoCfm() {
     setOpeningPortal(true)
     try {
       // 1. Grava no banco PocketBase
-      const log = await logCfmAccess()
+      const log = await logCfmAccess('open_cfm_prescription')
       const nowIso = new Date().toISOString()
       setLastAccess(nowIso)
       if (log) {
         setAccessLogs((prev) => [log, ...prev.slice(0, 7)])
       }
 
-      // 2. Abre nova aba com isolamento seguro
+      // 2. Abre nova aba com isolamento seguro para a URL oficial da Prescrição
       const win = window.open(CFM_PRESCRIPTION_URL, '_blank', 'noopener,noreferrer')
       if (win) {
         win.opener = null
@@ -176,6 +183,39 @@ export default function PrescricaoCfm() {
       })
     } finally {
       setOpeningPortal(false)
+    }
+  }
+
+  const handleOpenCfmServices = async () => {
+    setOpeningServices(true)
+    try {
+      // 1. Grava log de auditoria
+      const log = await logCfmServicesAccess()
+      const nowIso = new Date().toISOString()
+      setLastAccess(nowIso)
+      if (log) {
+        setAccessLogs((prev) => [log, ...prev.slice(0, 7)])
+      }
+
+      // 2. Abre nova aba com isolamento seguro para a URL oficial do Portal de Serviços
+      const win = window.open(CFM_SERVICES_URL, '_blank', 'noopener,noreferrer')
+      if (win) {
+        win.opener = null
+      }
+
+      toast({
+        title: 'Portal de Serviços CFM Aberto',
+        description: 'Navegando com segurança para https://servicos.cfm.org.br/ em nova aba.',
+      })
+    } catch (err) {
+      console.error('Falha ao abrir Portal de Serviços CFM:', err)
+      toast({
+        variant: 'destructive',
+        title: 'Aviso de Navegação',
+        description: 'Verifique se o bloqueador de pop-ups do navegador não impediu a abertura.',
+      })
+    } finally {
+      setOpeningServices(false)
     }
   }
 
@@ -262,90 +302,260 @@ export default function PrescricaoCfm() {
             className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-md gap-2"
           >
             <ExternalLink className="w-5 h-5" />
-            {openingPortal ? 'Abrindo CFM...' : 'Abrir Prescrição Eletrônica do CFM'}
+            {openingPortal ? 'Abrindo CFM...' : 'Abrir Prescrição Eletrônica'}
+          </Button>
+          <Button
+            onClick={handleOpenCfmServices}
+            disabled={openingServices}
+            variant="outline"
+            size="lg"
+            className="gap-2"
+          >
+            <Building2 className="w-5 h-5 text-brand-blue" />
+            {openingServices ? 'Abrindo Serviços...' : 'Portal de Serviços CFM'}
+            <ArrowUpRight className="w-4 h-4 text-muted-foreground" />
           </Button>
         </div>
       </div>
 
-      {/* Hero Banner / Quick Access Card */}
-      <Card className="border-emerald-500/30 bg-gradient-to-br from-emerald-500/5 via-transparent to-primary/5 shadow-sm overflow-hidden">
-        <CardContent className="p-6 md:p-8">
-          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-            <div className="space-y-3 max-w-2xl">
-              <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 text-xs font-semibold">
-                <Sparkles className="w-3.5 h-3.5" />
-                Autenticação 100% no Portal Oficial
-              </div>
-              <h2 className="text-2xl font-bold tracking-tight text-foreground">
-                Emissão Oficial de Receituários & Atestados
-              </h2>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                Por diretriz do CFM e da LGPD, a autenticação ocorre com suas credenciais médicas
-                diretamente no portal oficial. O dashboard da clínica nunca coleta, armazena ou
-                transmite sua senha, seu CPF em texto plano ou chave de certificado.
-              </p>
+      {/* Navegação por Abas: Prescrição Direta vs. Portal de Serviços CFM (Contingência) */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full space-y-6">
+        <TabsList className="grid grid-cols-2 max-w-md h-11 p-1 bg-muted/80">
+          <TabsTrigger
+            value="prescricao"
+            className="text-xs md:text-sm font-medium gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+          >
+            <FileCheck className="w-4 h-4 text-emerald-600" />
+            Prescrição Direta
+          </TabsTrigger>
+          <TabsTrigger
+            value="portal-servicos"
+            className="text-xs md:text-sm font-medium gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+          >
+            <Building2 className="w-4 h-4 text-brand-blue" />
+            Portal de Serviços CFM
+          </TabsTrigger>
+        </TabsList>
 
-              {/* Status do CRM Cadastrado */}
-              <div className="pt-2 flex flex-wrap items-center gap-3">
-                <div className="flex items-center gap-2 bg-card border rounded-lg px-3 py-2 shadow-sm text-sm">
-                  <span className="text-muted-foreground font-medium">Seu CRM:</span>
-                  <span className="font-mono font-bold text-foreground">
-                    {hasCrmSaved ? `${savedCrmNumero}-${savedCrmUf}` : 'Não cadastrado'}
-                  </span>
-                  {hasCrmSaved && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
-                      onClick={() => handleCopyText(`${savedCrmNumero}/${savedCrmUf}`, 'full')}
-                      title="Copiar CRM/UF"
-                    >
-                      {copiedFullCrm ? (
-                        <Check className="w-3.5 h-3.5 text-emerald-600" />
-                      ) : (
-                        <Copy className="w-3.5 h-3.5" />
+        {/* ABA 1: Prescrição Direta */}
+        <TabsContent value="prescricao" className="space-y-6 mt-0">
+          <Card className="border-emerald-500/30 bg-gradient-to-br from-emerald-500/5 via-transparent to-primary/5 shadow-sm overflow-hidden">
+            <CardContent className="p-6 md:p-8">
+              <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+                <div className="space-y-3 max-w-2xl">
+                  <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 text-xs font-semibold">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    Acesso Direto Homologado
+                  </div>
+                  <h2 className="text-2xl font-bold tracking-tight text-foreground">
+                    Emissão Oficial de Receituários & Atestados
+                  </h2>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Por diretriz do CFM e da LGPD, a autenticação ocorre com suas credenciais
+                    médicas diretamente no portal oficial. O dashboard da clínica nunca coleta,
+                    armazena ou transmite sua senha, seu CPF em texto plano ou chave de certificado.
+                  </p>
+
+                  {/* Status do CRM Cadastrado */}
+                  <div className="pt-2 flex flex-wrap items-center gap-3">
+                    <div className="flex items-center gap-2 bg-card border rounded-lg px-3 py-2 shadow-sm text-sm">
+                      <span className="text-muted-foreground font-medium">Seu CRM:</span>
+                      <span className="font-mono font-bold text-foreground">
+                        {hasCrmSaved ? `${savedCrmNumero}-${savedCrmUf}` : 'Não cadastrado'}
+                      </span>
+                      {hasCrmSaved && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+                          onClick={() => handleCopyText(`${savedCrmNumero}/${savedCrmUf}`, 'full')}
+                          title="Copiar CRM/UF"
+                        >
+                          {copiedFullCrm ? (
+                            <Check className="w-3.5 h-3.5 text-emerald-600" />
+                          ) : (
+                            <Copy className="w-3.5 h-3.5" />
+                          )}
+                        </Button>
                       )}
-                    </Button>
-                  )}
+                    </div>
+
+                    <div className="flex items-center gap-2 bg-card border rounded-lg px-3 py-2 shadow-sm text-sm">
+                      <Clock className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-muted-foreground font-medium">Último Acesso:</span>
+                      <span className="font-semibold text-foreground text-xs md:text-sm">
+                        {formatDate(lastAccess)}
+                      </span>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="flex items-center gap-2 bg-card border rounded-lg px-3 py-2 shadow-sm text-sm">
-                  <Clock className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-muted-foreground font-medium">Último Acesso:</span>
-                  <span className="font-semibold text-foreground text-xs md:text-sm">
-                    {formatDate(lastAccess)}
-                  </span>
+                <div className="flex flex-col sm:flex-row lg:flex-col gap-3 w-full lg:w-auto shrink-0">
+                  <Button
+                    onClick={handleOpenCfmPortal}
+                    disabled={openingPortal}
+                    size="lg"
+                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-6 text-base shadow-md gap-2"
+                  >
+                    <ExternalLink className="w-5 h-5" />
+                    {openingPortal ? 'Carregando...' : 'Abrir Prescrição CFM'}
+                  </Button>
+                  <Button
+                    onClick={handleOpenCfmServices}
+                    disabled={openingServices}
+                    variant="outline"
+                    size="sm"
+                    className="w-full text-xs gap-1.5"
+                  >
+                    <Building2 className="w-3.5 h-3.5 text-brand-blue" />
+                    {openingServices ? 'Abrindo...' : 'Portal de Serviços CFM'}
+                    <ArrowUpRight className="w-3 h-3 text-muted-foreground" />
+                  </Button>
                 </div>
               </div>
-            </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-            <div className="flex flex-col sm:flex-row lg:flex-col gap-3 w-full lg:w-auto shrink-0">
-              <Button
-                onClick={handleOpenCfmPortal}
-                disabled={openingPortal}
-                size="lg"
-                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-6 text-base shadow-md gap-2"
-              >
-                <ExternalLink className="w-5 h-5" />
-                {openingPortal ? 'Carregando...' : 'Abrir Prescrição CFM'}
-              </Button>
-              <a
-                href={CFM_SERVICES_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex"
-              >
-                <Button variant="outline" size="sm" className="w-full text-xs gap-1.5">
-                  <Building2 className="w-3.5 h-3.5" />
-                  Portal de Serviços CFM
-                  <ArrowUpRight className="w-3 h-3 text-muted-foreground" />
-                </Button>
-              </a>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+        {/* ABA 2: Portal de Serviços CFM (Acesso de Contingência e Gestão) */}
+        <TabsContent value="portal-servicos" className="space-y-6 mt-0">
+          <Card className="border-blue-500/30 bg-gradient-to-br from-blue-500/5 via-transparent to-primary/5 shadow-sm overflow-hidden">
+            <CardContent className="p-6 md:p-8">
+              <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+                <div className="space-y-3 max-w-2xl">
+                  <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-blue-500/15 text-blue-800 dark:text-blue-300 text-xs font-semibold">
+                    <Building2 className="w-3.5 h-3.5" />
+                    Acesso de Contingência & Central de Serviços
+                  </div>
+                  <h2 className="text-2xl font-bold tracking-tight text-foreground">
+                    Portal de Serviços do CFM (servicos.cfm.org.br)
+                  </h2>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    O Portal de Serviços é a central unificada do Conselho Federal de Medicina. Em
+                    caso de indisponibilidade momentânea da rota direta de prescrição, você pode
+                    acessar todos os serviços médicos — incluindo o módulo de prescrição eletrônica,
+                    certidões de regularidade e atualização cadastral — a partir deste portal.
+                  </p>
+
+                  <div className="pt-2 flex flex-wrap items-center gap-3">
+                    <div className="flex items-center gap-2 bg-card border rounded-lg px-3 py-2 shadow-sm text-sm">
+                      <span className="text-muted-foreground font-medium">Endereço Oficial:</span>
+                      <a
+                        href={CFM_SERVICES_URL}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-mono font-semibold text-brand-blue hover:underline inline-flex items-center gap-1"
+                      >
+                        https://servicos.cfm.org.br/
+                        <ArrowUpRight className="w-3.5 h-3.5" />
+                      </a>
+                    </div>
+
+                    <div className="flex items-center gap-2 bg-card border rounded-lg px-3 py-2 shadow-sm text-sm">
+                      <Clock className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-muted-foreground font-medium">Último Acesso:</span>
+                      <span className="font-semibold text-foreground text-xs md:text-sm">
+                        {formatDate(lastAccess)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row lg:flex-col gap-3 w-full lg:w-auto shrink-0">
+                  <Button
+                    onClick={handleOpenCfmServices}
+                    disabled={openingServices}
+                    size="lg"
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-6 text-base shadow-md gap-2"
+                  >
+                    <ExternalLink className="w-5 h-5" />
+                    {openingServices ? 'Carregando Portal...' : 'Acessar servicos.cfm.org.br'}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full text-xs gap-1.5"
+                    onClick={() => setActiveTab('prescricao')}
+                  >
+                    <FileCheck className="w-3.5 h-3.5 text-emerald-600" />
+                    Voltar à Prescrição Direta
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Guia Passo a Passo de Autenticação no Portal de Serviços */}
+          <Card className="border-border/60 shadow-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <LogIn className="w-4.5 h-4.5 text-brand-blue" />
+                Passo a Passo: Como Acessar a Prescrição pelo Portal de Serviços
+              </CardTitle>
+              <CardDescription>
+                Roteiro de contingência quando a rota direta prescricao.cfm.org.br apresentar
+                lentidão ou manutenção.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid md:grid-cols-4 gap-4">
+                <div className="p-4 rounded-lg border bg-card space-y-2 relative">
+                  <div className="flex items-center gap-2 font-semibold text-sm text-foreground">
+                    <span className="w-6 h-6 rounded-full bg-brand-blue/10 text-brand-blue flex items-center justify-center text-xs font-bold">
+                      1
+                    </span>
+                    Acesse o Portal
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Clique em &quot;Acessar servicos.cfm.org.br&quot;. A página oficial abrirá em
+                    nova aba segura.
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-lg border bg-card space-y-2 relative">
+                  <div className="flex items-center gap-2 font-semibold text-sm text-foreground">
+                    <span className="w-6 h-6 rounded-full bg-brand-blue/10 text-brand-blue flex items-center justify-center text-xs font-bold">
+                      2
+                    </span>
+                    Autenticação Médica
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Informe seu CRM ({savedCrmNumero || '...'}), UF ({savedCrmUf || 'MG'}), CPF e
+                    senha, ou use seu Certificado ICP-Brasil.
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-lg border bg-card space-y-2 relative">
+                  <div className="flex items-center gap-2 font-semibold text-sm text-foreground">
+                    <span className="w-6 h-6 rounded-full bg-brand-blue/10 text-brand-blue flex items-center justify-center text-xs font-bold">
+                      3
+                    </span>
+                    Selecione o Módulo
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    No menu principal de serviços do CFM, clique no item &quot;Prescrição
+                    Eletrônica&quot;.
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-lg border bg-card space-y-2 relative">
+                  <div className="flex items-center gap-2 font-semibold text-sm text-foreground">
+                    <span className="w-6 h-6 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center text-xs font-bold">
+                      4
+                    </span>
+                    Emita a Receita
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Preencha o receituário, anexe assinatura digital ICP-Brasil e envie o documento
+                    ao paciente.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Main Grid: CRM Fast Copy + Audit History */}
       <div className="grid lg:grid-cols-12 gap-6">
@@ -639,15 +849,28 @@ export default function PrescricaoCfm() {
                     Acesso direto pelo Portal de Serviços centralizado do CFM. Permite emitir
                     certidões, atualizar dados e navegar aos módulos.
                   </p>
-                  <a
-                    href={CFM_SERVICES_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-brand-blue hover:underline font-semibold text-xs pt-1"
-                  >
-                    servicos.cfm.org.br
-                    <ArrowUpRight className="w-3 h-3" />
-                  </a>
+                  <div className="flex items-center gap-2 pt-1">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleOpenCfmServices}
+                      disabled={openingServices}
+                      className="text-xs h-7 px-2.5 gap-1 text-brand-blue hover:text-brand-blue"
+                    >
+                      <Building2 className="w-3 h-3" />
+                      {openingServices ? 'Abrindo...' : 'Abrir servicos.cfm.org.br'}
+                      <ArrowUpRight className="w-3 h-3" />
+                    </Button>
+                    <a
+                      href={CFM_SERVICES_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[11px] text-muted-foreground hover:text-foreground inline-flex items-center gap-0.5"
+                    >
+                      (link direto)
+                    </a>
+                  </div>
                 </div>
 
                 <div className="p-3.5 rounded-lg border bg-card space-y-2">

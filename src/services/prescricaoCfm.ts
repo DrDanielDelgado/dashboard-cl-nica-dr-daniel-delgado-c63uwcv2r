@@ -84,7 +84,9 @@ export async function updateDoctorCrm(crmNumero: string, crmUf: string): Promise
  * 2. Cria registro de auditoria na coleção `integration_access_logs`.
  * Nenhum dado clínico, CID ou medicamento é transmitido ou gravado.
  */
-export async function logCfmAccess(): Promise<IntegrationAccessLog | null> {
+export async function logCfmAccess(
+  action: 'open_cfm_prescription' | 'open_cfm_services' = 'open_cfm_prescription',
+): Promise<IntegrationAccessLog | null> {
   if (!pb.authStore.isValid || !pb.authStore.model) {
     return null
   }
@@ -92,6 +94,7 @@ export async function logCfmAccess(): Promise<IntegrationAccessLog | null> {
   const userId = pb.authStore.model.id
   const userName = pb.authStore.model.name || pb.authStore.model.email || 'Usuário Clínico'
   const now = new Date().toISOString()
+  const isServices = action === 'open_cfm_services'
 
   // 1. Atualiza last_cfm_access no usuário
   try {
@@ -107,10 +110,14 @@ export async function logCfmAccess(): Promise<IntegrationAccessLog | null> {
     const logRecord = await pb.collection('integration_access_logs').create({
       user: userId,
       user_name: userName,
-      action: 'open_cfm_prescription',
-      integration_name: 'CFM Prescrição Eletrônica (Estratégia B)',
-      target_url: CFM_PRESCRIPTION_URL,
-      details: 'Acesso direcionado seguro aberto em nova aba com noopener,noreferrer',
+      action,
+      integration_name: isServices
+        ? 'Portal de Serviços CFM (Contingência)'
+        : 'CFM Prescrição Eletrônica (Estratégia B)',
+      target_url: isServices ? CFM_SERVICES_URL : CFM_PRESCRIPTION_URL,
+      details: isServices
+        ? 'Acesso alternativo direcionado ao Portal de Serviços aberto em nova aba com noopener,noreferrer'
+        : 'Acesso direcionado seguro aberto em nova aba com noopener,noreferrer',
     })
     return logRecord as unknown as IntegrationAccessLog
   } catch (err) {
@@ -120,13 +127,20 @@ export async function logCfmAccess(): Promise<IntegrationAccessLog | null> {
 }
 
 /**
+ * Registra o acesso ao Portal de Serviços CFM (contingência)
+ */
+export async function logCfmServicesAccess(): Promise<IntegrationAccessLog | null> {
+  return logCfmAccess('open_cfm_services')
+}
+
+/**
  * Busca histórico de logs de acesso do CFM do usuário atual
  */
 export async function getCfmAccessLogs(limit = 10): Promise<IntegrationAccessLog[]> {
   if (!pb.authStore.isValid) return []
   try {
     const records = await pb.collection('integration_access_logs').getList(1, limit, {
-      filter: 'action = "open_cfm_prescription"',
+      filter: 'action = "open_cfm_prescription" || action = "open_cfm_services"',
       sort: '-created',
     })
     return records.items as unknown as IntegrationAccessLog[]
@@ -144,7 +158,9 @@ export async function getCfmAccessLogs(limit = 10): Promise<IntegrationAccessLog
 export async function openCfmPrescriptionWindow(): Promise<boolean> {
   try {
     // Registra log sem bloquear navegação caso falhe
-    logCfmAccess().catch((err) => console.error('Erro de log ao abrir CFM:', err))
+    logCfmAccess('open_cfm_prescription').catch((err) =>
+      console.error('Erro de log ao abrir CFM:', err),
+    )
 
     // Abertura segura
     const newWindow = window.open(CFM_PRESCRIPTION_URL, '_blank', 'noopener,noreferrer')
@@ -154,6 +170,28 @@ export async function openCfmPrescriptionWindow(): Promise<boolean> {
     return true
   } catch (err) {
     console.error('Falha ao abrir janela do CFM:', err)
+    return false
+  }
+}
+
+/**
+ * Executa a abertura segura direcionada para o Portal de Serviços do CFM:
+ * - Registra auditoria de contingência
+ * - Abre https://servicos.cfm.org.br/ em nova aba com window.open(..., '_blank', 'noopener,noreferrer')
+ */
+export async function openCfmServicesWindow(): Promise<boolean> {
+  try {
+    logCfmServicesAccess().catch((err) =>
+      console.error('Erro de log ao abrir Portal de Serviços CFM:', err),
+    )
+
+    const newWindow = window.open(CFM_SERVICES_URL, '_blank', 'noopener,noreferrer')
+    if (newWindow) {
+      newWindow.opener = null
+    }
+    return true
+  } catch (err) {
+    console.error('Falha ao abrir Portal de Serviços CFM:', err)
     return false
   }
 }
