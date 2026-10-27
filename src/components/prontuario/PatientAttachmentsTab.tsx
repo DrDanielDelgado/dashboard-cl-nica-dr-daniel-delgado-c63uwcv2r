@@ -21,7 +21,9 @@ import {
   Shield,
   HardDrive,
   User,
-  Info,
+  Camera,
+  Mic,
+  FolderOpen,
 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -68,6 +70,8 @@ import {
 } from '@/services/patientAttachments'
 import { Patient } from '@/types/paciente'
 import { cn } from '@/lib/utils'
+import { CameraCaptureDialog, CapturedPhoto } from '@/components/prontuario/CameraCaptureDialog'
+import { AudioRecordDialog, CapturedAudio } from '@/components/prontuario/AudioRecordDialog'
 
 interface PatientAttachmentsTabProps {
   patients: Patient[]
@@ -100,6 +104,7 @@ export function PatientAttachmentsTab({
 }: PatientAttachmentsTabProps) {
   const { toast } = useToast()
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const mobileCameraInputRef = useRef<HTMLInputElement>(null)
 
   // Estados principais
   const [currentPatientId, setCurrentPatientId] = useState<string>(selectedPatientId || '')
@@ -126,6 +131,10 @@ export function PatientAttachmentsTab({
 
   // Drag & drop highlight
   const [isDragging, setIsDragging] = useState<boolean>(false)
+
+  // Modais de Câmera e Áudio ao Vivo
+  const [cameraModalOpen, setCameraModalOpen] = useState<boolean>(false)
+  const [audioModalOpen, setAudioModalOpen] = useState<boolean>(false)
 
   // Sincroniza com prop externa quando mudar
   useEffect(() => {
@@ -247,6 +256,84 @@ export function PatientAttachmentsTab({
     if (e.dataTransfer?.files) {
       handleFilesSelected(e.dataTransfer.files)
     }
+  }
+
+  // Validador de paciente selecionado antes de abrir ferramentas ao vivo
+  const checkPatientSelected = (actionLabel: string): boolean => {
+    if (!currentPatientId || currentPatientId === 'all') {
+      toast({
+        variant: 'destructive',
+        title: 'Selecione um paciente',
+        description: `Para ${actionLabel}, selecione o paciente correspondente no seletor acima.`,
+      })
+      return false
+    }
+    return true
+  }
+
+  const handleOpenCameraModal = () => {
+    if (checkPatientSelected('capturar foto')) {
+      setCameraModalOpen(true)
+    }
+  }
+
+  const handleOpenAudioModal = () => {
+    if (checkPatientSelected('gravar áudio')) {
+      setAudioModalOpen(true)
+    }
+  }
+
+  // Recebe fotos capturadas pela câmera e as adiciona na mesma fila
+  const handlePhotosConfirmed = (photos: CapturedPhoto[]) => {
+    if (photos.length === 0) return
+
+    const newQueued: QueuedFile[] = photos.map((p, index) => {
+      const { category, extension } = detectAttachmentCategory(p.file)
+      const now = new Date()
+      const timeStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+      return {
+        id: `camera-${p.id}`,
+        file: p.file,
+        category,
+        extension,
+        title:
+          `Foto Clínica ${index + 1 > 1 ? `#${index + 1}` : ''} — ${now.toLocaleDateString('pt-BR')} ${timeStr}`.trim(),
+        description: batchDescription || 'Captura de foto em tempo real pelo prontuário',
+        examDate: batchExamDate,
+        status: 'pending',
+        progress: 0,
+      }
+    })
+
+    setQueuedFiles((prev) => [...prev, ...newQueued])
+    toast({
+      title: `${newQueued.length} foto(s) da câmera adicionada(s) à fila!`,
+      description: 'Revise os dados e clique em "Iniciar Upload dos Arquivos" para salvar.',
+    })
+  }
+
+  // Recebe áudio gravado e o adiciona na mesma fila
+  const handleAudioConfirmed = (audio: CapturedAudio) => {
+    const { category, extension } = detectAttachmentCategory(audio.file)
+    const newQueued: QueuedFile = {
+      id: `audio-${audio.id}`,
+      file: audio.file,
+      category: 'audio',
+      extension,
+      title: audio.title,
+      description:
+        batchDescription ||
+        `Gravação de áudio em tempo real (${Math.round(audio.durationSeconds)}s)`,
+      examDate: batchExamDate,
+      status: 'pending',
+      progress: 0,
+    }
+
+    setQueuedFiles((prev) => [...prev, newQueued])
+    toast({
+      title: 'Gravação de áudio adicionada à fila!',
+      description: 'Revise os dados e clique em "Iniciar Upload dos Arquivos" para salvar.',
+    })
   }
 
   const handleRemoveQueueItem = (id: string) => {
@@ -544,53 +631,142 @@ export function PatientAttachmentsTab({
         </Card>
       </div>
 
-      {/* ÁREA DE UPLOAD E ARRASTE */}
-      <Card className="border-dashed border-2 border-primary/30 shadow-sm">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base flex items-center justify-between">
-            <span className="flex items-center gap-2">
-              <UploadCloud className="h-5 w-5 text-primary" />
-              Upload Múltiplo de Arquivos & Mídias
-            </span>
-            <span className="text-xs font-normal text-muted-foreground">
-              Limite: 50MB por arquivo
-            </span>
-          </CardTitle>
-          <CardDescription className="text-xs">
-            Arraste pastas/arquivos de qualquer diretório do computador ou use o seletor. É possível
-            enviar múltiplos arquivos de uma só vez.
-          </CardDescription>
+      {/* ÁREA DE CAPTURA AO VIVO & UPLOAD MÚLTIPLO */}
+      <Card className="border border-primary/30 shadow-sm overflow-hidden">
+        <CardHeader className="pb-3 bg-muted/20 border-b">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <CardTitle className="text-base flex items-center gap-2">
+                <UploadCloud className="h-5 w-5 text-primary" />
+                Upload Múltiplo & Captura em Tempo Real
+              </CardTitle>
+              <CardDescription className="text-xs mt-0.5">
+                Envie arquivos locais ou capture fotos pela câmera e grave áudios ao vivo pelo
+                computador ou celular. Tudo alimenta a mesma fila unificada.
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-2 self-start sm:self-auto">
+              <Badge variant="outline" className="text-xs font-mono">
+                Limite: 50MB / arquivo
+              </Badge>
+            </div>
+          </div>
+
+          {/* BARRA DE AÇÕES RÁPIDAS: ARQUIVOS + CÂMERA AO VIVO + ÁUDIO AO VIVO */}
+          <div className="pt-3 grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+            {/* Botão Selecionar Arquivos */}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => fileInputRef.current?.click()}
+              className="w-full justify-start gap-2 h-10 border-primary/30 hover:border-primary hover:bg-primary/5 text-xs font-medium"
+            >
+              <FolderOpen className="h-4 w-4 text-primary shrink-0" />
+              <div className="text-left min-w-0">
+                <p className="font-semibold text-foreground truncate">Selecionar Arquivos</p>
+                <p className="text-[10px] text-muted-foreground truncate">
+                  Múltiplos diretórios / drag & drop
+                </p>
+              </div>
+            </Button>
+
+            {/* Botão Câmera ao Vivo */}
+            <div className="flex items-center gap-1">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleOpenCameraModal}
+                className="flex-1 justify-start gap-2 h-10 border-emerald-500/30 hover:border-emerald-500 hover:bg-emerald-500/5 text-xs font-medium"
+              >
+                <Camera className="h-4 w-4 text-emerald-600 shrink-0" />
+                <div className="text-left min-w-0">
+                  <p className="font-semibold text-foreground truncate">Tirar Foto (Câmera)</p>
+                  <p className="text-[10px] text-muted-foreground truncate">
+                    Webcam ou celular ao vivo
+                  </p>
+                </div>
+              </Button>
+              {/* Fallback nativo mobile (environment) */}
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  if (checkPatientSelected('usar a câmera')) {
+                    mobileCameraInputRef.current?.click()
+                  }
+                }}
+                className="h-10 px-2 text-muted-foreground hover:text-emerald-700"
+                title="Abrir app de câmera nativo do celular"
+              >
+                <span className="text-[10px] font-mono uppercase">App</span>
+              </Button>
+            </div>
+
+            {/* Botão Gravar Áudio ao Vivo */}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleOpenAudioModal}
+              className="w-full justify-start gap-2 h-10 border-purple-500/30 hover:border-purple-500 hover:bg-purple-500/5 text-xs font-medium"
+            >
+              <Mic className="h-4 w-4 text-purple-600 shrink-0" />
+              <div className="text-left min-w-0">
+                <p className="font-semibold text-foreground truncate">Gravar Áudio</p>
+                <p className="text-[10px] text-muted-foreground truncate">
+                  Microfone ao vivo com timer
+                </p>
+              </div>
+            </Button>
+          </div>
         </CardHeader>
-        <CardContent className="space-y-4">
+
+        <CardContent className="space-y-4 pt-4">
+          {/* Inputs ocultos */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            className="hidden"
+            onChange={(e) => {
+              if (e.target.files) {
+                handleFilesSelected(e.target.files)
+                e.target.value = ''
+              }
+            }}
+          />
+          <input
+            ref={mobileCameraInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            onChange={(e) => {
+              if (e.target.files) {
+                handleFilesSelected(e.target.files)
+                e.target.value = ''
+              }
+            }}
+          />
+
+          {/* Dropzone Drag & Drop */}
           <div
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
             onClick={() => fileInputRef.current?.click()}
             className={cn(
-              'border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-200',
+              'border-2 border-dashed rounded-xl p-6 sm:p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-200',
               isDragging
                 ? 'border-primary bg-primary/10 scale-[1.01]'
                 : 'border-muted hover:border-primary/50 hover:bg-muted/30 bg-muted/10',
             )}
           >
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              className="hidden"
-              onChange={(e) => {
-                if (e.target.files) {
-                  handleFilesSelected(e.target.files)
-                  e.target.value = ''
-                }
-              }}
-            />
-            <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-3">
-              <UploadCloud className="h-7 w-7 text-primary" />
+            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-2.5">
+              <UploadCloud className="h-6 w-6 text-primary" />
             </div>
-            <h3 className="font-semibold text-base text-foreground">
-              Arraste os arquivos aqui ou clique para selecionar
+            <h3 className="font-semibold text-sm sm:text-base text-foreground">
+              Arraste múltiplos arquivos aqui ou clique para selecionar
             </h3>
             <p className="text-xs text-muted-foreground mt-1 max-w-lg">
               Formatos aceitos: <strong>{ALLOWED_EXTENSIONS_TEXT}</strong>
@@ -606,7 +782,7 @@ export function PatientAttachmentsTab({
                 Laudos (PDF)
               </Badge>
               <Badge variant="secondary" className="text-[11px]">
-                Áudio (MP3/WAV/M4A)
+                Áudio (MP3/WAV/M4A/Gravação)
               </Badge>
               <Badge variant="secondary" className="text-[11px]">
                 Vídeo (MP4/MOV/AVI)
@@ -1175,6 +1351,22 @@ export function PatientAttachmentsTab({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* MODAL DE CÂMERA AO VIVO */}
+      <CameraCaptureDialog
+        open={cameraModalOpen}
+        onOpenChange={setCameraModalOpen}
+        patientName={activePatient?.fullName || ''}
+        onPhotosConfirmed={handlePhotosConfirmed}
+      />
+
+      {/* MODAL DE GRAVAÇÃO DE ÁUDIO AO VIVO */}
+      <AudioRecordDialog
+        open={audioModalOpen}
+        onOpenChange={setAudioModalOpen}
+        patientName={activePatient?.fullName || ''}
+        onAudioConfirmed={handleAudioConfirmed}
+      />
     </div>
   )
 }
