@@ -53,7 +53,34 @@ export default function Prontuario() {
 
   const isSecretary = role === 'Secretária'
 
-  const [activeTab, setActiveTab] = useState<string>('hidoctor')
+  // Lê eventual query param ?tab=cfm da URL para abrir direto na aba desejada
+  const initialTab = useMemo(() => {
+    try {
+      const params = new URLSearchParams(window.location.search)
+      const tabParam = params.get('tab')
+      if (tabParam && ['hidoctor', 'anexos', 'cfm', 'financeiro', 'clinico'].includes(tabParam)) {
+        return tabParam
+      }
+    } catch {
+      // ignore
+    }
+    return 'hidoctor'
+  }, [])
+
+  const [activeTab, setActiveTab] = useState<string>(initialTab)
+
+  // Escuta mudanças nos search params caso haja navegação interna sem reload
+  useEffect(() => {
+    const handlePopState = () => {
+      const params = new URLSearchParams(window.location.search)
+      const tabParam = params.get('tab')
+      if (tabParam && ['hidoctor', 'anexos', 'cfm', 'financeiro', 'clinico'].includes(tabParam)) {
+        setActiveTab(tabParam)
+      }
+    }
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [])
   const [selectedPatientId, setSelectedPatientId] = useState<string>('')
   const [openCombobox, setOpenCombobox] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')

@@ -42,6 +42,7 @@ import {
   CFM_SUPPORT_URL,
   CFM_RDC1000_URL,
   CLINICA_PJ_DADOS,
+  DEFAULT_DOCTOR_CRM,
   getDoctorProfile,
   updateDoctorCrm,
   logCfmAccess,
@@ -101,11 +102,11 @@ export function PrescricaoCfmContent({
     'prescricao' | 'portal-servicos' | 'portal-servicos-pj'
   >('prescricao')
 
-  // CRM state
-  const [crmNumero, setCrmNumero] = useState('')
-  const [crmUf, setCrmUf] = useState('MG')
-  const [savedCrmNumero, setSavedCrmNumero] = useState('')
-  const [savedCrmUf, setSavedCrmUf] = useState('MG')
+  // CRM state (inicia por padrão com Dr. Daniel Delgado CRM 37.525 MG se vazio)
+  const [crmNumero, setCrmNumero] = useState<string>(DEFAULT_DOCTOR_CRM.crmNumero)
+  const [crmUf, setCrmUf] = useState<string>(DEFAULT_DOCTOR_CRM.crmUf)
+  const [savedCrmNumero, setSavedCrmNumero] = useState<string>(DEFAULT_DOCTOR_CRM.crmNumero)
+  const [savedCrmUf, setSavedCrmUf] = useState<string>(DEFAULT_DOCTOR_CRM.crmUf)
 
   // Copy feedback states (PF)
   const [copiedNumero, setCopiedNumero] = useState(false)
@@ -118,6 +119,7 @@ export function PrescricaoCfmContent({
   const [copiedRazao, setCopiedRazao] = useState(false)
   const [copiedDiretor, setCopiedDiretor] = useState(false)
   const [copiedDiretorCrm, setCopiedDiretorCrm] = useState(false)
+  const [copiedDiretorCrmLegado, setCopiedDiretorCrmLegado] = useState(false)
 
   // Audit state
   const [lastAccess, setLastAccess] = useState<string | null>(null)
@@ -129,13 +131,19 @@ export function PrescricaoCfmContent({
     try {
       const profile = await getDoctorProfile()
       if (profile) {
-        const num = profile.crm_numero || ''
-        const uf = profile.crm_uf || 'MG'
+        const num = profile.crm_numero || DEFAULT_DOCTOR_CRM.crmNumero
+        const uf = profile.crm_uf || DEFAULT_DOCTOR_CRM.crmUf
         setCrmNumero(num)
         setCrmUf(uf)
         setSavedCrmNumero(num)
         setSavedCrmUf(uf)
         setLastAccess(profile.last_cfm_access || null)
+      } else {
+        // Fallback default caso perfil não retorne
+        setCrmNumero(DEFAULT_DOCTOR_CRM.crmNumero)
+        setCrmUf(DEFAULT_DOCTOR_CRM.crmUf)
+        setSavedCrmNumero(DEFAULT_DOCTOR_CRM.crmNumero)
+        setSavedCrmUf(DEFAULT_DOCTOR_CRM.crmUf)
       }
       const logs = await getCfmAccessLogs(8)
       setAccessLogs(logs)
@@ -155,8 +163,10 @@ export function PrescricaoCfmContent({
     setSavingCrm(true)
     try {
       await updateDoctorCrm(crmNumero, crmUf)
-      setSavedCrmNumero(crmNumero.trim().replace(/[^0-9]/g, ''))
-      setSavedCrmUf(crmUf.trim().toUpperCase())
+      // Mantém a formatação digitada pelo usuário ou normaliza para exibição
+      const trimmedNum = crmNumero.trim()
+      setSavedCrmNumero(trimmedNum || DEFAULT_DOCTOR_CRM.crmNumero)
+      setSavedCrmUf(crmUf.trim().toUpperCase() || DEFAULT_DOCTOR_CRM.crmUf)
       toast({
         title: 'CRM Atualizado com Sucesso',
         description: `CRM ${crmNumero}-${crmUf} salvo no seu perfil para lembrete e cópia rápida.`,
@@ -295,7 +305,7 @@ export function PrescricaoCfmContent({
 
   const handleCopyPjText = (
     text: string,
-    field: 'cnpj' | 'cnpjNums' | 'razao' | 'diretor' | 'diretorCrm',
+    field: 'cnpj' | 'cnpjNums' | 'razao' | 'diretor' | 'diretorCrm' | 'diretorCrmLegado',
     label: string,
   ) => {
     if (!text) return
@@ -315,6 +325,9 @@ export function PrescricaoCfmContent({
     } else if (field === 'diretorCrm') {
       setCopiedDiretorCrm(true)
       setTimeout(() => setCopiedDiretorCrm(false), 2000)
+    } else if (field === 'diretorCrmLegado') {
+      setCopiedDiretorCrmLegado(true)
+      setTimeout(() => setCopiedDiretorCrmLegado(false), 2000)
     }
     toast({
       title: `${label} copiado!`,
@@ -662,7 +675,7 @@ export function PrescricaoCfmContent({
                     Autenticação Médica
                   </div>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    Informe seu CRM ({savedCrmNumero || '37525'}), UF ({savedCrmUf || 'MG'}), CPF e
+                    Informe seu CRM ({savedCrmNumero || '37.525'}), UF ({savedCrmUf || 'MG'}), CPF e
                     senha cadastrada, ou autentique com seu Certificado Digital ICP-Brasil.
                   </p>
                 </div>
@@ -885,8 +898,11 @@ export function PrescricaoCfmContent({
                     <div className="font-semibold text-sm text-foreground">
                       {CLINICA_PJ_DADOS.diretorTecnico}
                     </div>
-                    <div className="font-mono text-xs text-indigo-600 dark:text-indigo-400 font-bold">
-                      {CLINICA_PJ_DADOS.diretorTecnicoCrm}
+                    <div className="font-mono text-xs text-indigo-600 dark:text-indigo-400 font-bold flex items-center gap-2">
+                      <span>{CLINICA_PJ_DADOS.diretorTecnicoCrm}</span>
+                      <span className="text-[11px] text-muted-foreground font-normal">
+                        ({CLINICA_PJ_DADOS.diretorTecnicoCrmLegado})
+                      </span>
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-1.5 pt-1">
@@ -919,16 +935,38 @@ export function PrescricaoCfmContent({
                         handleCopyPjText(
                           CLINICA_PJ_DADOS.diretorTecnicoCrm,
                           'diretorCrm',
-                          'CRM Diretor',
+                          'CRM Diretor (formatado)',
                         )
                       }
+                      title="Copiar CRM-MG 37.525"
                     >
                       {copiedDiretorCrm ? (
                         <Check className="w-3 h-3 mr-1 text-emerald-600" />
                       ) : (
                         <Copy className="w-3 h-3 mr-1" />
                       )}
-                      {copiedDiretorCrm ? 'Copiado' : 'Copiar CRM'}
+                      {copiedDiretorCrm ? 'Copiado' : 'CRM 37.525'}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-xs font-mono text-muted-foreground hover:text-foreground"
+                      onClick={() =>
+                        handleCopyPjText(
+                          CLINICA_PJ_DADOS.diretorTecnicoCrmLegado,
+                          'diretorCrmLegado',
+                          'CRM Diretor (CRMGM 37525)',
+                        )
+                      }
+                      title="Copiar formato legado: CRMGM 37525"
+                    >
+                      {copiedDiretorCrmLegado ? (
+                        <Check className="w-3 h-3 mr-1 text-emerald-600" />
+                      ) : (
+                        <Copy className="w-3 h-3 mr-1" />
+                      )}
+                      {copiedDiretorCrmLegado ? 'Copiado' : 'CRMGM 37525'}
                     </Button>
                   </div>
                 </div>
@@ -1021,7 +1059,7 @@ export function PrescricaoCfmContent({
                         id="crm_numero"
                         value={crmNumero}
                         onChange={(e) => setCrmNumero(e.target.value)}
-                        placeholder="Ex: 54321"
+                        placeholder="Ex: 37.525"
                         className="font-mono pr-9"
                       />
                       {crmNumero && (

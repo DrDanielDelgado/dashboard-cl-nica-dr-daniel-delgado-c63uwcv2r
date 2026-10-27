@@ -12,8 +12,15 @@ export const CLINICA_PJ_DADOS = {
   cnpjNumeros: '13548058000116',
   razaoSocial: 'Mattos Delgado Clínica Médica LTDA',
   diretorTecnico: 'Daniel de Mattos Delgado',
-  diretorTecnicoCrm: 'CRM-MG 37525',
-  crmNumero: '37525',
+  diretorTecnicoCrm: 'CRM-MG 37.525',
+  diretorTecnicoCrmLegado: 'CRMGM 37525',
+  crmNumero: '37.525',
+  crmNumeroNumeros: '37525',
+  crmUf: 'MG',
+} as const
+
+export const DEFAULT_DOCTOR_CRM = {
+  crmNumero: '37.525',
   crmUf: 'MG',
 } as const
 
@@ -53,8 +60,10 @@ export async function getDoctorProfile(): Promise<UserDoctorProfile | null> {
       id: user.id,
       name: user.name || user.email,
       email: user.email,
-      crm_numero: user.crm_numero || '',
-      crm_uf: user.crm_uf || '',
+      // Se o usuário tiver valor salvo no backend, prevalece.
+      // Se estiver vazio, aplica o padrão do Dr. Daniel Delgado (37.525 / MG).
+      crm_numero: user.crm_numero || DEFAULT_DOCTOR_CRM.crmNumero,
+      crm_uf: user.crm_uf || DEFAULT_DOCTOR_CRM.crmUf,
       last_cfm_access: user.last_cfm_access || '',
     }
   } catch (err) {
@@ -63,8 +72,8 @@ export async function getDoctorProfile(): Promise<UserDoctorProfile | null> {
       id: pb.authStore.model.id,
       name: pb.authStore.model.name || pb.authStore.model.email,
       email: pb.authStore.model.email,
-      crm_numero: (pb.authStore.model as any).crm_numero || '',
-      crm_uf: (pb.authStore.model as any).crm_uf || '',
+      crm_numero: (pb.authStore.model as any).crm_numero || DEFAULT_DOCTOR_CRM.crmNumero,
+      crm_uf: (pb.authStore.model as any).crm_uf || DEFAULT_DOCTOR_CRM.crmUf,
       last_cfm_access: (pb.authStore.model as any).last_cfm_access || '',
     }
   }

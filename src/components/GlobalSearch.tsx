@@ -61,9 +61,9 @@ export function GlobalSearch({ open, setOpen }: { open: boolean; setOpen: (o: bo
       <CommandList>
         <CommandEmpty>Nenhum resultado encontrado no sistema.</CommandEmpty>
         <CommandGroup heading="Acesso Rápido - Módulos">
-          <CommandItem onSelect={() => runCommand(() => navigate('/prescricao-cfm'))}>
+          <CommandItem onSelect={() => runCommand(() => navigate('/prontuario?tab=cfm'))}>
             <FileCheck className="mr-2 h-4 w-4 text-emerald-600" />
-            <span className="font-medium">Prescrição Eletrônica CFM</span>
+            <span className="font-medium">Prescrição Eletrônica CFM (Prontuário 360)</span>
           </CommandItem>
           <CommandItem onSelect={() => runCommand(() => navigate('/crm'))}>
             <Users className="mr-2 h-4 w-4 text-brand-blue" />
