@@ -34,13 +34,14 @@ export type CatalogSource = {
 
 /** Busca no catálogo por nome comercial, substância ou código EAN. */
 export async function searchCatalog(term: string, limit = 25): Promise<CatalogItem[]> {
-  const q = term.trim().replace(/"/g, '')
+  const q = term.trim().replace(/["\\]/g, '')
   if (!q) return []
   const filter = `name ~ "${q}" || substance ~ "${q}" || ean ~ "${q}" || laboratory ~ "${q}"`
-  return (await pb.collection('med_catalog').getList(1, limit, {
+  const res: any = await pb.collection('med_catalog').getList(1, limit, {
     filter,
     sort: 'name',
-  })) as unknown as CatalogItem[]
+  })
+  return (res?.items || []) as CatalogItem[]
 }
 
 /** Busca um item do catálogo pelo código de barras (EAN). */
@@ -59,8 +60,12 @@ export async function findByEan(ean: string): Promise<CatalogItem | null> {
 }
 
 export const getCatalogCount = async (): Promise<number> => {
-  const res = await pb.collection('med_catalog').getList(1, 1)
-  return (res as any).totalItems || 0
+  try {
+    const res: any = await pb.collection('med_catalog').getList(1, 1, { fields: 'id' })
+    return res?.totalItems || 0
+  } catch {
+    return 0
+  }
 }
 
 export const getCatalogSources = async (): Promise<CatalogSource[]> => {

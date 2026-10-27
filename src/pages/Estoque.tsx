@@ -119,6 +119,34 @@ export default function Estoque() {
   const [catBusy, setCatBusy] = useState(false)
   const [catTotal, setCatTotal] = useState(0)
 
+  // fontes de dados do catálogo (CMED ativa; ANVISA/Brasíndice para o futuro)
+  const [sources, setSources] = useState<CatalogSource[]>([])
+  const [srcOpen, setSrcOpen] = useState(false)
+  const [srcForm, setSrcForm] = useState<any>({ kind: 'ANVISA', active: true })
+
+  const loadSources = () =>
+    getCatalogSources()
+      .then(setSources)
+      .catch(() => setSources([]))
+
+  useEffect(() => {
+    loadSources()
+  }, [])
+
+  const saveSource = async () => {
+    if (!srcForm.name?.trim()) return
+    setSaving(true)
+    try {
+      if (srcForm.id) await updateCatalogSource(srcForm.id, srcForm)
+      else await createCatalogSource(srcForm)
+      setSrcOpen(false)
+      setSrcForm({ kind: 'ANVISA', active: true })
+      loadSources()
+    } finally {
+      setSaving(false)
+    }
+  }
+
   useEffect(() => {
     getCatalogCount()
       .then(setCatTotal)
@@ -378,7 +406,126 @@ export default function Estoque() {
           <TabsTrigger value="catalogo">
             Biblioteca ({catTotal.toLocaleString('pt-BR')})
           </TabsTrigger>
+          <TabsTrigger value="fontes">Fontes de dados</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="fontes" className="mt-4">
+          <Card className="shadow-sm border-slate-200">
+            <CardHeader className="flex flex-row items-center justify-between border-b bg-slate-50/50 py-4">
+              <div>
+                <CardTitle className="text-base text-brand-blue">
+                  Fontes de dados vinculadas
+                </CardTitle>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Cada fonte é uma tabela de referência que alimenta a biblioteca do estoque. CMED
+                  (ANVISA) é pública e atualizada mensalmente. Brasíndice é comercial (assinatura):
+                  usa-se o arquivo TXT/CSV exportado pela sua conta.
+                </p>
+              </div>
+              <Button
+                size="sm"
+                onClick={() => {
+                  setSrcForm({ kind: 'ANVISA', active: true })
+                  setSrcOpen(true)
+                }}
+                className="bg-brand-blue hover:bg-brand-blue/90 text-white shrink-0"
+              >
+                <Plus className="h-4 w-4 mr-1" /> Nova fonte
+              </Button>
+            </CardHeader>
+            <CardContent className="p-0 overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-slate-50">
+                    <TableHead className="font-semibold text-brand-blue">Fonte</TableHead>
+                    <TableHead className="font-semibold text-brand-blue">Tipo</TableHead>
+                    <TableHead className="font-semibold text-brand-blue">Edição</TableHead>
+                    <TableHead className="text-right font-semibold text-brand-blue">
+                      Registros
+                    </TableHead>
+                    <TableHead className="font-semibold text-brand-blue">Status</TableHead>
+                    <TableHead className="text-right font-semibold text-brand-blue">
+                      Ações
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {sources.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8 text-slate-500">
+                        Nenhuma fonte cadastrada. Adicione CMED, ANVISA ou Brasíndice.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {sources.map((s) => (
+                    <TableRow key={s.id}>
+                      <TableCell>
+                        <div className="font-bold text-slate-800">{s.name}</div>
+                        {s.url ? (
+                          <a
+                            href={s.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-xs text-brand-blue underline break-all"
+                          >
+                            {s.url.slice(0, 60)}
+                          </a>
+                        ) : null}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="text-[11px]">
+                          {s.kind}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm text-slate-600">{s.edition || '—'}</TableCell>
+                      <TableCell className="text-right font-semibold">
+                        {(s.record_count || 0).toLocaleString('pt-BR')}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="secondary"
+                          className={
+                            s.active
+                              ? 'bg-emerald-100 text-emerald-700'
+                              : 'bg-slate-200 text-slate-600'
+                          }
+                        >
+                          {s.active ? 'Ativa' : 'Inativa'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 text-xs"
+                            onClick={() => {
+                              setSrcForm(s)
+                              setSrcOpen(true)
+                            }}
+                          >
+                            Editar
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 text-xs text-brand-red hover:bg-brand-red/5"
+                            onClick={async () => {
+                              await deleteCatalogSource(s.id)
+                              loadSources()
+                            }}
+                          >
+                            Excluir
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         <TabsContent value="catalogo" className="mt-4">
           <Card className="shadow-sm border-slate-200 overflow-hidden">
@@ -871,6 +1018,101 @@ export default function Estoque() {
               className="bg-brand-red hover:bg-brand-red/90 text-white"
             >
               {saving ? 'Salvando...' : 'Cadastrar item'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ---------- Fonte de dados ---------- */}
+      <Dialog open={srcOpen} onOpenChange={setSrcOpen}>
+        <DialogContent className="sm:max-w-[460px]">
+          <DialogHeader>
+            <DialogTitle>
+              {srcForm.id ? 'Editar fonte de dados' : 'Nova fonte de dados'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-1">
+            <div className="space-y-2">
+              <Label>Nome *</Label>
+              <Input
+                value={srcForm.name || ''}
+                onChange={(e) => setSrcForm({ ...srcForm, name: e.target.value })}
+                placeholder="Ex.: Brasíndice — tabela 2026"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>Tipo</Label>
+                <Select
+                  value={srcForm.kind}
+                  onValueChange={(v) => setSrcForm({ ...srcForm, kind: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {['CMED', 'ANVISA', 'BRASINDICE', 'OUTRO'].map((k) => (
+                      <SelectItem key={k} value={k}>
+                        {k}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Edição</Label>
+                <Input
+                  value={srcForm.edition || ''}
+                  onChange={(e) => setSrcForm({ ...srcForm, edition: e.target.value })}
+                  placeholder="2026-10"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>URL (opcional)</Label>
+              <Input
+                value={srcForm.url || ''}
+                onChange={(e) => setSrcForm({ ...srcForm, url: e.target.value })}
+                placeholder="https://..."
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>Registros</Label>
+                <Input
+                  type="number"
+                  value={srcForm.record_count || ''}
+                  onChange={(e) => setSrcForm({ ...srcForm, record_count: e.target.value })}
+                />
+              </div>
+              <label className="flex items-end gap-2 text-sm text-slate-700 pb-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={srcForm.active !== false}
+                  onChange={(e) => setSrcForm({ ...srcForm, active: e.target.checked })}
+                />
+                Fonte ativa
+              </label>
+            </div>
+            <div className="space-y-2">
+              <Label>Observações</Label>
+              <Input
+                value={srcForm.notes || ''}
+                onChange={(e) => setSrcForm({ ...srcForm, notes: e.target.value })}
+                placeholder="Origem dos dados, responsável, forma de atualização"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSrcOpen(false)}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={saveSource}
+              disabled={saving || !srcForm.name?.trim()}
+              className="bg-brand-blue hover:bg-brand-blue/90 text-white"
+            >
+              {saving ? 'Salvando...' : 'Salvar'}
             </Button>
           </DialogFooter>
         </DialogContent>
