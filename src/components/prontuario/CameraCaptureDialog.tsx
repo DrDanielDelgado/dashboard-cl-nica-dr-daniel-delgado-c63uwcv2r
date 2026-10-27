@@ -6,8 +6,6 @@ import {
   X,
   AlertCircle,
   FlipHorizontal,
-  Plus,
-  Trash2,
   Image as ImageIcon,
   HelpCircle,
 } from 'lucide-react'
@@ -21,7 +19,8 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { LgpdCaptureConsentDialog } from '@/components/prontuario/LgpdCaptureConsentDialog'
+import { hasSessionConsent } from '@/services/captureConsentAudit'
 
 export interface CapturedPhoto {
   id: string
@@ -33,6 +32,7 @@ export interface CapturedPhoto {
 interface CameraCaptureDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  patientId?: string
   patientName: string
   onPhotosConfirmed: (photos: CapturedPhoto[]) => void
 }
@@ -40,6 +40,7 @@ interface CameraCaptureDialogProps {
 export function CameraCaptureDialog({
   open,
   onOpenChange,
+  patientId,
   patientName,
   onPhotosConfirmed,
 }: CameraCaptureDialogProps) {
@@ -53,6 +54,8 @@ export function CameraCaptureDialog({
   const [cameraError, setCameraError] = useState<{ title: string; message: string } | null>(null)
   const [isLoadingStream, setIsLoadingStream] = useState<boolean>(false)
   const [flashAnimation, setFlashAnimation] = useState<boolean>(false)
+  const [consentModalOpen, setConsentModalOpen] = useState<boolean>(false)
+  const [hasConsent, setHasConsent] = useState<boolean>(false)
 
   // Encerra todas as tracks ativas da câmera para LGPD e privacidade
   const stopStream = useCallback(() => {
@@ -153,20 +156,40 @@ export function CameraCaptureDialog({
     [stopStream],
   )
 
-  // Inicia ou para quando o modal abre/fecha
+  // Inicia ou para quando o modal abre/fecha e gerencia o consentimento LGPD
   useEffect(() => {
     if (open) {
-      startCamera(facingMode)
+      const effectiveId = patientId || patientName || 'paciente'
+      const alreadyGranted = hasSessionConsent(effectiveId, 'camera')
+      if (alreadyGranted) {
+        setHasConsent(true)
+        startCamera(facingMode)
+      } else {
+        setHasConsent(false)
+        setConsentModalOpen(true)
+      }
     } else {
       stopStream()
       setCapturedPhotos([])
       setCameraError(null)
+      setConsentModalOpen(false)
     }
 
     return () => {
       stopStream()
     }
-  }, [open, facingMode, startCamera, stopStream])
+  }, [open, patientId, patientName, facingMode, startCamera, stopStream])
+
+  const handleConsentGranted = () => {
+    setHasConsent(true)
+    startCamera(facingMode)
+  }
+
+  const handleConsentDeclined = () => {
+    setHasConsent(false)
+    stopStream()
+    onOpenChange(false)
+  }
 
   // Alterna câmera frontal / traseira
   const toggleFacingMode = () => {
@@ -404,7 +427,7 @@ export function CameraCaptureDialog({
         <DialogFooter className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-2 pt-3 border-t">
           <div className="text-[11px] text-muted-foreground flex items-center gap-1">
             <HelpCircle className="h-3 w-3 shrink-0" />
-            <span>A câmera é desligada automaticamente ao fechar esta janela (LGPD).</span>
+            <span>Por privacidade, a câmera desliga sozinha ao fechar esta janela.</span>
           </div>
           <div className="flex items-center gap-2 justify-end">
             <Button
@@ -430,5 +453,21 @@ export function CameraCaptureDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    <LgpdCaptureConsentDialog
+      open={consentModalOpen}
+      onOpenChange={(val) => {
+        setConsentModalOpen(val)
+        if (!val && !hasConsent) {
+          handleConsentDeclined()
+        }
+      }}
+      captureType="camera"
+      patientId={patientId}
+      patientName={patientName}
+      onConsentGranted={handleConsentGranted}
+      onConsentDeclined={handleConsentDeclined}
+    />
+    </>
   )
 }

@@ -32,9 +32,13 @@ export interface CapturedAudio {
   timestamp: Date
 }
 
+import { LgpdCaptureConsentDialog } from '@/components/prontuario/LgpdCaptureConsentDialog'
+import { hasSessionConsent } from '@/services/captureConsentAudit'
+
 interface AudioRecordDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  patientId?: string
   patientName: string
   onAudioConfirmed: (audio: CapturedAudio) => void
 }
@@ -42,6 +46,7 @@ interface AudioRecordDialogProps {
 export function AudioRecordDialog({
   open,
   onOpenChange,
+  patientId,
   patientName,
   onAudioConfirmed,
 }: AudioRecordDialogProps) {
@@ -58,6 +63,8 @@ export function AudioRecordDialog({
   const [audioTitle, setAudioTitle] = useState<string>('')
   const [isPlayingPreview, setIsPlayingPreview] = useState<boolean>(false)
   const [micError, setMicError] = useState<{ title: string; message: string } | null>(null)
+  const [consentModalOpen, setConsentModalOpen] = useState<boolean>(false)
+  const [hasConsent, setHasConsent] = useState<boolean>(false)
 
   // Encerra todas as tracks do microfone para garantir privacidade e LGPD
   const stopStream = useCallback(() => {
@@ -105,11 +112,21 @@ export function AudioRecordDialog({
     setMicError(null)
   }, [stopTimer, stopStream, audioUrl])
 
-  // Fecha e limpa tudo
+  // Fecha e limpa tudo e gerencia consentimento LGPD
   useEffect(() => {
     if (!open) {
       resetRecording()
+      setConsentModalOpen(false)
     } else {
+      const effectiveId = patientId || patientName || 'paciente'
+      const alreadyGranted = hasSessionConsent(effectiveId, 'audio')
+      if (alreadyGranted) {
+        setHasConsent(true)
+      } else {
+        setHasConsent(false)
+        setConsentModalOpen(true)
+      }
+
       // Sugere título com data/hora formatada
       const now = new Date()
       const dateStr = now.toLocaleDateString('pt-BR')
@@ -120,10 +137,26 @@ export function AudioRecordDialog({
       stopTimer()
       stopStream()
     }
-  }, [open, resetRecording, stopTimer, stopStream])
+  }, [open, patientId, patientName, resetRecording, stopTimer, stopStream])
+
+  const handleConsentGranted = () => {
+    setHasConsent(true)
+  }
+
+  const handleConsentDeclined = () => {
+    setHasConsent(false)
+    resetRecording()
+    onOpenChange(false)
+  }
 
   // Inicia a gravação com MediaRecorder
   const startRecording = async () => {
+    const effectiveId = patientId || patientName || 'paciente'
+    if (!hasConsent && !hasSessionConsent(effectiveId, 'audio')) {
+      setConsentModalOpen(true)
+      return
+    }
+
     setMicError(null)
     chunksRef.current = []
 
@@ -433,7 +466,7 @@ export function AudioRecordDialog({
         <DialogFooter className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-2 pt-3 border-t">
           <div className="text-[11px] text-muted-foreground flex items-center gap-1">
             <HelpCircle className="h-3 w-3 shrink-0" />
-            <span>O microfone é desligado automaticamente ao finalizar ou fechar (LGPD).</span>
+            <span>Por privacidade, o microfone desliga sozinho ao finalizar ou fechar esta janela.</span>
           </div>
           <div className="flex items-center gap-2 justify-end">
             <Button
@@ -459,5 +492,21 @@ export function AudioRecordDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    <LgpdCaptureConsentDialog
+      open={consentModalOpen}
+      onOpenChange={(val) => {
+        setConsentModalOpen(val)
+        if (!val && !hasConsent) {
+          handleConsentDeclined()
+        }
+      }}
+      captureType="audio"
+      patientId={patientId}
+      patientName={patientName}
+      onConsentGranted={handleConsentGranted}
+      onConsentDeclined={handleConsentDeclined}
+    />
+    </>
   )
 }

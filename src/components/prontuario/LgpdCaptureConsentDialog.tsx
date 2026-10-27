@@ -159,10 +159,11 @@ export function LgpdCaptureConsentDialog({
                 1. Finalidade do Tratamento
               </h4>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Os dados capturados ({isCamera ? 'fotografias clínicas' : 'gravações de voz/relatos'}
-                ) destinam-se exclusivamente à anexação ao prontuário médico individual do
-                paciente, com o objetivo de acompanhamento clínico, registro de evolução, suporte ao
-                diagnóstico e documentação médica assistencial.
+                Os dados capturados (
+                {isCamera ? 'fotografias clínicas' : 'gravações de voz/relatos'}) destinam-se
+                exclusivamente à anexação ao prontuário médico individual do paciente, com o
+                objetivo de acompanhamento clínico, registro de evolução, suporte ao diagnóstico e
+                documentação médica assistencial.
               </p>
             </div>
 
@@ -183,8 +184,8 @@ export function LgpdCaptureConsentDialog({
               </h4>
               <p className="text-xs text-muted-foreground mt-0.5">
                 O dispositivo ({isCamera ? 'câmera/webcam' : 'microfone'}) é acionado apenas pelo
-                tempo estritamente necessário para a captura e é desligado automaticamente logo que a
-                janela for fechada ou a gravação concluída. Nenhuma transmissão contínua ou em
+                tempo estritamente necessário para a captura e é desligado automaticamente logo que
+                a janela for fechada ou a gravação concluída. Nenhuma transmissão contínua ou em
                 segundo plano é realizada.
               </p>
             </div>
@@ -196,8 +197,8 @@ export function LgpdCaptureConsentDialog({
               <p className="text-xs text-muted-foreground mt-0.5">
                 Conforme o Art. 18 da LGPD, o titular dos dados possui o direito de confirmação,
                 acesso, correção de informações incompletas e esclarecimentos sobre o tratamento,
-                observados os prazos regulatórios de guarda obrigatória de prontuários médicos (mínimo
-                de 20 anos estabelecido pelo CFM).
+                observados os prazos regulatórios de guarda obrigatória de prontuários médicos
+                (mínimo de 20 anos estabelecido pelo CFM).
               </p>
             </div>
 

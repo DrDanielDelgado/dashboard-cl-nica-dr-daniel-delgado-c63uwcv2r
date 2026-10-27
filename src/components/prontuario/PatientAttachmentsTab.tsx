@@ -1352,18 +1352,20 @@ export function PatientAttachmentsTab({
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* MODAL DE CÂMERA AO VIVO */}
+      {/* MODAL DE CÂMERA AO VIVO COM CONSENTIMENTO LGPD */}
       <CameraCaptureDialog
         open={cameraModalOpen}
         onOpenChange={setCameraModalOpen}
+        patientId={activePatient?.id || currentPatientId}
         patientName={activePatient?.fullName || ''}
         onPhotosConfirmed={handlePhotosConfirmed}
       />
 
-      {/* MODAL DE GRAVAÇÃO DE ÁUDIO AO VIVO */}
+      {/* MODAL DE GRAVAÇÃO DE ÁUDIO AO VIVO COM CONSENTIMENTO LGPD */}
       <AudioRecordDialog
         open={audioModalOpen}
         onOpenChange={setAudioModalOpen}
+        patientId={activePatient?.id || currentPatientId}
         patientName={activePatient?.fullName || ''}
         onAudioConfirmed={handleAudioConfirmed}
       />
