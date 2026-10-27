@@ -79,6 +79,7 @@ migrate(
     app.save(movements)
 
     // ---------- Financeiro: despesas ----------
+    // (movements já foi salvo acima, então a relação pode ser resolvida)
     const expenses = new Collection({
       name: 'expenses',
       type: 'base',
@@ -103,7 +104,12 @@ migrate(
           values: ['Pendente', 'Pago', 'Atrasado', 'Cancelado'],
         },
         { name: 'supplier', type: 'text' },
-        { name: 'movement', type: 'relation', collectionId: movements.id, maxSelect: 1 },
+        {
+          name: 'movement',
+          type: 'relation',
+          collectionId: app.findCollectionByNameOrId('stock_movements').id,
+          maxSelect: 1,
+        },
         { name: 'notes', type: 'text' },
         { name: 'created', type: 'autodate', onCreate: true, onUpdate: false },
         { name: 'updated', type: 'autodate', onCreate: true, onUpdate: true },
