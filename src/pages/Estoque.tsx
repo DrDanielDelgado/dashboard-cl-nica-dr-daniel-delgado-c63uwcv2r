@@ -52,7 +52,17 @@ import {
   type InventoryItem,
   type StockMovement,
 } from '@/services/inventory'
-import { searchCatalog, findByEan, getCatalogCount, type CatalogItem } from '@/services/catalog'
+import {
+  searchCatalog,
+  findByEan,
+  getCatalogCount,
+  getCatalogSources,
+  createCatalogSource,
+  updateCatalogSource,
+  deleteCatalogSource,
+  type CatalogItem,
+  type CatalogSource,
+} from '@/services/catalog'
 
 const fmtBRL = (v?: number) =>
   (Number(v) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })

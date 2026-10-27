@@ -127,8 +127,10 @@ export type Expense = {
   created?: string
 }
 
-export const getExpenses = async () => {
-  return await pb.collection('expenses').getFullList({ sort: '-created', perPage: 200 })
+export const getExpenses = async (): Promise<Expense[]> => {
+  return (await pb
+    .collection('expenses')
+    .getFullList({ sort: '-created', perPage: 200 })) as unknown as Expense[]
 }
 
 export const updateExpenseStatus = async (id: string, status: string) => {
