@@ -39,12 +39,16 @@ import { useToast } from '@/hooks/use-toast'
 import {
   CFM_PRESCRIPTION_URL,
   CFM_SERVICES_URL,
+  CFM_SERVICES_PF_URL,
+  CFM_SERVICES_PJ_URL,
   CFM_SUPPORT_URL,
   CFM_RDC1000_URL,
+  CLINICA_PJ_DADOS,
   getDoctorProfile,
   updateDoctorCrm,
   logCfmAccess,
   logCfmServicesAccess,
+  logCfmServicesPjAccess,
   getCfmAccessLogs,
   IntegrationAccessLog,
 } from '@/services/prescricaoCfm'
@@ -86,7 +90,10 @@ export default function PrescricaoCfm() {
   const [savingCrm, setSavingCrm] = useState(false)
   const [openingPortal, setOpeningPortal] = useState(false)
   const [openingServices, setOpeningServices] = useState(false)
-  const [activeTab, setActiveTab] = useState('prescricao')
+  const [openingServicesPj, setOpeningServicesPj] = useState(false)
+  const [activeTab, setActiveTab] = useState<
+    'prescricao' | 'portal-servicos' | 'portal-servicos-pj'
+  >('prescricao')
 
   // CRM state
   const [crmNumero, setCrmNumero] = useState('')
@@ -94,10 +101,17 @@ export default function PrescricaoCfm() {
   const [savedCrmNumero, setSavedCrmNumero] = useState('')
   const [savedCrmUf, setSavedCrmUf] = useState('MG')
 
-  // Copy feedback states
+  // Copy feedback states (PF)
   const [copiedNumero, setCopiedNumero] = useState(false)
   const [copiedUf, setCopiedUf] = useState(false)
   const [copiedFullCrm, setCopiedFullCrm] = useState(false)
+
+  // Copy feedback states (PJ)
+  const [copiedCnpj, setCopiedCnpj] = useState(false)
+  const [copiedCnpjNums, setCopiedCnpjNums] = useState(false)
+  const [copiedRazao, setCopiedRazao] = useState(false)
+  const [copiedDiretor, setCopiedDiretor] = useState(false)
+  const [copiedDiretorCrm, setCopiedDiretorCrm] = useState(false)
 
   // Audit state
   const [lastAccess, setLastAccess] = useState<string | null>(null)
@@ -189,7 +203,7 @@ export default function PrescricaoCfm() {
   const handleOpenCfmServices = async () => {
     setOpeningServices(true)
     try {
-      // 1. Grava log de auditoria
+      // 1. Grava log de auditoria PF
       const log = await logCfmServicesAccess()
       const nowIso = new Date().toISOString()
       setLastAccess(nowIso)
@@ -197,15 +211,16 @@ export default function PrescricaoCfm() {
         setAccessLogs((prev) => [log, ...prev.slice(0, 7)])
       }
 
-      // 2. Abre nova aba com isolamento seguro para a URL oficial do Portal de Serviços
-      const win = window.open(CFM_SERVICES_URL, '_blank', 'noopener,noreferrer')
+      // 2. Abre nova aba com isolamento seguro para a URL oficial do Portal de Serviços - Pessoa Física
+      const win = window.open(CFM_SERVICES_PF_URL, '_blank', 'noopener,noreferrer')
       if (win) {
         win.opener = null
       }
 
       toast({
-        title: 'Portal de Serviços CFM Aberto',
-        description: 'Navegando com segurança para https://servicos.cfm.org.br/ em nova aba.',
+        title: 'Portal de Serviços CFM (Pessoa Física) Aberto',
+        description:
+          'Navegando com segurança para https://portalservicos.cfm.org.br/portal/login/pessoa-fisica em nova aba.',
       })
     } catch (err) {
       console.error('Falha ao abrir Portal de Serviços CFM:', err)
@@ -216,6 +231,40 @@ export default function PrescricaoCfm() {
       })
     } finally {
       setOpeningServices(false)
+    }
+  }
+
+  const handleOpenCfmServicesPj = async () => {
+    setOpeningServicesPj(true)
+    try {
+      // 1. Grava log de auditoria PJ
+      const log = await logCfmServicesPjAccess()
+      const nowIso = new Date().toISOString()
+      setLastAccess(nowIso)
+      if (log) {
+        setAccessLogs((prev) => [log, ...prev.slice(0, 7)])
+      }
+
+      // 2. Abre nova aba com isolamento seguro para a URL oficial do Portal de Serviços - Pessoa Jurídica
+      const win = window.open(CFM_SERVICES_PJ_URL, '_blank', 'noopener,noreferrer')
+      if (win) {
+        win.opener = null
+      }
+
+      toast({
+        title: 'Portal de Serviços CFM (Pessoa Jurídica) Aberto',
+        description:
+          'Navegando com segurança para https://portalservicos.cfm.org.br/portal/login/pessoa-juridica em nova aba.',
+      })
+    } catch (err) {
+      console.error('Falha ao abrir Portal de Serviços CFM PJ:', err)
+      toast({
+        variant: 'destructive',
+        title: 'Aviso de Navegação',
+        description: 'Verifique se o bloqueador de pop-ups do navegador não impediu a abertura.',
+      })
+    } finally {
+      setOpeningServicesPj(false)
     }
   }
 
@@ -235,6 +284,35 @@ export default function PrescricaoCfm() {
     toast({
       title: 'Copiado para a área de transferência',
       description: `"${text}" pronto para colar no portal oficial do CFM.`,
+    })
+  }
+
+  const handleCopyPjText = (
+    text: string,
+    field: 'cnpj' | 'cnpjNums' | 'razao' | 'diretor' | 'diretorCrm',
+    label: string,
+  ) => {
+    if (!text) return
+    navigator.clipboard.writeText(text)
+    if (field === 'cnpj') {
+      setCopiedCnpj(true)
+      setTimeout(() => setCopiedCnpj(false), 2000)
+    } else if (field === 'cnpjNums') {
+      setCopiedCnpjNums(true)
+      setTimeout(() => setCopiedCnpjNums(false), 2000)
+    } else if (field === 'razao') {
+      setCopiedRazao(true)
+      setTimeout(() => setCopiedRazao(false), 2000)
+    } else if (field === 'diretor') {
+      setCopiedDiretor(true)
+      setTimeout(() => setCopiedDiretor(false), 2000)
+    } else if (field === 'diretorCrm') {
+      setCopiedDiretorCrm(true)
+      setTimeout(() => setCopiedDiretorCrm(false), 2000)
+    }
+    toast({
+      title: `${label} copiado!`,
+      description: `"${text}" copiado para a área de transferência para colar no portal CFM.`,
     })
   }
 
@@ -310,30 +388,56 @@ export default function PrescricaoCfm() {
             variant="outline"
             size="lg"
             className="gap-2"
+            title="Acessar com credenciais de Pessoa Física"
           >
-            <Building2 className="w-5 h-5 text-brand-blue" />
-            {openingServices ? 'Abrindo Serviços...' : 'Portal de Serviços CFM'}
+            <LogIn className="w-5 h-5 text-brand-blue" />
+            {openingServices ? 'Abrindo...' : 'Portal CFM (PF)'}
+            <ArrowUpRight className="w-4 h-4 text-muted-foreground" />
+          </Button>
+          <Button
+            onClick={handleOpenCfmServicesPj}
+            disabled={openingServicesPj}
+            variant="outline"
+            size="lg"
+            className="gap-2 border-indigo-500/30 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-500/10"
+            title="Acessar com credenciais da Clínica (Pessoa Jurídica)"
+          >
+            <Building2 className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+            {openingServicesPj ? 'Abrindo PJ...' : 'Portal CFM (PJ)'}
             <ArrowUpRight className="w-4 h-4 text-muted-foreground" />
           </Button>
         </div>
       </div>
 
-      {/* Navegação por Abas: Prescrição Direta vs. Portal de Serviços CFM (Contingência) */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full space-y-6">
-        <TabsList className="grid grid-cols-2 max-w-md h-11 p-1 bg-muted/80">
+      {/* Navegação por Abas: Prescrição Direta vs. Portal PF vs. Portal PJ */}
+      <Tabs
+        value={activeTab}
+        onValueChange={(val) =>
+          setActiveTab(val as 'prescricao' | 'portal-servicos' | 'portal-servicos-pj')
+        }
+        className="w-full space-y-6"
+      >
+        <TabsList className="grid grid-cols-1 sm:grid-cols-3 max-w-2xl h-auto sm:h-11 p-1 bg-muted/80 gap-1 sm:gap-0">
           <TabsTrigger
             value="prescricao"
-            className="text-xs md:text-sm font-medium gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            className="text-xs md:text-sm font-medium gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm py-2 sm:py-1.5"
           >
             <FileCheck className="w-4 h-4 text-emerald-600" />
             Prescrição Direta
           </TabsTrigger>
           <TabsTrigger
             value="portal-servicos"
-            className="text-xs md:text-sm font-medium gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+            className="text-xs md:text-sm font-medium gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm py-2 sm:py-1.5"
           >
-            <Building2 className="w-4 h-4 text-brand-blue" />
-            Portal de Serviços CFM
+            <LogIn className="w-4 h-4 text-brand-blue" />
+            Portal Serviços — PF
+          </TabsTrigger>
+          <TabsTrigger
+            value="portal-servicos-pj"
+            className="text-xs md:text-sm font-medium gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm py-2 sm:py-1.5"
+          >
+            <Building2 className="w-4 h-4 text-indigo-600" />
+            Portal Serviços — PJ
           </TabsTrigger>
         </TabsList>
 
@@ -408,8 +512,19 @@ export default function PrescricaoCfm() {
                     size="sm"
                     className="w-full text-xs gap-1.5"
                   >
-                    <Building2 className="w-3.5 h-3.5 text-brand-blue" />
-                    {openingServices ? 'Abrindo...' : 'Portal de Serviços CFM'}
+                    <LogIn className="w-3.5 h-3.5 text-brand-blue" />
+                    {openingServices ? 'Abrindo...' : 'Portal CFM — Pessoa Física'}
+                    <ArrowUpRight className="w-3 h-3 text-muted-foreground" />
+                  </Button>
+                  <Button
+                    onClick={handleOpenCfmServicesPj}
+                    disabled={openingServicesPj}
+                    variant="outline"
+                    size="sm"
+                    className="w-full text-xs gap-1.5 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-500/10"
+                  >
+                    <Building2 className="w-3.5 h-3.5 text-indigo-600" />
+                    {openingServicesPj ? 'Abrindo...' : 'Portal CFM — Pessoa Jurídica'}
                     <ArrowUpRight className="w-3 h-3 text-muted-foreground" />
                   </Button>
                 </div>
@@ -418,37 +533,39 @@ export default function PrescricaoCfm() {
           </Card>
         </TabsContent>
 
-        {/* ABA 2: Portal de Serviços CFM (Acesso de Contingência e Gestão) */}
+        {/* ABA 2: Portal de Serviços CFM — Pessoa Física */}
         <TabsContent value="portal-servicos" className="space-y-6 mt-0">
           <Card className="border-blue-500/30 bg-gradient-to-br from-blue-500/5 via-transparent to-primary/5 shadow-sm overflow-hidden">
             <CardContent className="p-6 md:p-8">
               <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
                 <div className="space-y-3 max-w-2xl">
                   <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-blue-500/15 text-blue-800 dark:text-blue-300 text-xs font-semibold">
-                    <Building2 className="w-3.5 h-3.5" />
-                    Acesso de Contingência & Central de Serviços
+                    <LogIn className="w-3.5 h-3.5" />
+                    Login Oficial — Pessoa Física
                   </div>
                   <h2 className="text-2xl font-bold tracking-tight text-foreground">
-                    Portal de Serviços do CFM (servicos.cfm.org.br)
+                    Portal de Serviços do CFM — Pessoa Física
                   </h2>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    O Portal de Serviços é a central unificada do Conselho Federal de Medicina. Em
-                    caso de indisponibilidade momentânea da rota direta de prescrição, você pode
-                    acessar todos os serviços médicos — incluindo o módulo de prescrição eletrônica,
-                    certidões de regularidade e atualização cadastral — a partir deste portal.
+                    Central oficial do médico para serviços unificados do Conselho Federal de
+                    Medicina. Permite emissão de certidões de quitação e regularidade, acesso à
+                    prescrição eletrônica, atualização de dados cadastrais e visualização de
+                    documentos profissionais como pessoa física.
                   </p>
 
                   <div className="pt-2 flex flex-wrap items-center gap-3">
                     <div className="flex items-center gap-2 bg-card border rounded-lg px-3 py-2 shadow-sm text-sm">
-                      <span className="text-muted-foreground font-medium">Endereço Oficial:</span>
+                      <span className="text-muted-foreground font-medium">
+                        Endereço Oficial PF:
+                      </span>
                       <a
-                        href={CFM_SERVICES_URL}
+                        href={CFM_SERVICES_PF_URL}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="font-mono font-semibold text-brand-blue hover:underline inline-flex items-center gap-1"
+                        className="font-mono text-xs md:text-sm font-semibold text-brand-blue hover:underline inline-flex items-center gap-1 break-all"
                       >
-                        https://servicos.cfm.org.br/
-                        <ArrowUpRight className="w-3.5 h-3.5" />
+                        {CFM_SERVICES_PF_URL}
+                        <ArrowUpRight className="w-3.5 h-3.5 shrink-0" />
                       </a>
                     </div>
 
@@ -470,12 +587,21 @@ export default function PrescricaoCfm() {
                     className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-6 text-base shadow-md gap-2"
                   >
                     <ExternalLink className="w-5 h-5" />
-                    {openingServices ? 'Carregando Portal...' : 'Acessar servicos.cfm.org.br'}
+                    {openingServices ? 'Carregando Portal PF...' : 'Acessar Login Pessoa Física'}
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     className="w-full text-xs gap-1.5"
+                    onClick={() => setActiveTab('portal-servicos-pj')}
+                  >
+                    <Building2 className="w-3.5 h-3.5 text-indigo-600" />
+                    Ir para Pessoa Jurídica (Clínica)
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full text-xs gap-1.5 text-muted-foreground hover:text-foreground"
                     onClick={() => setActiveTab('prescricao')}
                   >
                     <FileCheck className="w-3.5 h-3.5 text-emerald-600" />
@@ -486,16 +612,16 @@ export default function PrescricaoCfm() {
             </CardContent>
           </Card>
 
-          {/* Guia Passo a Passo de Autenticação no Portal de Serviços */}
+          {/* Guia Passo a Passo de Autenticação no Portal de Serviços PF */}
           <Card className="border-border/60 shadow-sm">
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
                 <LogIn className="w-4.5 h-4.5 text-brand-blue" />
-                Passo a Passo: Como Acessar a Prescrição pelo Portal de Serviços
+                Passo a Passo: Como Acessar pelo Portal de Serviços (Pessoa Física)
               </CardTitle>
               <CardDescription>
-                Roteiro de contingência quando a rota direta prescricao.cfm.org.br apresentar
-                lentidão ou manutenção.
+                Roteiro de autenticação para emissão de certidões, dados cadastrais e prescrição via
+                portal unificado.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -505,11 +631,12 @@ export default function PrescricaoCfm() {
                     <span className="w-6 h-6 rounded-full bg-brand-blue/10 text-brand-blue flex items-center justify-center text-xs font-bold">
                       1
                     </span>
-                    Acesse o Portal
+                    Acesse a Página PF
                   </div>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    Clique em &quot;Acessar servicos.cfm.org.br&quot;. A página oficial abrirá em
-                    nova aba segura.
+                    Clique em &quot;Acessar Login Pessoa Física&quot;. O endereço oficial{' '}
+                    <span className="font-mono">portalservicos.cfm.org.br/.../pessoa-fisica</span>{' '}
+                    abrirá em nova aba segura.
                   </p>
                 </div>
 
@@ -521,8 +648,8 @@ export default function PrescricaoCfm() {
                     Autenticação Médica
                   </div>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    Informe seu CRM ({savedCrmNumero || '...'}), UF ({savedCrmUf || 'MG'}), CPF e
-                    senha, ou use seu Certificado ICP-Brasil.
+                    Informe seu CRM ({savedCrmNumero || '37525'}), UF ({savedCrmUf || 'MG'}), CPF e
+                    senha cadastrada, ou autentique com seu Certificado Digital ICP-Brasil.
                   </p>
                 </div>
 
@@ -531,11 +658,11 @@ export default function PrescricaoCfm() {
                     <span className="w-6 h-6 rounded-full bg-brand-blue/10 text-brand-blue flex items-center justify-center text-xs font-bold">
                       3
                     </span>
-                    Selecione o Módulo
+                    Selecione o Serviço
                   </div>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    No menu principal de serviços do CFM, clique no item &quot;Prescrição
-                    Eletrônica&quot;.
+                    Navegue pelos módulos disponíveis: Prescrição Eletrônica, Certidão de Quitação,
+                    Certidão de Registro ou Alterações Cadastrais.
                   </p>
                 </div>
 
@@ -544,11 +671,307 @@ export default function PrescricaoCfm() {
                     <span className="w-6 h-6 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center text-xs font-bold">
                       4
                     </span>
-                    Emita a Receita
+                    Conclusão Segura
                   </div>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    Preencha o receituário, anexe assinatura digital ICP-Brasil e envie o documento
-                    ao paciente.
+                    Emita ou assine seus documentos com validade jurídica nacional e em total
+                    conformidade CFM.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ABA 3: Portal de Serviços CFM — Pessoa Jurídica (NOVA ABA SOLICITADA) */}
+        <TabsContent value="portal-servicos-pj" className="space-y-6 mt-0">
+          <Card className="border-indigo-500/30 bg-gradient-to-br from-indigo-500/5 via-transparent to-primary/5 shadow-sm overflow-hidden">
+            <CardContent className="p-6 md:p-8">
+              <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+                <div className="space-y-3 max-w-2xl">
+                  <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-indigo-500/15 text-indigo-800 dark:text-indigo-300 text-xs font-semibold">
+                    <Building2 className="w-3.5 h-3.5" />
+                    Login Oficial — Pessoa Jurídica (Clínica)
+                  </div>
+                  <h2 className="text-2xl font-bold tracking-tight text-foreground">
+                    Portal de Serviços do CFM — Pessoa Jurídica
+                  </h2>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Ambiente do Conselho Federal de Medicina dedicado às entidades de saúde (PJ).
+                    Acesso para certidão de regularidade de pessoa jurídica, renovação de cadastro
+                    da clínica, comprovação de responsabilidade técnica e gestão regulatória perante
+                    o CRM/CFM.
+                  </p>
+
+                  <div className="pt-2 flex flex-wrap items-center gap-3">
+                    <div className="flex items-center gap-2 bg-card border rounded-lg px-3 py-2 shadow-sm text-sm">
+                      <span className="text-muted-foreground font-medium">
+                        Endereço Oficial PJ:
+                      </span>
+                      <a
+                        href={CFM_SERVICES_PJ_URL}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-mono text-xs md:text-sm font-semibold text-indigo-600 dark:text-indigo-400 hover:underline inline-flex items-center gap-1 break-all"
+                      >
+                        {CFM_SERVICES_PJ_URL}
+                        <ArrowUpRight className="w-3.5 h-3.5 shrink-0" />
+                      </a>
+                    </div>
+
+                    <div className="flex items-center gap-2 bg-card border rounded-lg px-3 py-2 shadow-sm text-sm">
+                      <Clock className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-muted-foreground font-medium">Último Acesso:</span>
+                      <span className="font-semibold text-foreground text-xs md:text-sm">
+                        {formatDate(lastAccess)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row lg:flex-col gap-3 w-full lg:w-auto shrink-0">
+                  <Button
+                    onClick={handleOpenCfmServicesPj}
+                    disabled={openingServicesPj}
+                    size="lg"
+                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-6 text-base shadow-md gap-2"
+                  >
+                    <ExternalLink className="w-5 h-5" />
+                    {openingServicesPj
+                      ? 'Carregando Portal PJ...'
+                      : 'Acessar Login Pessoa Jurídica'}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full text-xs gap-1.5"
+                    onClick={() => setActiveTab('portal-servicos')}
+                  >
+                    <LogIn className="w-3.5 h-3.5 text-brand-blue" />
+                    Ir para Pessoa Física
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full text-xs gap-1.5 text-muted-foreground hover:text-foreground"
+                    onClick={() => setActiveTab('prescricao')}
+                  >
+                    <FileCheck className="w-3.5 h-3.5 text-emerald-600" />
+                    Voltar à Prescrição Direta
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Card com os dados oficiais da Pessoa Jurídica da clínica e botões de cópia rápida */}
+          <Card className="border-indigo-500/20 shadow-sm">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Building2 className="w-4.5 h-4.5 text-indigo-600" />
+                    Dados Cadastrais da Clínica (Pessoa Jurídica)
+                  </CardTitle>
+                  <CardDescription>
+                    Dados oficiais da clínica para agilizar o login e preenchimento de formulários
+                    no Portal de Serviços CFM — Pessoa Jurídica.
+                  </CardDescription>
+                </div>
+                <Badge
+                  variant="outline"
+                  className="border-indigo-500/30 text-indigo-700 dark:text-indigo-300 font-mono text-xs"
+                >
+                  Homologado
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid md:grid-cols-3 gap-4">
+                {/* CNPJ */}
+                <div className="p-4 rounded-lg border bg-card/60 space-y-2">
+                  <span className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
+                    CNPJ da Clínica
+                  </span>
+                  <div className="font-mono font-bold text-base text-foreground break-all">
+                    {CLINICA_PJ_DADOS.cnpj}
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      className="h-7 text-xs font-mono"
+                      onClick={() => handleCopyPjText(CLINICA_PJ_DADOS.cnpj, 'cnpj', 'CNPJ')}
+                    >
+                      {copiedCnpj ? (
+                        <Check className="w-3 h-3 mr-1 text-emerald-600" />
+                      ) : (
+                        <Copy className="w-3 h-3 mr-1" />
+                      )}
+                      {copiedCnpj ? 'Copiado' : 'Com pontuação'}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs font-mono"
+                      onClick={() =>
+                        handleCopyPjText(CLINICA_PJ_DADOS.cnpjNumeros, 'cnpjNums', 'CNPJ (números)')
+                      }
+                      title="Copiar apenas os números do CNPJ"
+                    >
+                      {copiedCnpjNums ? (
+                        <Check className="w-3 h-3 mr-1 text-emerald-600" />
+                      ) : (
+                        <Copy className="w-3 h-3 mr-1" />
+                      )}
+                      {copiedCnpjNums ? 'Copiado' : 'Apenas números'}
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Razão Social */}
+                <div className="p-4 rounded-lg border bg-card/60 space-y-2">
+                  <span className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
+                    Razão Social
+                  </span>
+                  <div
+                    className="font-semibold text-sm text-foreground line-clamp-2"
+                    title={CLINICA_PJ_DADOS.razaoSocial}
+                  >
+                    {CLINICA_PJ_DADOS.razaoSocial}
+                  </div>
+                  <div className="pt-1">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() =>
+                        handleCopyPjText(CLINICA_PJ_DADOS.razaoSocial, 'razao', 'Razão Social')
+                      }
+                    >
+                      {copiedRazao ? (
+                        <Check className="w-3 h-3 mr-1 text-emerald-600" />
+                      ) : (
+                        <Copy className="w-3 h-3 mr-1" />
+                      )}
+                      {copiedRazao ? 'Copiado' : 'Copiar Razão Social'}
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Diretor Técnico */}
+                <div className="p-4 rounded-lg border bg-card/60 space-y-2">
+                  <span className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
+                    Diretor Técnico
+                  </span>
+                  <div className="space-y-0.5">
+                    <div className="font-semibold text-sm text-foreground">
+                      {CLINICA_PJ_DADOS.diretorTecnico}
+                    </div>
+                    <div className="font-mono text-xs text-indigo-600 dark:text-indigo-400 font-bold">
+                      {CLINICA_PJ_DADOS.diretorTecnicoCrm}
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() =>
+                        handleCopyPjText(
+                          CLINICA_PJ_DADOS.diretorTecnico,
+                          'diretor',
+                          'Diretor Técnico',
+                        )
+                      }
+                    >
+                      {copiedDiretor ? (
+                        <Check className="w-3 h-3 mr-1 text-emerald-600" />
+                      ) : (
+                        <Copy className="w-3 h-3 mr-1" />
+                      )}
+                      {copiedDiretor ? 'Copiado' : 'Copiar Nome'}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs font-mono"
+                      onClick={() =>
+                        handleCopyPjText(
+                          CLINICA_PJ_DADOS.diretorTecnicoCrm,
+                          'diretorCrm',
+                          'CRM Diretor',
+                        )
+                      }
+                    >
+                      {copiedDiretorCrm ? (
+                        <Check className="w-3 h-3 mr-1 text-emerald-600" />
+                      ) : (
+                        <Copy className="w-3 h-3 mr-1" />
+                      )}
+                      {copiedDiretorCrm ? 'Copiado' : 'Copiar CRM'}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Guia de Acesso PJ */}
+          <Card className="border-border/60 shadow-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <CheckCircle2 className="w-4.5 h-4.5 text-indigo-600" />
+                Como Autenticar no Portal do CFM como Pessoa Jurídica
+              </CardTitle>
+              <CardDescription>
+                Orientações para login seguro com certificado da empresa (e-CNPJ) ou credenciais do
+                responsável técnico.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid md:grid-cols-3 gap-4 text-xs text-muted-foreground leading-relaxed">
+                <div className="p-3.5 rounded-lg border bg-card space-y-1.5">
+                  <div className="font-semibold text-foreground flex items-center gap-2">
+                    <span className="w-5 h-5 rounded-full bg-indigo-500/10 text-indigo-600 flex items-center justify-center font-bold text-[11px]">
+                      1
+                    </span>
+                    Certificado Digital e-CNPJ
+                  </div>
+                  <p>
+                    A forma recomendada pelo CFM para entidades médicas: utilize seu certificado
+                    digital modelo A1 ou A3 emitido para o CNPJ 13.548.058/0001-16.
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-lg border bg-card space-y-1.5">
+                  <div className="font-semibold text-foreground flex items-center gap-2">
+                    <span className="w-5 h-5 rounded-full bg-indigo-500/10 text-indigo-600 flex items-center justify-center font-bold text-[11px]">
+                      2
+                    </span>
+                    Login por Usuário e Senha PJ
+                  </div>
+                  <p>
+                    Utilize o CNPJ da clínica junto com a senha cadastrada pelo responsável
+                    legal/técnico (Dr. Daniel de Mattos Delgado) junto ao CRM-MG.
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-lg border bg-card space-y-1.5">
+                  <div className="font-semibold text-foreground flex items-center gap-2">
+                    <span className="w-5 h-5 rounded-full bg-indigo-500/10 text-indigo-600 flex items-center justify-center font-bold text-[11px]">
+                      3
+                    </span>
+                    Serviços Disponíveis para a Clínica
+                  </div>
+                  <p>
+                    Emissão do Certificado de Regularidade de Inscrição de PJ (CRPJ), certidões
+                    ético-profissionais da empresa e acompanhamento regulatório.
                   </p>
                 </div>
               </div>
@@ -839,17 +1262,17 @@ export default function PrescricaoCfm() {
                   <div className="flex items-center justify-between">
                     <span className="font-semibold text-foreground flex items-center gap-1.5">
                       <Building2 className="w-4 h-4 text-brand-blue" />
-                      Acesso Alternativo
+                      Acesso Portais de Serviços CFM
                     </span>
                     <Badge variant="secondary" className="text-[10px]">
-                      Contingência 1
+                      PF & PJ
                     </Badge>
                   </div>
                   <p className="text-muted-foreground leading-relaxed">
-                    Acesso direto pelo Portal de Serviços centralizado do CFM. Permite emitir
-                    certidões, atualizar dados e navegar aos módulos.
+                    Acesso direto pelos portais oficiais do CFM para pessoas físicas (médicos) ou
+                    jurídicas (clínicas/estabelecimentos).
                   </p>
-                  <div className="flex items-center gap-2 pt-1">
+                  <div className="flex flex-wrap items-center gap-2 pt-1">
                     <Button
                       type="button"
                       variant="outline"
@@ -858,17 +1281,29 @@ export default function PrescricaoCfm() {
                       disabled={openingServices}
                       className="text-xs h-7 px-2.5 gap-1 text-brand-blue hover:text-brand-blue"
                     >
+                      <LogIn className="w-3 h-3" />
+                      {openingServices ? 'Abrindo PF...' : 'Portal PF'}
+                      <ArrowUpRight className="w-3 h-3" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleOpenCfmServicesPj}
+                      disabled={openingServicesPj}
+                      className="text-xs h-7 px-2.5 gap-1 text-indigo-600 hover:text-indigo-600"
+                    >
                       <Building2 className="w-3 h-3" />
-                      {openingServices ? 'Abrindo...' : 'Abrir servicos.cfm.org.br'}
+                      {openingServicesPj ? 'Abrindo PJ...' : 'Portal PJ'}
                       <ArrowUpRight className="w-3 h-3" />
                     </Button>
                     <a
-                      href={CFM_SERVICES_URL}
+                      href={CFM_SERVICES_PF_URL}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-[11px] text-muted-foreground hover:text-foreground inline-flex items-center gap-0.5"
                     >
-                      (link direto)
+                      (link direto PF)
                     </a>
                   </div>
                 </div>

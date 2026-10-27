@@ -73,8 +73,8 @@ A análise da infraestrutura pública do CFM e das normas vigentes confirmou os 
 3. **Auditoria Leve:**
    - Cada abertura registra data/hora na coleção `integration_access_logs` e no campo `last_cfm_access` do usuário.
    - Nenhum dado clínico, CID ou medicamento transita ou é registrado no nosso banco de dados.
-4. **Fluxo de Contingência (Fallback):**
-   - Instruções detalhadas para acesso alternativo via Portal de Serviços (`https://servicos.cfm.org.br`);
+4. **Fluxo de Contingência (Fallback) e Acesso Unificado:**
+   - Instruções detalhadas para acesso alternativo via Portal de Serviços CFM — Pessoa Física (`https://portalservicos.cfm.org.br/portal/login/pessoa-fisica`) e Pessoa Jurídica da clínica (`https://portalservicos.cfm.org.br/portal/login/pessoa-juridica`);
    - Link direto para o canal oficial de atendimento: `https://sistemas.cfm.org.br/contatoprescricaoeletronica/br`.
 
 ---

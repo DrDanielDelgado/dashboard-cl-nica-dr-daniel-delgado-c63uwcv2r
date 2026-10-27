@@ -1,9 +1,21 @@
 import pb from '@/lib/pocketbase/client'
 
 export const CFM_PRESCRIPTION_URL = 'https://prescricao.cfm.org.br/'
-export const CFM_SERVICES_URL = 'https://servicos.cfm.org.br/'
+export const CFM_SERVICES_URL = 'https://portalservicos.cfm.org.br/portal/login/pessoa-fisica'
+export const CFM_SERVICES_PF_URL = 'https://portalservicos.cfm.org.br/portal/login/pessoa-fisica'
+export const CFM_SERVICES_PJ_URL = 'https://portalservicos.cfm.org.br/portal/login/pessoa-juridica'
 export const CFM_SUPPORT_URL = 'https://sistemas.cfm.org.br/contatoprescricaoeletronica/br'
 export const CFM_RDC1000_URL = 'https://prescricaoeletronica.cfm.org.br/rdc-1000.html'
+
+export const CLINICA_PJ_DADOS = {
+  cnpj: '13.548.058/0001-16',
+  cnpjNumeros: '13548058000116',
+  razaoSocial: 'Mattos Delgado Clínica Médica LTDA',
+  diretorTecnico: 'Daniel de Mattos Delgado',
+  diretorTecnicoCrm: 'CRM-MG 37525',
+  crmNumero: '37525',
+  crmUf: 'MG',
+} as const
 
 export interface IntegrationAccessLog {
   id: string
@@ -84,8 +96,16 @@ export async function updateDoctorCrm(crmNumero: string, crmUf: string): Promise
  * 2. Cria registro de auditoria na coleção `integration_access_logs`.
  * Nenhum dado clínico, CID ou medicamento é transmitido ou gravado.
  */
+export type CfmAccessAction = 'open_cfm_prescription' | 'open_cfm_services' | 'open_cfm_services_pj'
+
+/**
+ * Registra o acesso direcionado à prescrição do CFM ou aos portais de serviços PF/PJ:
+ * 1. Atualiza `last_cfm_access` no registro do usuário;
+ * 2. Cria registro de auditoria na coleção `integration_access_logs`.
+ * Nenhum dado clínico, CID ou medicamento é transmitido ou gravado.
+ */
 export async function logCfmAccess(
-  action: 'open_cfm_prescription' | 'open_cfm_services' = 'open_cfm_prescription',
+  action: CfmAccessAction = 'open_cfm_prescription',
 ): Promise<IntegrationAccessLog | null> {
   if (!pb.authStore.isValid || !pb.authStore.model) {
     return null
@@ -94,7 +114,22 @@ export async function logCfmAccess(
   const userId = pb.authStore.model.id
   const userName = pb.authStore.model.name || pb.authStore.model.email || 'Usuário Clínico'
   const now = new Date().toISOString()
-  const isServices = action === 'open_cfm_services'
+
+  let integrationName = 'CFM Prescrição Eletrônica (Estratégia B)'
+  let targetUrl = CFM_PRESCRIPTION_URL
+  let details = 'Acesso direcionado seguro aberto em nova aba com noopener,noreferrer'
+
+  if (action === 'open_cfm_services') {
+    integrationName = 'Portal de Serviços CFM — Pessoa Física'
+    targetUrl = CFM_SERVICES_PF_URL
+    details =
+      'Acesso direcionado seguro ao Portal de Serviços (Pessoa Física) aberto em nova aba com noopener,noreferrer'
+  } else if (action === 'open_cfm_services_pj') {
+    integrationName = 'Portal de Serviços CFM — Pessoa Jurídica'
+    targetUrl = CFM_SERVICES_PJ_URL
+    details =
+      'Acesso direcionado seguro ao Portal de Serviços (Pessoa Jurídica) aberto em nova aba com noopener,noreferrer'
+  }
 
   // 1. Atualiza last_cfm_access no usuário
   try {
@@ -111,13 +146,9 @@ export async function logCfmAccess(
       user: userId,
       user_name: userName,
       action,
-      integration_name: isServices
-        ? 'Portal de Serviços CFM (Contingência)'
-        : 'CFM Prescrição Eletrônica (Estratégia B)',
-      target_url: isServices ? CFM_SERVICES_URL : CFM_PRESCRIPTION_URL,
-      details: isServices
-        ? 'Acesso alternativo direcionado ao Portal de Serviços aberto em nova aba com noopener,noreferrer'
-        : 'Acesso direcionado seguro aberto em nova aba com noopener,noreferrer',
+      integration_name: integrationName,
+      target_url: targetUrl,
+      details,
     })
     return logRecord as unknown as IntegrationAccessLog
   } catch (err) {
@@ -127,10 +158,17 @@ export async function logCfmAccess(
 }
 
 /**
- * Registra o acesso ao Portal de Serviços CFM (contingência)
+ * Registra o acesso ao Portal de Serviços CFM (Pessoa Física)
  */
 export async function logCfmServicesAccess(): Promise<IntegrationAccessLog | null> {
   return logCfmAccess('open_cfm_services')
+}
+
+/**
+ * Registra o acesso ao Portal de Serviços CFM (Pessoa Jurídica)
+ */
+export async function logCfmServicesPjAccess(): Promise<IntegrationAccessLog | null> {
+  return logCfmAccess('open_cfm_services_pj')
 }
 
 /**
@@ -140,7 +178,8 @@ export async function getCfmAccessLogs(limit = 10): Promise<IntegrationAccessLog
   if (!pb.authStore.isValid) return []
   try {
     const records = await pb.collection('integration_access_logs').getList(1, limit, {
-      filter: 'action = "open_cfm_prescription" || action = "open_cfm_services"',
+      filter:
+        'action = "open_cfm_prescription" || action = "open_cfm_services" || action = "open_cfm_services_pj"',
       sort: '-created',
     })
     return records.items as unknown as IntegrationAccessLog[]
@@ -175,23 +214,45 @@ export async function openCfmPrescriptionWindow(): Promise<boolean> {
 }
 
 /**
- * Executa a abertura segura direcionada para o Portal de Serviços do CFM:
- * - Registra auditoria de contingência
- * - Abre https://servicos.cfm.org.br/ em nova aba com window.open(..., '_blank', 'noopener,noreferrer')
+ * Executa a abertura segura direcionada para o Portal de Serviços do CFM (Pessoa Física):
+ * - Registra auditoria
+ * - Abre https://portalservicos.cfm.org.br/portal/login/pessoa-fisica em nova aba com window.open(..., '_blank', 'noopener,noreferrer')
  */
 export async function openCfmServicesWindow(): Promise<boolean> {
   try {
     logCfmServicesAccess().catch((err) =>
-      console.error('Erro de log ao abrir Portal de Serviços CFM:', err),
+      console.error('Erro de log ao abrir Portal de Serviços CFM (PF):', err),
     )
 
-    const newWindow = window.open(CFM_SERVICES_URL, '_blank', 'noopener,noreferrer')
+    const newWindow = window.open(CFM_SERVICES_PF_URL, '_blank', 'noopener,noreferrer')
     if (newWindow) {
       newWindow.opener = null
     }
     return true
   } catch (err) {
-    console.error('Falha ao abrir Portal de Serviços CFM:', err)
+    console.error('Falha ao abrir Portal de Serviços CFM (PF):', err)
+    return false
+  }
+}
+
+/**
+ * Executa a abertura segura direcionada para o Portal de Serviços do CFM (Pessoa Jurídica):
+ * - Registra auditoria
+ * - Abre https://portalservicos.cfm.org.br/portal/login/pessoa-juridica em nova aba com window.open(..., '_blank', 'noopener,noreferrer')
+ */
+export async function openCfmServicesPjWindow(): Promise<boolean> {
+  try {
+    logCfmServicesPjAccess().catch((err) =>
+      console.error('Erro de log ao abrir Portal de Serviços CFM (PJ):', err),
+    )
+
+    const newWindow = window.open(CFM_SERVICES_PJ_URL, '_blank', 'noopener,noreferrer')
+    if (newWindow) {
+      newWindow.opener = null
+    }
+    return true
+  } catch (err) {
+    console.error('Falha ao abrir Portal de Serviços CFM (PJ):', err)
     return false
   }
 }
