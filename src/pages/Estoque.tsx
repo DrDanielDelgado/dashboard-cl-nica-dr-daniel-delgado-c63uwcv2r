@@ -52,6 +52,7 @@ import {
   type InventoryItem,
   type StockMovement,
 } from '@/services/inventory'
+import { searchCatalog, findByEan, getCatalogCount, type CatalogItem } from '@/services/catalog'
 
 const fmtBRL = (v?: number) =>
   (Number(v) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -111,6 +112,46 @@ export default function Estoque() {
   const [aiResult, setAiResult] = useState('')
   const [aiBusy, setAiBusy] = useState(false)
   const [aiMode, setAiMode] = useState<'translate' | 'explain' | 'structured'>('translate')
+
+  // catálogo de referência (CMED/ANVISA)
+  const [catTerm, setCatTerm] = useState('')
+  const [catResults, setCatResults] = useState<CatalogItem[]>([])
+  const [catBusy, setCatBusy] = useState(false)
+  const [catTotal, setCatTotal] = useState(0)
+
+  useEffect(() => {
+    getCatalogCount()
+      .then(setCatTotal)
+      .catch(() => setCatTotal(0))
+  }, [])
+
+  const runCatalogSearch = async (term: string) => {
+    setCatBusy(true)
+    try {
+      setCatResults((await searchCatalog(term, 30)) as CatalogItem[])
+    } catch (e) {
+      console.error(e)
+      setCatResults([])
+    } finally {
+      setCatBusy(false)
+    }
+  }
+
+  /** Preenche o formulário com um item do catálogo oficial. */
+  const applyCatalogItem = (c: CatalogItem) => {
+    const name = [c.name, c.presentation].filter(Boolean).join(' — ')
+    setForm((prev: any) => ({
+      ...prev,
+      name: c.name || prev.name,
+      presentation: c.presentation || '',
+      substance: c.substance || '',
+      ean: c.ean || '',
+      supplier: c.laboratory || prev.supplier,
+      unit_cost: c.pmc ? String(c.pmc) : prev.unit_cost,
+      catalog_item: c.id,
+    }))
+    setNewOpen(true)
+  }
   const fileRef = useRef<HTMLInputElement>(null)
 
   const load = useCallback(async () => {
@@ -177,7 +218,23 @@ export default function Estoque() {
       setPreview(url)
       const text = await runOcr(file, setOcrProgress)
       setOcrText(text)
-      setParsed(parseLabel(text))
+
+      const p = parseLabel(text)
+      setParsed(p)
+
+      // Se o OCR capturou um EAN, tenta casar com a biblioteca oficial
+      const eanMatch = text.replace(/[\s.-]/g, '').match(/\b(7\d{12}|789\d{10})\b/)
+      if (eanMatch) {
+        const hit = await findByEan(eanMatch[1])
+        if (hit) {
+          setParsed({
+            ...p,
+            name: hit.name || p.name,
+            batch: p.batch,
+            catalogMatch: hit,
+          })
+        }
+      }
     } catch (e: any) {
       setOcrText('Falha ao ler a imagem: ' + (e?.message || e))
     } finally {
@@ -187,8 +244,15 @@ export default function Estoque() {
 
   const handleCreateFromScan = () => {
     if (!parsed) return
+    const hit = parsed.catalogMatch
     setForm({
-      name: parsed.name || '',
+      name: hit?.name || parsed.name || '',
+      presentation: hit?.presentation || '',
+      substance: hit?.substance || '',
+      ean: hit?.ean || '',
+      catalog_item: hit?.id || '',
+      supplier: hit?.laboratory || '',
+      unit_cost: hit?.pmc ? String(hit.pmc) : '',
       batch: parsed.batch || '',
       expiry: parsed.expiry || '',
       category: 'Medicamento',
@@ -215,7 +279,10 @@ export default function Estoque() {
         unit_cost: Number(form.unit_cost) || 0,
         supplier: form.supplier || '',
         location: form.location || location,
-      })
+        ...(form.catalog_item ? { catalog_item: form.catalog_item } : {}),
+        ...(form.ean ? { ean: form.ean } : {}),
+        ...(form.substance ? { substance: form.substance } : {}),
+      } as any)
       setNewOpen(false)
       setForm({ category: 'Medicamento', unit: 'un' })
       await load()
@@ -308,7 +375,105 @@ export default function Estoque() {
         <TabsList className="bg-slate-100">
           <TabsTrigger value="itens">Itens</TabsTrigger>
           <TabsTrigger value="mov">Movimentações</TabsTrigger>
+          <TabsTrigger value="catalogo">
+            Biblioteca ({catTotal.toLocaleString('pt-BR')})
+          </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="catalogo" className="mt-4">
+          <Card className="shadow-sm border-slate-200 overflow-hidden">
+            <CardHeader className="py-4 border-b bg-slate-50/50">
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Search className="h-4 w-4 text-brand-blue/60" />
+                  <span className="text-sm font-semibold text-brand-blue">
+                    Biblioteca de produtos médicos
+                  </span>
+                  <Badge variant="outline" className="text-[10px] bg-brand-blue/5 text-brand-blue">
+                    Fonte oficial CMED/ANVISA
+                  </Badge>
+                </div>
+                <form
+                  className="max-w-lg relative"
+                  onSubmit={(e) => {
+                    e.preventDefault()
+                    runCatalogSearch(catTerm)
+                  }}
+                >
+                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-brand-blue/50" />
+                  <Input
+                    placeholder="Nome comercial, princípio ativo, laboratório ou EAN..."
+                    value={catTerm}
+                    onChange={(e) => setCatTerm(e.target.value)}
+                    className="pl-10 bg-white border-slate-200"
+                  />
+                </form>
+                <p className="text-xs text-muted-foreground">
+                  Preços de referência (PF/PMC) da lista oficial. Clique em um produto para
+                  cadastrá-lo no estoque já preenchido.
+                </p>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0 overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-slate-50">
+                    <TableHead className="font-semibold text-brand-blue">Produto</TableHead>
+                    <TableHead className="font-semibold text-brand-blue">Princípio ativo</TableHead>
+                    <TableHead className="font-semibold text-brand-blue">Laboratório</TableHead>
+                    <TableHead className="text-right font-semibold text-brand-blue">PMC</TableHead>
+                    <TableHead className="text-right font-semibold text-brand-blue">Ação</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {catBusy && (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-8 text-slate-500">
+                        <Loader2 className="h-4 w-4 animate-spin inline mr-2" /> Buscando na
+                        biblioteca...
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {!catBusy && catResults.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-10 text-slate-500">
+                        Digite acima para buscar entre {catTotal.toLocaleString('pt-BR')} produtos
+                        da lista oficial (ex.: dipirona, omeprazol, luva).
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {catResults.map((c) => (
+                    <TableRow key={c.id} className="hover:bg-slate-50/80">
+                      <TableCell>
+                        <div className="font-bold text-slate-800">{c.name}</div>
+                        <div className="text-xs text-slate-500">{c.presentation}</div>
+                      </TableCell>
+                      <TableCell className="text-sm text-slate-600 max-w-[220px] truncate">
+                        {c.substance || '—'}
+                      </TableCell>
+                      <TableCell className="text-sm text-slate-600 max-w-[180px] truncate">
+                        {c.laboratory || '—'}
+                      </TableCell>
+                      <TableCell className="text-right font-semibold text-slate-700">
+                        {c.pmc ? fmtBRL(c.pmc) : '—'}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 text-xs border-brand-blue/30 text-brand-blue hover:bg-brand-blue/5"
+                          onClick={() => applyCatalogItem(c)}
+                        >
+                          <Plus className="h-3 w-3 mr-1" /> Usar
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         <TabsContent value="itens" className="mt-4">
           <Card className="shadow-sm border-slate-200 overflow-hidden">
@@ -556,6 +721,53 @@ export default function Estoque() {
           </DialogHeader>
           <div className="grid gap-3 py-1 max-h-[60vh] overflow-y-auto pr-1">
             <div className="space-y-2">
+              <Label>Buscar na biblioteca oficial (CMED/ANVISA)</Label>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Ex.: dipirona, omeprazol, luva..."
+                  value={catTerm}
+                  onChange={(e) => setCatTerm(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      runCatalogSearch(catTerm)
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => runCatalogSearch(catTerm)}
+                  disabled={catBusy}
+                >
+                  {catBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Buscar'}
+                </Button>
+              </div>
+              {catResults.length > 0 && (
+                <div className="max-h-40 overflow-y-auto rounded border border-slate-200 divide-y">
+                  {catResults.slice(0, 8).map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      className="w-full text-left px-2 py-1.5 hover:bg-brand-blue/5"
+                      onClick={() => applyCatalogItem(c)}
+                    >
+                      <div className="text-xs font-semibold text-slate-800">
+                        {c.name}{' '}
+                        {c.presentation ? (
+                          <span className="font-normal text-slate-500">— {c.presentation}</span>
+                        ) : null}
+                      </div>
+                      <div className="text-[10px] text-slate-500">
+                        {c.substance} {c.pmc ? `· PMC ${fmtBRL(c.pmc)}` : ''}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="space-y-2">
               <Label>Nome do produto *</Label>
               <Input
                 value={form.name || ''}
@@ -563,6 +775,13 @@ export default function Estoque() {
                 placeholder="Ex.: Dipirona 500mg"
               />
             </div>
+            {form.catalog_item && (
+              <div className="rounded border border-emerald-200 bg-emerald-50 px-2 py-1.5 text-xs text-emerald-800 flex items-center gap-1">
+                <Check className="h-3 w-3" /> Vinculado à biblioteca oficial
+                {form.substance ? ` · ${form.substance}` : ''}
+                {form.ean ? ` · EAN ${form.ean}` : ''}
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label>Categoria</Label>
@@ -778,6 +997,13 @@ export default function Estoque() {
                     <strong>Qtd na embalagem:</strong> {parsed.qty}
                   </div>
                 ) : null}
+                {parsed.catalogMatch && (
+                  <div className="mt-1 rounded bg-white/70 border border-emerald-200 px-2 py-1 text-xs text-emerald-900">
+                    <strong>Encontrado na biblioteca oficial:</strong> {parsed.catalogMatch.name} —{' '}
+                    {parsed.catalogMatch.presentation}
+                    {parsed.catalogMatch.pmc ? ` · PMC ${fmtBRL(parsed.catalogMatch.pmc)}` : ''}
+                  </div>
+                )}
               </div>
             )}
           </div>
